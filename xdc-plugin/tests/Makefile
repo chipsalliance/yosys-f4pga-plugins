@@ -8,17 +8,20 @@ TESTS = counter \
 	port_indexes \
 	io_loc_pairs \
 	minilitex_ddr_arty \
-	package_pins
+	package_pins \
+	get_nets
 
 counter_verify = $(call compare_json,counter)
 port_indexes_verify = $(call compare_json,port_indexes) && test $$(grep "'unknown' proc command handler" port_indexes/port_indexes.txt | wc -l) -eq 2
 io_loc_pairs_verify = $(call compare_json,io_loc_pairs)
 minilitex_ddr_arty_verify = $(call compare_json,minilitex_ddr_arty)
 package_pins_verify = $(call compare_json,package_pins)
+get_nets_verify = $(call compare,get_nets,txt)
 
 all: $(TESTS)
 
 compare_json = python compare_output_json.py --json $(1)/$(1).json --golden $(1)/$(1)_golden.json
+compare = diff $(1)/$(1).golden.$(2) $(1)/$(1).$(2)
 
 define test_tpl =
 $(1): $(1)/$(1).json
