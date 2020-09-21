@@ -7,21 +7,26 @@ yosys -import
 # Some of symbiflow expects eblifs with only one module.
 synth_xilinx -vpr -flatten -abc9 -nosrl -noclkbuf -nodsp
 
+
 set fp [open "get_nets.txt" "w"]
 
-puts "*inter* nets quiet"
+puts "\n*inter* nets quiet"
 puts $fp "*inter* nets quiet"
 puts $fp [get_nets -quiet *inter*]
 
-puts "*inter* nets"
+puts "\n*inter* nets"
 puts $fp "*inter* nets"
 puts $fp [get_nets *inter*]
 
-puts "Filtered nets"
+puts "\n*inter* nets with invalid filter expression"
+puts $fp "*inter* nets with invalid filter expression"
+puts $fp [get_nets -filter {mr_ff != true} *inter* ]
+
+puts "\nFiltered nets"
 puts $fp "Filtered nets"
 puts $fp [get_nets -filter {mr_ff == true || async_reg == true && dont_touch == true} ]
 
-puts "All nets"
+puts "\nAll nets"
 puts $fp "All nets"
 puts $fp [get_nets]
 

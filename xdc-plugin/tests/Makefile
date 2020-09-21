@@ -3,6 +3,7 @@
 # io_loc_pairs - test for LOC property being set on IOBUFs as the IO_LOC_PAIRS parameter
 # minilitex_ddr_arty - litex design with more types of IOBUFS including differential
 # package_pins - test for PACKAGE_PIN property being set on IOBUFs as the IO_LOC_PAIRS parameter
+# get_nets - tests for the get_nets command
 
 TESTS = counter \
 	port_indexes \

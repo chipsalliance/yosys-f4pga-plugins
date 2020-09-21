@@ -191,7 +191,7 @@ struct GetNets : public Pass {
 		size_t argidx;
 		std::vector<std::pair<std::string, std::string>> filters;
 		bool is_quiet = false;
-		bool is_filter = false;
+		bool has_filter = false;
 
 		// Parse command arguments
 		for (argidx = 1; argidx < args.size(); argidx++) {
@@ -211,21 +211,22 @@ struct GetNets : public Pass {
 			std::regex filter_attr_regex("(\\w+\\s?==\\s?\\w+)([(||)(&&)]*)");
 			std::regex_token_iterator<std::string::iterator> regex_end;
 			std::regex_token_iterator<std::string::iterator> matches(filter_arg.begin(), filter_arg.end(), filter_attr_regex, 1);
+			if (matches == regex_end) {
+			    log_warning("Currently -filter switch supports only a single 'equal(==)' condition expression, the rest will be ignored\n");
+			}
 
 			while (matches != regex_end) {
 			    std::string filter(*matches++);
 			    auto separator = filter.find("==");
 			    if (separator == std::string::npos) {
-				log_cmd_error("Incorrect filter expression: %s %s\n", arg.c_str(), args[argidx].c_str());
+				log_cmd_error("Incorrect filter expression: %s\n", args[argidx].c_str());
 			    }
 			    filters.emplace_back(filter.substr(0, separator), filter.substr(separator + 2));
 			}
-
-			if (size_t filter_cnt = filters.size()) {
-			    if (filter_cnt > 1) {
-				log_warning("Currently -filter switch supports only a single expression, the rest will be ignored\n");
-			    }
-			    is_filter = true;
+			size_t filter_cnt = filters.size();
+			has_filter = filter_cnt > 0;
+			if (filter_cnt > 1) {
+			    log_warning("Currently -filter switch supports only a single 'equal(==)' condition expression, the rest will be ignored\n");
 			}
 			continue;
 		    }
@@ -255,7 +256,7 @@ struct GetNets : public Pass {
 		Tcl_Obj* tcl_list = Tcl_NewListObj(0, NULL);
 		for (auto module : design->selected_modules()) {
 		    for (auto wire : module->selected_wires()) {
-			if (is_filter) {
+			if (has_filter) {
 			    std::pair<std::string, std::string> filter = filters.at(0);
 			    std::string attr_value = wire->get_string_attribute(RTLIL::IdString(RTLIL::escape_id(filter.first)));
 			    if (attr_value.compare(filter.second)) {

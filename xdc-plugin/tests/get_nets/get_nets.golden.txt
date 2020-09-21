@@ -2,6 +2,8 @@
 bottom_intermediate_inst.I bottom_intermediate_inst.O bottom_intermediate_inst.bottom_intermediate_wire inter_wire inter_wire_2
 *inter* nets
 bottom_intermediate_inst.I bottom_intermediate_inst.O bottom_intermediate_inst.bottom_intermediate_wire inter_wire inter_wire_2
+*inter* nets with invalid filter expression
+bottom_intermediate_inst.I bottom_intermediate_inst.O bottom_intermediate_inst.bottom_intermediate_wire inter_wire inter_wire_2
 Filtered nets
 clk
 All nets
