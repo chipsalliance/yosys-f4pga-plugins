@@ -60,9 +60,9 @@ struct ReadSdcCmd : public Frontend {
     }
 };
 
-struct WriteSdcCmd : public Backend {
-    WriteSdcCmd(Clocks& clocks, SdcWriter& sdc_writer)
-        : Backend("sdc", "Write SDC file"), clocks_(clocks), sdc_writer_(sdc_writer) {}
+struct WriteSdcCmd : public ScriptPass {
+    WriteSdcCmd(Clocks& clocks)
+        : ScriptPass("write_sdc", "Write SDC file"), clocks_(clocks) {}
 
     void help() override {
 	log("\n");
@@ -72,8 +72,38 @@ struct WriteSdcCmd : public Backend {
 	log("\n");
     }
 
+    void execute(std::vector<std::string> args,
+                 RTLIL::Design* design) override {
+	if (args.size() < 2) {
+	    log_cmd_error("Missing output file.\n");
+	}
+	run_script(design);
+	std::string file_name(args[1]);
+	run("write_sdc_file " + file_name);
+	clocks_.Clear();
+    }
+
+    void script() override { run("propagate_clocks"); }
+
+   private:
+    Clocks& clocks_;
+};
+
+struct WriteSdcFileCmd : public Backend {
+    WriteSdcFileCmd(Clocks& clocks, SdcWriter& sdc_writer)
+        : Backend("sdc_file", "Write SDC file"), clocks_(clocks), sdc_writer_(sdc_writer) {}
+
+    void help() override {
+	log("\n");
+	log("    write_sdc_file <filename>\n");
+	log("\n");
+	log("Write SDC file.\n");
+	log("\n");
+    }
+
     void execute(std::ostream*& f, std::string filename,
-                 std::vector<std::string> args, RTLIL::Design*) override {
+                 std::vector<std::string> args, RTLIL::Design* design) override {
+	(void)design;
 	if (args.size() < 2) {
 	    log_cmd_error("Missing output file.\n");
 	}
@@ -251,7 +281,8 @@ struct PropagateClocksCmd : public Pass {
 class SdcPlugin {
    public:
     SdcPlugin()
-        : write_sdc_cmd_(clocks_, sdc_writer_),
+        : write_sdc_cmd_(clocks_),
+          write_sdc_file_cmd_(clocks_, sdc_writer_),
           create_clock_cmd_(clocks_),
           get_clocks_cmd_(clocks_),
           propagate_clocks_cmd_(clocks_),
@@ -263,6 +294,7 @@ class SdcPlugin {
 
     ReadSdcCmd read_sdc_cmd_;
     WriteSdcCmd write_sdc_cmd_;
+    WriteSdcFileCmd write_sdc_file_cmd_;
     CreateClockCmd create_clock_cmd_;
     GetClocksCmd get_clocks_cmd_;
     PropagateClocksCmd propagate_clocks_cmd_;

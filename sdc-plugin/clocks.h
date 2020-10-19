@@ -73,6 +73,9 @@ class Clocks {
     const std::vector<Clock> GetClocks() {
 	return clocks_;
     }
+    void Clear() {
+	clocks_.clear();
+    }
 
    private:
     std::vector<Clock> clocks_;
