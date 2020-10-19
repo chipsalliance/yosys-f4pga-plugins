@@ -13,9 +13,6 @@ synth_xilinx -vpr -flatten -abc9 -nosrl -nodsp -iopad -run prepare:check
 # Read the design's timing constraints
 read_sdc $::env(DESIGN_TOP).input.sdc
 
-# Propagate the clocks
-propagate_clocks
-
 # Write the clocks to file
 set fh [open $::env(DESIGN_TOP).txt w]
 set clocks [get_clocks]
