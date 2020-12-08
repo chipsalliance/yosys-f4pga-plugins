@@ -26,8 +26,8 @@ std::string GetPorts::TypeName() { return "port"; }
 std::string GetPorts::SelectionType() { return "x"; }
 
 void GetPorts::ExecuteSelection([[gnu::unused]] RTLIL::Design* design,
-                               [[gnu::unused]] const CommandArgs& args) {
-}
+                               [[gnu::unused]] const CommandArgs& args) 
+
 
 GetPorts::SelectionObjects GetPorts::ExtractSelection(RTLIL::Design* design,
                                                       const CommandArgs& args) {
