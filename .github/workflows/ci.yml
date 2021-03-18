@@ -20,6 +20,11 @@ jobs:
           pkg-config libboost-system-dev libboost-python-dev \
           libboost-filesystem-dev zlib1g-dev clang-format-8 cmake
 
+    - name: Format
+      run: source .github/workflows/format-check.sh
+      env:
+        OS: ${{ runner.os }}
+
     - name: Install Yosys
       run: source .github/workflows/setup.sh
       env:
@@ -27,10 +32,5 @@ jobs:
 
     - name: Build and test plugins
       run: source .github/workflows/build-and-test.sh
-      env:
-        OS: ${{ runner.os }}
-
-    - name: Format
-      run: source .github/workflows/format-check.sh
       env:
         OS: ${{ runner.os }}
