@@ -23,4 +23,6 @@ close $fh
 
 # Write out the SDC file after the clock propagation step
 write_sdc [test_output_path "counter.sdc"]
+
+yosys proc
 write_json [test_output_path "counter.json"]

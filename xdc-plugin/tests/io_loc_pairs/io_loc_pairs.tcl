@@ -19,5 +19,6 @@ synth_xilinx -flatten -abc9 -nosrl -noclkbuf -nodsp -run prepare:check
 read_xdc -part_json [file dirname $::env(DESIGN_TOP)]/../xc7a35tcsg324-1.json $::env(DESIGN_TOP).xdc
 
 # Write the design in JSON format.
+yosys proc
 write_json [test_output_path "io_loc_pairs.json"]
 write_blif -param [test_output_path "io_loc_pairs.eblif"]
