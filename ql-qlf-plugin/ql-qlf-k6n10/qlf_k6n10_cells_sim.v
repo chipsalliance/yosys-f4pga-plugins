@@ -77,6 +77,58 @@ module dff(
 endmodule
 
 (* abc9_flop, lib_whitebox *)
+module dffr(
+        output reg Q,
+        input D,
+        input R,
+        (* clkbuf_sink *)
+        input C
+);
+        parameter [0:0] INIT = 1'b0;
+        initial Q = INIT;
+
+        always @(posedge C)
+                if (R == 1'b1)
+                        Q <= 1'b0;
+                else
+                        Q <= D;
+endmodule
+
+(* abc9_flop, lib_whitebox *)
+module dffre(
+    output reg Q,
+    input D,
+    input R,
+    input E,
+    (* clkbuf_sink *)
+    input C
+);
+    parameter [0:0] INIT = 1'b0;
+    initial Q = INIT;
+
+    always @(posedge C)
+       if (R == 1'b1)
+            Q <= 1'b0;
+       else if(E)
+            Q <= D;
+endmodule
+
+(* abc9_flop, lib_whitebox *)
+module latch(
+    output reg Q,
+    input D,
+    input E,
+    input R
+);
+    parameter [0:0] INIT = 1'b0;
+    initial Q = INIT;
+
+    always @*
+	if (R == 1'b1)
+            Q <= D;
+endmodule
+
+(* abc9_flop, lib_whitebox *)
 module scff(
         output reg Q,
         input D,
