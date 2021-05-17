@@ -20,6 +20,18 @@ end_section
 
 ##########################################################################
 
+# Fixup environment
+start_section Environment
+(
+    echo '=========================='
+    echo 'Fixing environment'
+    echo '=========================='
+    sudo apt remove --purge gcc-11 g++-11
+)
+end_section
+
+##########################################################################
+
 # Update submodules
 start_section Submodules
 (
@@ -36,13 +48,12 @@ start_section Install-Yosys
         echo '=========================='
         echo 'Building yosys'
         echo '=========================='
-        sudo apt-cache policy gcc-11
         mkdir -p ~/.local-src
         mkdir -p ~/.local-bin
         cd ~/.local-src
         git clone https://github.com/SymbiFlow/yosys.git -b master+wip
         cd yosys
-        gcc --version
+        gcc -v
         clang -v
         make config-clang
         PREFIX=$HOME/.local-bin make -j$(nproc)
