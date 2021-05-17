@@ -36,6 +36,7 @@ start_section Install-Yosys
         echo '=========================='
         echo 'Building yosys'
         echo '=========================='
+        sudo apt-cache policy gcc-11
         mkdir -p ~/.local-src
         mkdir -p ~/.local-bin
         cd ~/.local-src
