@@ -43,7 +43,7 @@ start_section Install-Yosys
         cd yosys
         gcc --version
         clang -v
-        make config-gcc
+        make config-clang
         PREFIX=$HOME/.local-bin make -j$(nproc)
         PREFIX=$HOME/.local-bin make install
         echo $(which yosys)
