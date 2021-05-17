@@ -41,6 +41,9 @@ start_section Install-Yosys
         cd ~/.local-src
         git clone https://github.com/SymbiFlow/yosys.git -b master+wip
         cd yosys
+        gcc --version
+        clang -v
+        make config-gcc
         PREFIX=$HOME/.local-bin make -j$(nproc)
         PREFIX=$HOME/.local-bin make install
         echo $(which yosys)
