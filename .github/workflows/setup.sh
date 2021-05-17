@@ -26,7 +26,7 @@ start_section Environment
     echo '=========================='
     echo 'Fixing environment'
     echo '=========================='
-    sudo apt remove --purge gcc-11 g++-11
+    sudo apt remove --purge gcc-11 libgcc-11*
 )
 end_section
 
