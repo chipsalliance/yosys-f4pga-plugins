@@ -376,7 +376,7 @@ struct SynthQuickLogicPass : public ScriptPass {
         }
 
         if (check_label("edif") && (!edif_file.empty())) {
-            run("splitnets -ports -format ()");
+            run("splitports");
             run("quicklogic_eqn");
 
             run(stringf("write_edif -nogndvcc -attrprop -pvector par %s %s", this->currmodule.c_str(), edif_file.c_str()));
