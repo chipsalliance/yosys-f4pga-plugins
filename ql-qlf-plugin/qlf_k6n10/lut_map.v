@@ -15,14 +15,14 @@ module \$lut (A, Y);
     input [WIDTH-1:0] A;
     output Y;
 
-    generate
+/*     generate
 	    if (WIDTH == 6) begin
 	       frac_lut6 #(.LUT(LUT)) _TECHMAP_REPLACE_ (.lut6_out(Y),.in(A));
 
 	    end else begin
 	       wire _TECHMAP_FAIL_ = 1;
 	    end
-    endgenerate
+    endgenerate */
 
 endmodule
 `endif

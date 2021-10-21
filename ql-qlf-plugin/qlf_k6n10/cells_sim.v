@@ -289,6 +289,7 @@ module dffsr(
         endcase
 endmodule
 
+/*
 module dffsre(
     output reg Q,
     input D,
@@ -313,7 +314,53 @@ module dffsre(
                 Q <= D;
         endcase
 endmodule
+*/
 
+module dffsre(
+    output reg Q,
+    input D,
+    (* clkbuf_sink *)
+    input C,
+    input E,
+    input R,
+    input S
+);
+    parameter [0:0] INIT = 1'b0;
+    initial Q = INIT;
+
+        always @(posedge C or negedge S or negedge R)
+          if (!R)
+            Q <= 1'b0;
+          else if (!S)
+            Q <= 1'b1;
+          else if (E)
+            Q <= D;
+        
+endmodule
+
+module dffnsre(
+    output reg Q,
+    input D,
+    (* clkbuf_sink *)
+    input C,
+    input E,
+    input R,
+    input S
+);
+    parameter [0:0] INIT = 1'b0;
+    initial Q = INIT;
+
+        always @(negedge C or negedge S or negedge R)
+          if (!R)
+            Q <= 1'b0;
+          else if (!S)
+            Q <= 1'b1;
+          else if (E)
+            Q <= D;
+        
+endmodule
+
+/*
 (* abc9_flop, lib_whitebox *)
 module latchsre (
     output reg Q,
@@ -332,6 +379,51 @@ module latchsre (
               if (S) Q <= 1'b1;
             else if (E && G) Q <= D;
     end
+endmodule
+*/
+
+(* abc9_flop, lib_whitebox *)
+module latchsre (
+    output reg Q,
+    input S,
+    input R,
+    input D,
+    input G,
+    input E
+);
+    parameter [0:0] INIT = 1'b0;
+    initial Q = INIT;
+    always @*
+      begin
+        if (!R) 
+          Q <= 1'b0;
+        else if (!S) 
+          Q <= 1'b1;
+        else if (E && G) 
+          Q <= D;
+      end
+endmodule
+
+(* abc9_flop, lib_whitebox *)
+module latchnsre (
+    output reg Q,
+    input S,
+    input R,
+    input D,
+    input G,
+    input E
+);
+    parameter [0:0] INIT = 1'b0;
+    initial Q = INIT;
+    always @*
+      begin
+        if (!R) 
+          Q <= 1'b0;
+        else if (!S) 
+          Q <= 1'b1;
+        else if (E && !G) 
+          Q <= D;
+      end
 endmodule
 
 (* abc9_flop, lib_whitebox *)
