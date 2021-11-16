@@ -218,11 +218,16 @@ struct SynthQuickLogicPass : public ScriptPass {
             run("opt_clean");
         }
 
+        std::string noDFFArgs;
+        if (family == "qlf_k4n8" || family == "qlf_k6n10") {
+            noDFFArgs = " -nodffe -nosdff";
+        }
+
         if (check_label("coarse")) {
             run("check");
             run("opt -nodffe -nosdff");
             run("fsm");
-            run("opt");
+            run("opt" + noDFFArgs);
             run("wreduce");
             run("peepopt");
             run("opt_clean");
@@ -250,7 +255,7 @@ struct SynthQuickLogicPass : public ScriptPass {
             run("opt_clean");
             run("alumacc");
             run("pmuxtree");
-            run("opt");
+            run("opt" + noDFFArgs);
             run("memory -nomap");
             run("opt_clean");
         }
@@ -264,11 +269,11 @@ struct SynthQuickLogicPass : public ScriptPass {
         }
 
         if (check_label("map_ffram")) {
-            run("opt -fast -mux_undef -undriven -fine");
+            run("opt -fast -mux_undef -undriven -fine" + noDFFArgs);
             run("memory_map -iattr -attr !ram_block -attr !rom_block -attr logic_block "
                 "-attr syn_ramstyle=auto -attr syn_ramstyle=registers "
                 "-attr syn_romstyle=auto -attr syn_romstyle=logic");
-            run("opt -undriven -fine");
+            run("opt -undriven -fine" + noDFFArgs);
         }
 
         if (check_label("map_gates")) {
@@ -277,14 +282,14 @@ struct SynthQuickLogicPass : public ScriptPass {
             } else {
                 run("techmap");
             }
-            run("opt -fast");
+            run("opt -fast" + noDFFArgs);
             if (family == "pp3") {
                 run("muxcover -mux8 -mux4");
             }
             run("opt_expr");
             run("opt_merge");
             run("opt_clean");
-            run("opt");
+            run("opt" + noDFFArgs);
         }
 
         if (check_label("map_ffs")) {
@@ -311,7 +316,7 @@ struct SynthQuickLogicPass : public ScriptPass {
             }
             run("opt_merge");
             run("opt_clean");
-            run("opt");
+            run("opt" + noDFFArgs);
         }
 
         if (check_label("map_luts")) {
