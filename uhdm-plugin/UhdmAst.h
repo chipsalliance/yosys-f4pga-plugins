@@ -128,6 +128,8 @@ class UhdmAst
     void process_string_var();
     void process_string_typespec();
     void process_repeat();
+    void process_byte_var();
+    void process_long_int_var();
     void process_nonsynthesizable(const UHDM::BaseClass *object);
     void visitEachDescendant(AST::AstNode *node, const std::function<void(AST::AstNode *)> &f);
 
@@ -142,6 +144,7 @@ class UhdmAst
     AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::AstNode *search_node);
     AST::AstNode *convert_dot(AST::AstNode *node, AST::AstNode *dot, AST::AstNode *module_node, std::map<std::string, AST::AstNode *> &wires,
                               std::map<std::string, std::pair<AST::AstNode *, std::vector<AST::AstNode *>>> &multirange_wires);
+    void resolve_wiretype(AST::AstNode *wire_node);
 #endif
 
     UhdmAst(UhdmAst *p, UhdmAstShared &s, const std::string &i) : parent(p), shared(s), indent(i)
