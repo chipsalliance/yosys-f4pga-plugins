@@ -127,7 +127,8 @@ struct CreateClockCmd : public Pass {
         float falling_edge(0);
         float period(0);
         if (args.size() < 4) {
-            log_cmd_error("Incorrect number of arguments\n");
+            log_file_error(__FILE__, __LINE__, "%s: Found only %ld arguments, but a minimum of 3 are required.\n", pass_name.c_str(),
+                           args.size() - 1);
         }
         for (argidx = 1; argidx < args.size(); argidx++) {
             std::string arg = args[argidx];
@@ -149,8 +150,16 @@ struct CreateClockCmd : public Pass {
             }
             break;
         }
+        if (argidx == args.size()) {
+            log_file_error(__FILE__, __LINE__, "%s: No target signal was provided.\n", pass_name.c_str());
+        }
         if (period <= 0) {
-            log_cmd_error("Incorrect period value\n");
+            log_file_error(__FILE__, __LINE__, "%s: Found non-positive period value of %f, periods must be positive and greater than zero.\n",
+                           pass_name.c_str(), period);
+        }
+        if (!is_waveform_specified) {
+            rising_edge = 0;
+            falling_edge = period / 2;
         }
         // Add "w:" prefix to selection arguments to enforce wire object
         // selection
@@ -176,10 +185,6 @@ struct CreateClockCmd : public Pass {
         }
         if (name.empty()) {
             name = RTLIL::unescape_id(selected_wires.at(0)->name);
-        }
-        if (!is_waveform_specified) {
-            rising_edge = 0;
-            falling_edge = period / 2;
         }
         Clock::Add(name, selected_wires, period, rising_edge, falling_edge, Clock::EXPLICIT);
     }
