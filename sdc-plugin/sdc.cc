@@ -33,7 +33,10 @@ USING_YOSYS_NAMESPACE
 PRIVATE_NAMESPACE_BEGIN
 
 struct ReadSdcCmd : public Frontend {
-    ReadSdcCmd() : Frontend("sdc", "Read SDC file") {}
+    ReadSdcCmd(std::string &file_name, size_t &line_number) : Frontend("sdc", "Read SDC file"), file_name(file_name), line_number(line_number) {}
+
+    std::string &file_name;
+    size_t &line_number;
 
     void help() override
     {
@@ -52,11 +55,16 @@ struct ReadSdcCmd : public Frontend {
         log("\nReading clock constraints file(SDC)\n\n");
         size_t argidx = 1;
         extra_args(f, filename, args, argidx);
-        std::string content{std::istreambuf_iterator<char>(*f), std::istreambuf_iterator<char>()};
-        log("%s\n", content.c_str());
+        file_name = filename;
+        line_number = 0;
         Tcl_Interp *interp = yosys_get_tcl_interp();
-        if (Tcl_EvalFile(interp, args[argidx].c_str()) != TCL_OK) {
-            log_cmd_error("TCL interpreter returned an error: %s\n", Tcl_GetStringResult(interp));
+        while (!f->eof()) {
+            std::string line;
+            std::getline(*f, line);
+            line_number++;
+            if (Tcl_Eval(interp, line.c_str()) != TCL_OK) {
+                log_cmd_error("TCL interpreter returned an error: %s\n", Tcl_GetStringResult(interp));
+            }
         }
     }
 };
@@ -100,7 +108,13 @@ struct WriteSdcCmd : public Backend {
 };
 
 struct CreateClockCmd : public Pass {
-    CreateClockCmd() : Pass("create_clock", "Create clock object") {}
+    CreateClockCmd(const std::string &file_name, size_t &line_number)
+        : Pass("create_clock", "Create clock object"), file_name(file_name), line_number(line_number)
+    {
+    }
+
+    const std::string &file_name;
+    const size_t &line_number;
 
     void help() override
     {
@@ -127,7 +141,7 @@ struct CreateClockCmd : public Pass {
         float falling_edge(0);
         float period(0);
         if (args.size() < 4) {
-            log_file_error(__FILE__, __LINE__, "%s: Found only %ld arguments, but a minimum of 3 are required.\n", pass_name.c_str(),
+            log_file_error(file_name, line_number, "%s: Found only %ld arguments, but a minimum of 3 are required.\n", pass_name.c_str(),
                            args.size() - 1);
         }
         for (argidx = 1; argidx < args.size(); argidx++) {
@@ -151,10 +165,10 @@ struct CreateClockCmd : public Pass {
             break;
         }
         if (argidx == args.size()) {
-            log_file_error(__FILE__, __LINE__, "%s: No target signal was provided.\n", pass_name.c_str());
+            log_file_error(file_name, line_number, "%s: No target signal was provided.\n", pass_name.c_str());
         }
         if (period <= 0) {
-            log_file_error(__FILE__, __LINE__, "%s: Found non-positive period value of %f, periods must be positive and greater than zero.\n",
+            log_file_error(file_name, line_number, "%s: Found non-positive period value of %f, periods must be positive and greater than zero.\n",
                            pass_name.c_str(), period);
         }
         if (!is_waveform_specified) {
@@ -336,7 +350,9 @@ struct PropagateClocksCmd : public Pass {
 class SdcPlugin
 {
   public:
-    SdcPlugin() : write_sdc_cmd_(sdc_writer_), set_false_path_cmd_(sdc_writer_), set_max_delay_cmd_(sdc_writer_), set_clock_groups_cmd_(sdc_writer_)
+    SdcPlugin()
+        : read_sdc_cmd_(file_name, line_number), write_sdc_cmd_(sdc_writer_), create_clock_cmd_(file_name, line_number),
+          set_false_path_cmd_(sdc_writer_), set_max_delay_cmd_(sdc_writer_), set_clock_groups_cmd_(sdc_writer_)
     {
         log("Loaded SDC plugin\n");
     }
@@ -349,6 +365,9 @@ class SdcPlugin
     SetFalsePath set_false_path_cmd_;
     SetMaxDelay set_max_delay_cmd_;
     SetClockGroups set_clock_groups_cmd_;
+
+    std::string file_name;
+    size_t line_number;
 
   private:
     SdcWriter sdc_writer_;
