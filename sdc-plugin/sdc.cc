@@ -63,7 +63,7 @@ struct ReadSdcCmd : public Frontend {
             std::getline(*f, line);
             line_number++;
             if (Tcl_Eval(interp, line.c_str()) != TCL_OK) {
-                log_cmd_error("TCL interpreter returned an error: %s\n", Tcl_GetStringResult(interp));
+                log_file_error(file_name, line_number, "%s: TCL interpreter returned an error: %s\n", pass_name.c_str(), Tcl_GetStringResult(interp));
             }
         }
     }
