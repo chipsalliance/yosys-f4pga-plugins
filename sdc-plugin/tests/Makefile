@@ -32,7 +32,9 @@ TESTS = abc9 \
 	period_check \
 	waveform_check \
 	period_format_check \
-	get_clocks
+	get_clocks \
+	sdc_errors_missing_arguments
+
 
 UNIT_TESTS = escaping
 
@@ -57,4 +59,6 @@ waveform_check_verify = true
 waveform_check_negative = 1
 period_format_check_verify = true
 period_format_check_negative = 1
+sdc_errors_missing_arguments_verify = tail -n 1 sdc_errors_missing_arguments/sdc_errors_missing_arguments.log | grep sdc_errors_missing_arguments.input.sdc:1 > /dev/null
+sdc_errors_missing_arguments_negative = 1
 get_clocks_verify = $(call diff_test,get_clocks,txt)
