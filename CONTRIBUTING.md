@@ -1,7 +1,7 @@
-# Contributing to Yosys SymbiFlow Plugins
+# Contributing to SymbiFlow Projects
 
-There are a couple of guidelines when contributing to Yosys SymbiFlow Plugins
-which are listed here.
+There are a couple of guidelines when contributing to SymbiFlow Projects which are
+listed here.
 
 ### Sending
 
@@ -11,8 +11,8 @@ All contributions should be sent as
 ### License
 
 All software (code, associated documentation, support files, etc) in the
-Yosys SymbiFlow Plugins repository are licensed under the very permissive
-[ISC Licence](COPYING). A copy can be found in the [`COPYING`](COPYING) file.
+Symbiflow repositories are licensed under the very permissive
+[ISC Licence](https://opensource.org/licenses/ISC). A copy can be found in the [`LICENSE`](LICENSE) file.
 
 All new contributions must also be released under this license.
 
