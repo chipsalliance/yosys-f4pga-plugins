@@ -3123,11 +3123,19 @@ void UhdmAst::process_sys_func_call()
         current_node->type = AST::AST_TO_SIGNED;
     } else if (current_node->str == "\\$unsigned") {
         current_node->type = AST::AST_TO_UNSIGNED;
-    } else if (current_node->str == "\\$display" || current_node->str == "\\$time") {
-        current_node->type = AST::AST_TCALL;
-        current_node->str = current_node->str.substr(1);
     } else if (current_node->str == "\\$readmemh") {
         current_node->type = AST::AST_TCALL;
+    }
+
+    std::string simulation_functions[] = {
+      "\\$value$plusargs", "\\$test$plusargs", "\\$display", "\\$displayb", "\\$displayh", "\\$displayo", "\\$strobe",   "\\$strobeb",  "\\$strobeh",
+      "\\$strobeo",        "\\$write",         "\\$writeb",  "\\$writeh",   "\\$writeo",   "\\$monitor",  "\\$monitorb", "\\$monitorh", "\\$monitoro",
+      "\\$monitoroff",     "\\$monitoron",     "\\$finish",  "\\$stop",     "\\$exit",     "\\$realtime", "\\$stime",    "\\$time"};
+
+    if (std::find(std::begin(simulation_functions), std::end(simulation_functions), current_node->str) != std::end(simulation_functions)) {
+        delete current_node;
+        current_node = nullptr;
+        return;
     }
 
     visit_one_to_many({vpiArgument}, obj_h, [&](AST::AstNode *node) {
@@ -3135,12 +3143,6 @@ void UhdmAst::process_sys_func_call()
             current_node->children.push_back(node);
         }
     });
-
-    // skip $value$plusargs function, as it is simulation function
-    if (current_node->str == "\\$value$plusargs") {
-        delete current_node;
-        current_node = nullptr;
-    }
 }
 
 void UhdmAst::process_func_call()
