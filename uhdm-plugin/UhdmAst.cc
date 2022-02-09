@@ -3118,16 +3118,19 @@ void UhdmAst::process_logic_var()
 
 void UhdmAst::process_sys_func_call()
 {
+    std::string sys_func_called_as_tasks[] = {
+        "\\$display", "\\$time", "\\$monitor", "\\$readmemh"
+    };
     current_node = make_ast_node(AST::AST_FCALL);
     if (current_node->str == "\\$signed") {
         current_node->type = AST::AST_TO_SIGNED;
     } else if (current_node->str == "\\$unsigned") {
         current_node->type = AST::AST_TO_UNSIGNED;
-    } else if (current_node->str == "\\$display" || current_node->str == "\\$time") {
+    } else if (std::find(std::begin(sys_func_called_as_tasks), std::end(sys_func_called_as_tasks),
+                         current_node->str)) {
         current_node->type = AST::AST_TCALL;
-        current_node->str = current_node->str.substr(1);
-    } else if (current_node->str == "\\$readmemh") {
-        current_node->type = AST::AST_TCALL;
+        if (current_node->str != "\\$readmemh")
+            current_node->str = current_node->str.substr(1);
     }
 
     visit_one_to_many({vpiArgument}, obj_h, [&](AST::AstNode *node) {
