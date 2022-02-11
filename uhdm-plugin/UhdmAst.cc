@@ -3607,6 +3607,27 @@ void UhdmAst::process_while()
     });
 }
 
+void UhdmAst::process_forever()
+{
+    current_node = make_ast_node(AST::AST_WHILE);
+    auto *true_condition = AST::AstNode::mkconst_int(1, false, 1);
+    current_node->children.push_back(true_condition);
+
+    visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
+        if (node->type != AST::AST_BLOCK) {
+            auto *statements = make_ast_node(AST::AST_BLOCK);
+            statements->str = current_node->str; // Needed in simplify step
+            statements->children.push_back(node);
+            current_node->children.push_back(statements);
+        } else {
+            if (node->str == "") {
+                node->str = current_node->str;
+                current_node->children.push_back(node);
+            }
+        }
+    });
+}
+
 void UhdmAst::process_unsupported_stmt(const UHDM::BaseClass *object)
 {
     log_error("%s:%d: Currently not supported object of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(),
@@ -3838,6 +3859,9 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiWhile:
         process_while();
+        break;
+    case vpiForever:
+        process_forever();
         break;
     case vpiClockingBlock:
         process_unsupported_stmt(object);

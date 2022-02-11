@@ -135,6 +135,7 @@ class UhdmAst
     void process_immediate_cover();
     void process_immediate_assume();
     void process_while();
+    void process_forever();
     void simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_node = nullptr);
     void process_nonsynthesizable(const UHDM::BaseClass *object);
     void process_unsupported_stmt(const UHDM::BaseClass *object);
