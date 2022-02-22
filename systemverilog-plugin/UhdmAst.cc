@@ -3897,6 +3897,13 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     const unsigned object_type = vpi_get(vpiType, obj_h);
     const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
     const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
+    for (auto *obj : shared.nonSynthesizableObjects) {
+        if (!object->Compare(obj)) {
+            log_warning("%s:%d: Skipping non-synthesizable object of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(),
+                        UHDM::VpiTypeName(obj_h).c_str());
+            return nullptr;
+        }
+    }
 
     if (shared.debug_flag) {
         std::cout << indent << "Object '" << object->VpiName() << "' of type '" << UHDM::VpiTypeName(obj_h) << '\'' << std::endl;

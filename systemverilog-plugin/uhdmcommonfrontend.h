@@ -18,6 +18,8 @@
  */
 
 #include "UhdmAst.h"
+#include "uhdm/SynthSubset.h"
+#include "uhdm/vpi_listener.h"
 #include "frontends/ast/ast.h"
 #include "kernel/yosys.h"
 #include <string>
