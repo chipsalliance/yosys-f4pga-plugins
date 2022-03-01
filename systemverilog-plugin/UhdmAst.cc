@@ -3098,12 +3098,14 @@ void UhdmAst::process_case_item()
         current_node->children.push_back(new AST::AstNode(AST::AST_DEFAULT));
     }
     visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
-        if (node->type != AST::AST_BLOCK) {
-            auto block_node = new AST::AstNode(AST::AST_BLOCK);
-            block_node->children.push_back(node);
-            node = block_node;
+        if (node) {
+            if (node->type != AST::AST_BLOCK) {
+                auto block_node = new AST::AstNode(AST::AST_BLOCK);
+                block_node->children.push_back(node);
+                node = block_node;
+            }
+            current_node->children.push_back(node);
         }
-        current_node->children.push_back(node);
     });
 }
 
