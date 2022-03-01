@@ -3193,22 +3193,24 @@ void UhdmAst::process_hier_path()
     current_node->str = "\\";
     AST::AstNode *top_node = nullptr;
     visit_one_to_many({vpiActual}, obj_h, [&](AST::AstNode *node) {
-        if (node->str.find('[') != std::string::npos)
-            node->str = node->str.substr(0, node->str.find('['));
-        // for first node, just set correct string and move any children
-        if (!top_node) {
-            current_node->str += node->str.substr(1);
-            current_node->children = std::move(node->children);
-            top_node = current_node;
-            delete node;
-        } else {
-            if (node->str.empty()) {
-                log_assert(!node->children.empty());
-                top_node->children.push_back(node->children[0]);
+        if (node) {
+            if (node->str.find('[') != std::string::npos)
+                node->str = node->str.substr(0, node->str.find('['));
+            // for first node, just set correct string and move any children
+            if (!top_node) {
+                current_node->str += node->str.substr(1);
+                current_node->children = std::move(node->children);
+                top_node = current_node;
+                delete node;
             } else {
-                node->type = static_cast<AST::AstNodeType>(AST::AST_DOT);
-                top_node->children.push_back(node);
-                top_node = node;
+                if (node->str.empty()) {
+                    log_assert(!node->children.empty());
+                    top_node->children.push_back(node->children[0]);
+                } else {
+                    node->type = static_cast<AST::AstNodeType>(AST::AST_DOT);
+                    top_node->children.push_back(node);
+                    top_node = node;
+                }
             }
         }
     });
