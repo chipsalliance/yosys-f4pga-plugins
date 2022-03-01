@@ -2348,13 +2348,18 @@ void UhdmAst::process_always()
 {
     current_node = make_ast_node(AST::AST_ALWAYS);
     visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
-        AST::AstNode *block = nullptr;
-        if (node && node->type != AST::AST_BLOCK) {
-            block = new AST::AstNode(AST::AST_BLOCK, node);
+        if (node) {
+            AST::AstNode *block = nullptr;
+            if (node->type != AST::AST_BLOCK) {
+                block = new AST::AstNode(AST::AST_BLOCK, node);
+            } else {
+                block = node;
+            }
+            current_node->children.push_back(block);
         } else {
-            block = node;
+            // create empty block
+            current_node->children.push_back(new AST::AstNode(AST::AST_BLOCK));
         }
-        current_node->children.push_back(block);
     });
     switch (vpi_get(vpiAlwaysType, obj_h)) {
     case vpiAlwaysComb:
