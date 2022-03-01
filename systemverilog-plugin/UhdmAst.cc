@@ -2988,7 +2988,8 @@ void UhdmAst::process_if_else()
     condition->children.push_back(constant);
     visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
         auto *statements = new AST::AstNode(AST::AST_BLOCK);
-        statements->children.push_back(node);
+        if (node)
+            statements->children.push_back(node);
         condition->children.push_back(statements);
     });
     current_node->children.push_back(condition);
@@ -2999,7 +3000,8 @@ void UhdmAst::process_if_else()
         condition->children.push_back(elseBlock);
         visit_one_to_one({vpiElseStmt}, obj_h, [&](AST::AstNode *node) {
             auto *statements = new AST::AstNode(AST::AST_BLOCK);
-            statements->children.push_back(node);
+            if (node)
+                statements->children.push_back(node);
             condition->children.push_back(statements);
         });
         current_node->children.push_back(condition);
