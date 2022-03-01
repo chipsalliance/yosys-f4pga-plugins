@@ -2407,6 +2407,8 @@ void UhdmAst::process_initial()
                 node = block_node;
             }
             current_node->children.push_back(node);
+        } else {
+            current_node->children.push_back(make_ast_node(AST::AST_BLOCK));
         }
     });
 }
