@@ -1250,7 +1250,10 @@ static void add_or_replace_child(AST::AstNode *parent, AST::AstNode *child)
         if (initial_node_it != parent->children.end()) {
             AST::AstNode *initial_node = *initial_node_it;
 
-            log_assert(!(initial_node->children.empty()));
+            if (initial_node->children.empty()) {
+                initial_node->children.push_back(new AST::AstNode(AST::AST_BLOCK));
+            }
+
             log_assert(initial_node->children[0]->type == AST::AST_BLOCK);
             log_assert(!(child->children.empty()));
             log_assert(child->children[0]->type == AST::AST_BLOCK);
