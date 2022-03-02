@@ -3760,6 +3760,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiEnumVar:
     case vpiEnumNet:
     case vpiStructVar:
+    case vpiClassVar:
     case vpiStructNet:
         process_custom_var();
         break;
