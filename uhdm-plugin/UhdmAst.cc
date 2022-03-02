@@ -40,6 +40,11 @@ YOSYS_NAMESPACE_BEGIN
     static const IdString id("\\is_imported");
     return id;
 }
+/*static*/ const IdString &UhdmAst::processes_from_all_modules()
+{
+    static const IdString id("\\processes_from_all_modules");
+    return id;
+}
 
 static void sanitize_symbol_name(std::string &name)
 {
@@ -1473,7 +1478,15 @@ void UhdmAst::process_module()
                                       add_or_replace_child(current_node, node);
                                   }
                               });
+            for (auto process : current_node->attributes[UhdmAst::processes_from_all_modules()]->children)
+                add_or_replace_child(current_node, process->clone());
+
             auto it = current_node->attributes.find(UhdmAst::partial());
+            if (it != current_node->attributes.end()) {
+                delete it->second;
+                current_node->attributes.erase(it);
+            }
+            it = current_node->attributes.find(UhdmAst::processes_from_all_modules());
             if (it != current_node->attributes.end()) {
                 delete it->second;
                 current_node->attributes.erase(it);
@@ -1484,13 +1497,14 @@ void UhdmAst::process_module()
             shared.top_nodes[current_node->str] = current_node;
             shared.current_top_node = current_node;
             current_node->attributes[UhdmAst::partial()] = AST::AstNode::mkconst_int(1, false, 1);
+            current_node->attributes[UhdmAst::processes_from_all_modules()] = AST::AstNode::mkconst_int(1, false, 1);
             visit_one_to_many({vpiTypedef}, obj_h, [&](AST::AstNode *node) {
                 if (node) {
                     move_type_to_new_typedef(current_node, node);
                 }
             });
             visit_one_to_many({vpiModule, vpiInterface, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiGenScopeArray,
-                               vpiContAssign, vpiProcess, vpiClockingBlock, vpiAssertion},
+                               vpiContAssign, vpiClockingBlock, vpiAssertion},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
                                       if (node->type == AST::AST_ASSIGN && node->children.size() < 2)
@@ -1498,6 +1512,11 @@ void UhdmAst::process_module()
                                       add_or_replace_child(current_node, node);
                                   }
                               });
+            visit_one_to_many({vpiProcess}, obj_h, [&](AST::AstNode *node) {
+                if (node) {
+                    current_node->attributes[UhdmAst::processes_from_all_modules()]->children.push_back(node);
+                }
+            });
         }
     } else {
         // Not a top module, create instance
@@ -1542,6 +1561,14 @@ void UhdmAst::process_module()
             }
             if (!module_parameters.empty()) {
                 module_node = module_node->clone();
+            }
+        } else {
+            for (auto process : current_node->attributes[UhdmAst::processes_from_all_modules()]->children)
+                add_or_replace_child(current_node, process->clone());
+            auto it = current_node->attributes.find(UhdmAst::processes_from_all_modules());
+            if (it != current_node->attributes.end()) {
+                delete it->second;
+                current_node->attributes.erase(it);
             }
         }
         module_node->str = module_name;
