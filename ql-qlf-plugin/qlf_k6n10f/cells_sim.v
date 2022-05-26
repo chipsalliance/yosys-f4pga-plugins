@@ -1660,6 +1660,7 @@ module QL_DSP2_MULT ( // TODO: Name subject to change
 
     input  wire       reset,
 
+    input  wire [2:0] feedback,
     input  wire       unsigned_a,
     input  wire       unsigned_b
 );
@@ -1698,7 +1699,7 @@ module QL_DSP2_MULT ( // TODO: Name subject to change
 
         .reset(reset),
 
-        .feedback(3'b0),
+        .feedback(feedback),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b)
@@ -1713,6 +1714,8 @@ module QL_DSP2_MULT_REGIN ( // TODO: Name subject to change
     (* clkbuf_sink *)
     input  wire       clk,
     input  wire       reset,
+
+    input  wire [2:0] feedback,
 
     input  wire       unsigned_a,
     input  wire       unsigned_b
@@ -1751,7 +1754,7 @@ module QL_DSP2_MULT_REGIN ( // TODO: Name subject to change
         .b(b),
         .z(z),
 
-        .feedback(3'b0),
+        .feedback(feedback),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
@@ -1769,6 +1772,8 @@ module QL_DSP2_MULT_REGOUT ( // TODO: Name subject to change
     (* clkbuf_sink *)
     input  wire       clk,
     input  wire       reset,
+
+    input  wire [2:0] feedback,
 
     input  wire       unsigned_a,
     input  wire       unsigned_b
@@ -1806,7 +1811,7 @@ module QL_DSP2_MULT_REGOUT ( // TODO: Name subject to change
         .b(b),
         .z(z),
 
-        .feedback(3'b0),
+        .feedback(feedback),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
@@ -1824,6 +1829,8 @@ module QL_DSP2_MULT_REGIN_REGOUT ( // TODO: Name subject to change
     (* clkbuf_sink *)
     input  wire       clk,
     input  wire       reset,
+
+    input  wire [2:0] feedback,
 
     input  wire       unsigned_a,
     input  wire       unsigned_b
@@ -1861,7 +1868,7 @@ module QL_DSP2_MULT_REGIN_REGOUT ( // TODO: Name subject to change
         .b(b),
         .z(z),
 
-        .feedback(3'b0),
+        .feedback(feedback),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
