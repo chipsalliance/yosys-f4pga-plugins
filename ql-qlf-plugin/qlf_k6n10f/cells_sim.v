@@ -1883,8 +1883,6 @@ module QL_DSP2_MULTADD (
     input  wire [17:0] b,
     output wire [37:0] z,
 
-    (* clkbuf_sink *)
-    input  wire        clk,
     input  wire        reset,
 
     input  wire [ 2:0] feedback,
@@ -1927,8 +1925,6 @@ module QL_DSP2_MULTADD (
         .b(b),
         .z(z),
 
-//        .f_mode(f_mode),
-
         .feedback(feedback),
         .acc_fir(acc_fir),
         .load_acc(load_acc),
@@ -1936,7 +1932,6 @@ module QL_DSP2_MULTADD (
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
 
-        .clk(clk),
         .reset(reset),
         .subtract(subtract)
     );
