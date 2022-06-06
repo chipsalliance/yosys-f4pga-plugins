@@ -1250,6 +1250,8 @@ static void add_or_replace_child(AST::AstNode *parent, AST::AstNode *child)
         if (initial_node_it != parent->children.end()) {
             AST::AstNode *initial_node = *initial_node_it;
 
+            // simplify assumes that initial has a block under it
+            // In case we don't have one (there were no statements under the initial), let's add it
             if (initial_node->children.empty()) {
                 initial_node->children.push_back(new AST::AstNode(AST::AST_BLOCK));
             }
@@ -3325,20 +3327,6 @@ void UhdmAst::process_sys_func_call()
 {
     current_node = make_ast_node(AST::AST_FCALL);
 
-    // skip unsupported simulation functions
-    std::string to_skip[] = {
-      "\\$value$plusargs", "\\$test$plusargs", "\\$displayb", "\\$displayh",  "\\$displayo",  "\\$strobeb",  "\\$strobeh",       "\\$strobeo",
-      "\\$writeb",         "\\$writeh",        "\\$writeo",   "\\$dumplimit", "\\$dumpflush", "\\$fdisplay", "\\$fdisplayb",     "\\$fdisplayh",
-      "\\$fdisplayo",      "\\$fmonitor",      "\\$fstrobe",  "\\$fstrobeb",  "\\$fstrobeh",  "\\$fstrobeo", "\\$fwrite",        "\\$fwriteb",
-      "\\$fwriteh",        "\\$fwriteo",       "\\$ungetc",   "\\$fgetc",     "\\$fgets",     "\\$ftell",    "\\$printtimescale"};
-
-    if (std::find(std::begin(to_skip), std::end(to_skip), current_node->str) != std::end(to_skip)) {
-        log_warning("System function %s was skipped\n", current_node->str.substr(1).c_str());
-        delete current_node;
-        current_node = nullptr;
-        return;
-    }
-
     std::string task_calls[] = {"\\$display", "\\$monitor", "\\$write", "\\$time", "\\$readmemh", "\\$readmemb", "\\$finish", "\\$stop"};
 
     if (current_node->str == "\\$signed") {
@@ -3390,16 +3378,6 @@ void UhdmAst::process_immediate_assert()
         if (n) {
             current_node->children.push_back(n);
         }
-    });
-}
-
-void UhdmAst::process_nonsynthesizable(const UHDM::BaseClass *object)
-{
-    log_warning("%s:%d: Non-synthesizable object of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(), UHDM::VpiTypeName(obj_h).c_str());
-    current_node = make_ast_node(AST::AST_BLOCK);
-    visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
-        if (node)
-            current_node->children.push_back(node);
     });
 }
 
@@ -4107,9 +4085,6 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         process_hier_path();
         break;
     case UHDM::uhdmimport_typespec:
-        break;
-    case vpiDelayControl:
-        process_nonsynthesizable(object);
         break;
     case vpiLogicTypespec:
         process_logic_typespec();
