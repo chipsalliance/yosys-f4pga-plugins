@@ -480,3 +480,182 @@ module BRAM2x18_SDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, C1ADDR, C1DATA,
 		.FLUSH2_i(FLUSH2)
 	);
 endmodule
+
+
+module BRAM2x18_FIFO (
+    DIN1,
+    PUSH1,
+    POP1,
+    Push_Clk1,
+    Pop_Clk1,
+    Async_Flush1,
+    Overrun_Error1,
+    Full_Watermark1,
+    Almost_Full1,
+    Full1,
+    Underrun_Error1,
+    Empty_Watermark1,
+    Almost_Empty1,
+    Empty1,
+    DOUT1,
+    
+    DIN2,
+    PUSH2,
+    POP2,
+    Push_Clk2,
+    Pop_Clk2,
+    Async_Flush2,
+    Overrun_Error2,
+    Full_Watermark2,
+    Almost_Full2,
+    Full2,
+    Underrun_Error2,
+    Empty_Watermark2,
+    Almost_Empty2,
+    Empty2,
+    DOUT2
+);
+
+  parameter CFG_DBITS = 18;
+  
+  parameter UPAE_DBITS1 = 11'd10;
+  parameter UPAF_DBITS1 = 11'd10;
+  parameter SYNC_FIFO1 = 1'b0;
+  
+  parameter UPAE_DBITS2 = 11'd10;
+  parameter UPAF_DBITS2 = 11'd10;
+  parameter SYNC_FIFO2 = 1'b0;
+  
+  input Push_Clk1, Pop_Clk1;
+  input PUSH1, POP1;
+  input [CFG_DBITS-1:0] DIN1;
+  input Async_Flush1;
+  output [CFG_DBITS-1:0] DOUT1;
+  output Almost_Full1, Almost_Empty1;
+  output Full1, Empty1;
+  output Full_Watermark1, Empty_Watermark1;
+  output Overrun_Error1, Underrun_Error1;
+  
+  input Push_Clk2, Pop_Clk2;
+  input PUSH2, POP2;
+  input [CFG_DBITS-1:0] DIN2;
+  input Async_Flush2;
+  output [CFG_DBITS-1:0] DOUT2;
+  output Almost_Full2, Almost_Empty2;
+  output Full2, Empty2;
+  output Full_Watermark2, Empty_Watermark2;
+  output Overrun_Error2, Underrun_Error2;
+  
+  wire [17:0] in_reg1;
+  wire [17:0] out_reg1;
+  wire [17:0] fifo1_flags;
+  
+  wire [17:0] in_reg2;
+  wire [17:0] out_reg2;
+  wire [17:0] fifo2_flags;
+  
+  assign Overrun_Error1 = fifo1_flags[0];
+  assign Full_Watermark1 = fifo1_flags[1];
+  assign Almost_Full1 = fifo1_flags[2];
+  assign Full1 = fifo1_flags[3];
+  assign Underrun_Error1 = fifo1_flags[4];
+  assign Empty_Watermark1 = fifo1_flags[5];
+  assign Almost_Empty1 = fifo1_flags[6];
+  assign Empty1 = fifo1_flags[7];
+  
+  assign Overrun_Error2 = fifo2_flags[0];
+  assign Full_Watermark2 = fifo2_flags[1];
+  assign Almost_Full2 = fifo2_flags[2];
+  assign Full2 = fifo2_flags[3];
+  assign Underrun_Error2 = fifo2_flags[4];
+  assign Empty_Watermark2 = fifo2_flags[5];
+  assign Almost_Empty2 = fifo2_flags[6];
+  assign Empty2 = fifo2_flags[7];
+  
+  assign in_reg1[CFG_DBITS-1:0] = DIN1[CFG_DBITS-1:0]; 
+  assign in_reg2[CFG_DBITS-1:0] = DIN2[CFG_DBITS-1:0];
+  
+  case (CFG_DBITS)
+		1: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, `MODE_1, `MODE_1, `MODE_1, `MODE_1, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, `MODE_1, `MODE_1, `MODE_1, `MODE_1, SYNC_FIFO1
+                                                  };
+		end
+
+		2: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, `MODE_2, `MODE_2, `MODE_2, `MODE_2, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, `MODE_2, `MODE_2, `MODE_2, `MODE_2, SYNC_FIFO1
+                                                  };
+		end
+
+		4: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, `MODE_4, `MODE_4, `MODE_4, `MODE_4, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, `MODE_4, `MODE_4, `MODE_4, `MODE_4, SYNC_FIFO1
+                                                  };
+		end
+    
+		8, 9: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, `MODE_9, `MODE_9, `MODE_9, `MODE_9, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, `MODE_9, `MODE_9, `MODE_9, `MODE_9, SYNC_FIFO1
+                                                  };
+		end
+    
+		16, 18: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, `MODE_18, `MODE_18, `MODE_18, `MODE_18, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, `MODE_18, `MODE_18, `MODE_18, `MODE_18, SYNC_FIFO1
+                                                  };
+		end
+    
+		default: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, `MODE_18, `MODE_18, `MODE_18, `MODE_18, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, `MODE_18, `MODE_18, `MODE_18, `MODE_18, SYNC_FIFO1
+                                                  };
+		end
+	endcase
+  
+ 	TDP36K _TECHMAP_REPLACE_ (
+		.RESET_ni(1'b1),
+		.WDATA_A1_i(in_reg1[17:0]),
+		.WDATA_A2_i(in_reg2[17:0]),
+		.RDATA_A1_o(fifo1_flags),
+		.RDATA_A2_o(fifo2_flags),
+		.ADDR_A1_i(14'h0),
+		.ADDR_A2_i(14'h0),
+		.CLK_A1_i(Push_Clk1),
+		.CLK_A2_i(Push_Clk2),
+		.REN_A1_i(1'b1),
+		.REN_A2_i(1'b1),
+		.WEN_A1_i(PUSH1),
+		.WEN_A2_i(PUSH2),
+		.BE_A1_i(2'b11),
+		.BE_A2_i(2'b11),
+
+		.WDATA_B1_i(18'h0),
+		.WDATA_B2_i(18'h0),
+		.RDATA_B1_o(out_reg1[17:0]),
+		.RDATA_B2_o(out_reg2[17:0]),
+		.ADDR_B1_i(14'h0),
+		.ADDR_B2_i(14'h0),
+		.CLK_B1_i(Pop_Clk1),
+		.CLK_B2_i(Pop_Clk2),
+		.REN_B1_i(POP1),
+		.REN_B2_i(POP2),
+		.WEN_B1_i(1'b0),
+		.WEN_B2_i(1'b0),
+		.BE_B1_i(2'b11),
+		.BE_B2_i(2'b11),
+
+		.FLUSH1_i(Async_Flush1),
+		.FLUSH2_i(Async_Flush2)
+	);
+
+  assign DOUT1[CFG_DBITS-1 : 0] = out_reg1[CFG_DBITS-1 : 0];
+  assign DOUT2[CFG_DBITS-1 : 0] = out_reg2[CFG_DBITS-1 : 0];
+
+endmodule

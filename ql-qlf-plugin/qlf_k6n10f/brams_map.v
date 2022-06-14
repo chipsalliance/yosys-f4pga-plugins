@@ -483,3 +483,236 @@ module \$__QLF_FACTOR_BRAM36_SDP (CLK2, CLK3, A1ADDR, A1DATA, A1EN, B1ADDR, B1DA
 	);
 endmodule
 
+
+module FIFO_36K_BLK (
+    DIN,
+    PUSH,
+    POP,
+    Push_Clk,
+    Pop_Clk,
+    Async_Flush,
+    Overrun_Error,
+    Full_Watermark,
+    Almost_Full,
+    Full,
+    Underrun_Error,
+    Empty_Watermark,
+    Almost_Empty,
+    Empty,
+    DOUT
+);
+
+  parameter CFG_DBITS = 36;
+  parameter UPAE_DBITS = 12'd10;
+  parameter UPAF_DBITS = 12'd10;
+  parameter SYNC_FIFO = 1'b0;
+    
+  localparam MODE_36  = 3'b111;	// 36 or 32-bit
+	localparam MODE_18  = 3'b110;	// 18 or 16-bit
+	localparam MODE_9   = 3'b101;	// 9 or 8-bit
+	localparam MODE_4   = 3'b100;	// 4-bit
+	localparam MODE_2   = 3'b010;	// 32-bit
+	localparam MODE_1   = 3'b001;	// 32-bit
+
+  input Push_Clk, Pop_Clk;
+  input PUSH, POP;
+  input [CFG_DBITS-1:0] DIN;
+  input Async_Flush;
+  output [CFG_DBITS-1:0] DOUT;
+  output Almost_Full, Almost_Empty;
+  output Full, Empty;
+  output Full_Watermark, Empty_Watermark;
+  output Overrun_Error, Underrun_Error;
+  
+  wire [35:0] in_reg;
+  wire [35:0] out_reg;
+  wire [17:0] fifo_flags;
+  
+  assign Overrun_Error = fifo_flags[0];
+  assign Full_Watermark = fifo_flags[1];
+  assign Almost_Full = fifo_flags[2];
+  assign Full = fifo_flags[3];
+  assign Underrun_Error = fifo_flags[4];
+  assign Empty_Watermark = fifo_flags[5];
+  assign Almost_Empty = fifo_flags[6];
+  assign Empty = fifo_flags[7];
+   
+  generate
+    if (CFG_DBITS == 36) begin
+      assign in_reg[CFG_DBITS-1:0] = DIN[CFG_DBITS-1:0];
+    end else if (CFG_DBITS > 9 && CFG_DBITS < 36) begin
+      assign in_reg[35:CFG_DBITS]  = 0;
+      assign in_reg[CFG_DBITS-1:0] = DIN[CFG_DBITS-1:0];
+    end else if (CFG_DBITS <= 9) begin
+      assign in_reg[35:CFG_DBITS]  = 0;
+      assign in_reg[CFG_DBITS-1:0] = DIN[CFG_DBITS-1:0];
+    end
+  endgenerate
+  
+  case (CFG_DBITS)
+		1: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, `MODE_1, `MODE_1, `MODE_1, `MODE_1, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, `MODE_1, `MODE_1, `MODE_1, `MODE_1, SYNC_FIFO
+            };
+		end
+
+		2: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, `MODE_2, `MODE_2, `MODE_2, `MODE_2, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, `MODE_2, `MODE_2, `MODE_2, `MODE_2, SYNC_FIFO
+            };
+		end
+
+		4: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, `MODE_4, `MODE_4, `MODE_4, `MODE_4, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, `MODE_4, `MODE_4, `MODE_4, `MODE_4, SYNC_FIFO
+            };
+		end
+		8, 9: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, `MODE_9, `MODE_9, `MODE_9, `MODE_9, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, `MODE_9, `MODE_9, `MODE_9, `MODE_9, SYNC_FIFO
+            };
+		end
+
+		16, 18: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, `MODE_18, `MODE_18, `MODE_18, `MODE_18, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, `MODE_18, `MODE_18, `MODE_18, `MODE_18, SYNC_FIFO
+            };
+		end
+		32, 36: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, `MODE_36, `MODE_36, `MODE_36, `MODE_36, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, `MODE_36, `MODE_36, `MODE_36, `MODE_36, SYNC_FIFO
+            };
+		end
+		default: begin
+          defparam _TECHMAP_REPLACE_.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, `MODE_36, `MODE_36, `MODE_36, `MODE_36, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, `MODE_36, `MODE_36, `MODE_36, `MODE_36, SYNC_FIFO
+            };
+		end
+	endcase
+  
+
+ 	TDP36K _TECHMAP_REPLACE_ (
+		.RESET_ni(1'b1),
+		.WDATA_A1_i(in_reg[17:0]),
+		.WDATA_A2_i(in_reg[35:18]),
+		.RDATA_A1_o(fifo_flags),
+		.RDATA_A2_o(),
+		.ADDR_A1_i(14'h0),
+		.ADDR_A2_i(14'h0),
+		.CLK_A1_i(Push_Clk),
+		.CLK_A2_i(1'b0),
+		.REN_A1_i(1'b1),
+		.REN_A2_i(1'b0),
+		.WEN_A1_i(PUSH),
+		.WEN_A2_i(1'b0),
+		.BE_A1_i(2'b11),
+		.BE_A2_i(2'b11),
+
+		.WDATA_B1_i(18'h0),
+		.WDATA_B2_i(18'h0),
+		.RDATA_B1_o(out_reg[17:0]),
+		.RDATA_B2_o(out_reg[35:18]),
+		.ADDR_B1_i(14'h0),
+		.ADDR_B2_i(14'h0),
+		.CLK_B1_i(Pop_Clk),
+		.CLK_B2_i(1'b0),
+		.REN_B1_i(POP),
+		.REN_B2_i(1'b0),
+		.WEN_B1_i(1'b0),
+		.WEN_B2_i(1'b0),
+		.BE_B1_i(2'b11),
+		.BE_B2_i(2'b11),
+
+		.FLUSH1_i(Async_Flush),
+		.FLUSH2_i(1'b0)
+	);
+
+  assign DOUT[CFG_DBITS-1 : 0] = out_reg[CFG_DBITS-1 : 0];
+
+endmodule
+
+module FIFO_18K_BLK (
+    DIN,
+    PUSH,
+    POP,
+    Push_Clk,
+    Pop_Clk,
+    Async_Flush,
+    Overrun_Error,
+    Full_Watermark,
+    Almost_Full,
+    Full,
+    Underrun_Error,
+    Empty_Watermark,
+    Almost_Empty,
+    Empty,
+    DOUT
+);
+  
+  parameter CFG_DBITS = 18;
+  parameter UPAE_DBITS = 11'd10;
+  parameter UPAF_DBITS = 11'd10;
+  parameter SYNC_FIFO = 1'b0;
+
+  input Push_Clk, Pop_Clk;
+  input PUSH, POP;
+  input [CFG_DBITS-1:0] DIN;
+  input Async_Flush;
+  output [CFG_DBITS-1:0] DOUT;
+  output Almost_Full, Almost_Empty;
+  output Full, Empty;
+  output Full_Watermark, Empty_Watermark;
+  output Overrun_Error, Underrun_Error;
+  
+ 	BRAM2x18_FIFO  #(
+      .CFG_DBITS(CFG_DBITS), 
+      .UPAE_DBITS1(UPAE_DBITS),
+      .UPAF_DBITS1(UPAF_DBITS),
+      .SYNC_FIFO1(SYNC_FIFO), 
+      .UPAE_DBITS2(),
+      .UPAF_DBITS2(),
+      .SYNC_FIFO2()         
+       ) _TECHMAP_REPLACE_
+      (
+      .DIN1(DIN),
+      .PUSH1(PUSH),
+      .POP1(POP),
+      .Push_Clk1(Push_Clk),
+      .Pop_Clk1(Pop_Clk),
+      .Async_Flush1(Async_Flush),
+      .Overrun_Error1(Overrun_Error),
+      .Full_Watermark1(Full_Watermark),
+      .Almost_Full1(Almost_Full),
+      .Full1(Full),
+      .Underrun_Error1(Underrun_Error),
+      .Empty_Watermark1(Empty_Watermark),
+      .Almost_Empty1(Almost_Empty),
+      .Empty1(Empty),
+      .DOUT1(DOUT),
+      
+      .DIN2(),
+      .PUSH2(),
+      .POP2(),
+      .Push_Clk2(),
+      .Pop_Clk2(),
+      .Async_Flush2(),
+      .Overrun_Error2(),
+      .Full_Watermark2(),
+      .Almost_Full2(),
+      .Full2(),
+      .Underrun_Error2(),
+      .Empty_Watermark2(),
+      .Almost_Empty2(),
+      .Empty2(),
+      .DOUT2()
+	);
+
+endmodule
+

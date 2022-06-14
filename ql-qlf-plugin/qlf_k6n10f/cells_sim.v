@@ -1612,6 +1612,425 @@ module BRAM2x18_SDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, C1ADDR, C1DATA,
 	);
 endmodule
 
+
+module BRAM2x18_FIFO (
+    DIN1,
+    PUSH1,
+    POP1,
+    Push_Clk1,
+    Pop_Clk1,
+    Async_Flush1,
+    Overrun_Error1,
+    Full_Watermark1,
+    Almost_Full1,
+    Full1,
+    Underrun_Error1,
+    Empty_Watermark1,
+    Almost_Empty1,
+    Empty1,
+    DOUT1,
+    
+    DIN2,
+    PUSH2,
+    POP2,
+    Push_Clk2,
+    Pop_Clk2,
+    Async_Flush2,
+    Overrun_Error2,
+    Full_Watermark2,
+    Almost_Full2,
+    Full2,
+    Underrun_Error2,
+    Empty_Watermark2,
+    Almost_Empty2,
+    Empty2,
+    DOUT2
+);
+
+  parameter CFG_DBITS = 18;
+  
+  parameter UPAE_DBITS1 = 11'd10;
+  parameter UPAF_DBITS1 = 11'd10;
+  parameter SYNC_FIFO1 = 0;
+  
+  parameter UPAE_DBITS2 = 11'd10;
+  parameter UPAF_DBITS2 = 11'd10;
+  parameter SYNC_FIFO2 = 0;
+    
+  localparam MODE_36  = 3'b111;	// 36 or 32-bit
+	localparam MODE_18  = 3'b110;	// 18 or 16-bit
+	localparam MODE_9   = 3'b101;	// 9 or 8-bit
+	localparam MODE_4   = 3'b100;	// 4-bit
+	localparam MODE_2   = 3'b010;	// 32-bit
+	localparam MODE_1   = 3'b001;	// 32-bit
+  
+  input wire Push_Clk1, Pop_Clk1;
+  input wire PUSH1, POP1;
+  input wire [CFG_DBITS-1:0] DIN1;
+  input wire Async_Flush1;
+  output wire [CFG_DBITS-1:0] DOUT1;
+  output wire Almost_Full1, Almost_Empty1;
+  output wire Full1, Empty1;
+  output wire Full_Watermark1, Empty_Watermark1;
+  output wire Overrun_Error1, Underrun_Error1;
+  
+  input wire Push_Clk2, Pop_Clk2;
+  input wire PUSH2, POP2;
+  input wire [CFG_DBITS-1:0] DIN2;
+  input wire Async_Flush2;
+  output wire [CFG_DBITS-1:0] DOUT2;
+  output wire Almost_Full2, Almost_Empty2;
+  output wire Full2, Empty2;
+  output wire Full_Watermark2, Empty_Watermark2;
+  output wire Overrun_Error2, Underrun_Error2;
+  
+  wire [17:0] in_reg1;
+  wire [17:0] out_reg1;
+  wire [17:0] fifo1_flags;
+  
+  wire [17:0] in_reg2;
+  wire [17:0] out_reg2;
+  wire [17:0] fifo2_flags;
+  
+  assign Overrun_Error1 = fifo1_flags[0];
+  assign Full_Watermark1 = fifo1_flags[1];
+  assign Almost_Full1 = fifo1_flags[2];
+  assign Full1 = fifo1_flags[3];
+  assign Underrun_Error1 = fifo1_flags[4];
+  assign Empty_Watermark1 = fifo1_flags[5];
+  assign Almost_Empty1 = fifo1_flags[6];
+  assign Empty1 = fifo1_flags[7];
+  
+  assign Overrun_Error2 = fifo2_flags[0];
+  assign Full_Watermark2 = fifo2_flags[1];
+  assign Almost_Full2 = fifo2_flags[2];
+  assign Full2 = fifo2_flags[3];
+  assign Underrun_Error2 = fifo2_flags[4];
+  assign Empty_Watermark2 = fifo2_flags[5];
+  assign Almost_Empty2 = fifo2_flags[6];
+  assign Empty2 = fifo2_flags[7];
+  
+  assign in_reg1[CFG_DBITS-1:0] = DIN1[CFG_DBITS-1:0]; 
+  assign in_reg2[CFG_DBITS-1:0] = DIN2[CFG_DBITS-1:0];
+  
+  case (CFG_DBITS)
+		1: begin
+          defparam U1.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, MODE_1, MODE_1, MODE_1, MODE_1, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, MODE_1, MODE_1, MODE_1, MODE_1, SYNC_FIFO1
+                                                  };
+		end
+
+		2: begin
+          defparam U1.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, MODE_2, MODE_2, MODE_2, MODE_2, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, MODE_2, MODE_2, MODE_2, MODE_2, SYNC_FIFO1
+                                                  };
+		end
+
+		4: begin
+          defparam U1.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, MODE_4, MODE_4, MODE_4, MODE_4, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, MODE_4, MODE_4, MODE_4, MODE_4, SYNC_FIFO1
+                                                  };
+		end
+    
+		8, 9: begin
+          defparam U1.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, MODE_9, MODE_9, MODE_9, MODE_9, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, MODE_9, MODE_9, MODE_9, MODE_9, SYNC_FIFO1
+                                                  };
+		end
+    
+		16, 18: begin
+          defparam U1.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, MODE_18, MODE_18, MODE_18, MODE_18, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, MODE_18, MODE_18, MODE_18, MODE_18, SYNC_FIFO1
+                                                  };
+		end
+    
+		default: begin
+          defparam U1.MODE_BITS = { 1'b1,
+                                                   UPAF_DBITS2, UPAE_DBITS2, 4'd0, MODE_18, MODE_18, MODE_18, MODE_18, SYNC_FIFO2,
+                                                   1'b0, UPAF_DBITS1, 1'b0, UPAE_DBITS1, 4'd0, MODE_18, MODE_18, MODE_18, MODE_18, SYNC_FIFO1
+                                                  };
+		end
+	endcase
+  
+ 	TDP36K U1 (
+		.RESET_ni(1'b1),
+		.WDATA_A1_i(in_reg1[17:0]),
+		.WDATA_A2_i(in_reg2[17:0]),
+		.RDATA_A1_o(fifo1_flags),
+		.RDATA_A2_o(fifo2_flags),
+		.ADDR_A1_i(14'h0),
+		.ADDR_A2_i(14'h0),
+		.CLK_A1_i(Push_Clk1),
+		.CLK_A2_i(Push_Clk2),
+		.REN_A1_i(1'b1),
+		.REN_A2_i(1'b1),
+		.WEN_A1_i(PUSH1),
+		.WEN_A2_i(PUSH2),
+		.BE_A1_i(2'b11),
+		.BE_A2_i(2'b11),
+
+		.WDATA_B1_i(18'h0),
+		.WDATA_B2_i(18'h0),
+		.RDATA_B1_o(out_reg1[17:0]),
+		.RDATA_B2_o(out_reg2[17:0]),
+		.ADDR_B1_i(14'h0),
+		.ADDR_B2_i(14'h0),
+		.CLK_B1_i(Pop_Clk1),
+		.CLK_B2_i(Pop_Clk2),
+		.REN_B1_i(POP1),
+		.REN_B2_i(POP2),
+		.WEN_B1_i(1'b0),
+		.WEN_B2_i(1'b0),
+		.BE_B1_i(2'b11),
+		.BE_B2_i(2'b11),
+
+		.FLUSH1_i(Async_Flush1),
+		.FLUSH2_i(Async_Flush2)
+	);
+
+  assign DOUT1[CFG_DBITS-1 : 0] = out_reg1[CFG_DBITS-1 : 0];
+  assign DOUT2[CFG_DBITS-1 : 0] = out_reg2[CFG_DBITS-1 : 0];
+
+endmodule
+
+module FIFO_36K_BLK (
+    DIN,
+    PUSH,
+    POP,
+    Push_Clk,
+    Pop_Clk,
+    Async_Flush,
+    Overrun_Error,
+    Full_Watermark,
+    Almost_Full,
+    Full,
+    Underrun_Error,
+    Empty_Watermark,
+    Almost_Empty,
+    Empty,
+    DOUT
+);
+
+  parameter CFG_DBITS = 36;
+  parameter UPAE_DBITS = 12'd10;
+  parameter UPAF_DBITS = 12'd10;
+  parameter SYNC_FIFO = 0;
+    
+  localparam MODE_36  = 3'b111;	// 36 or 32-bit
+	localparam MODE_18  = 3'b110;	// 18 or 16-bit
+	localparam MODE_9   = 3'b101;	// 9 or 8-bit
+	localparam MODE_4   = 3'b100;	// 4-bit
+	localparam MODE_2   = 3'b010;	// 32-bit
+	localparam MODE_1   = 3'b001;	// 32-bit
+
+  input wire Push_Clk, Pop_Clk;
+  input wire PUSH, POP;
+  input wire [CFG_DBITS-1:0] DIN;
+  input wire Async_Flush;
+  output wire [CFG_DBITS-1:0] DOUT;
+  output wire Almost_Full, Almost_Empty;
+  output wire Full, Empty;
+  output wire Full_Watermark, Empty_Watermark;
+  output wire Overrun_Error, Underrun_Error;
+  
+  wire [35:0] in_reg;
+  wire [35:0] out_reg;
+  wire [17:0] fifo_flags;
+  
+  assign Overrun_Error = fifo_flags[0];
+  assign Full_Watermark = fifo_flags[1];
+  assign Almost_Full = fifo_flags[2];
+  assign Full = fifo_flags[3];
+  assign Underrun_Error = fifo_flags[4];
+  assign Empty_Watermark = fifo_flags[5];
+  assign Almost_Empty = fifo_flags[6];
+  assign Empty = fifo_flags[7];
+   
+  generate
+    if (CFG_DBITS == 36) begin
+      assign in_reg[CFG_DBITS-1:0] = DIN[CFG_DBITS-1:0];
+    end else if (CFG_DBITS > 9 && CFG_DBITS < 36) begin
+      assign in_reg[35:CFG_DBITS]  = 0;
+      assign in_reg[CFG_DBITS-1:0] = DIN[CFG_DBITS-1:0];
+    end else if (CFG_DBITS <= 9) begin
+      assign in_reg[35:CFG_DBITS]  = 0;
+      assign in_reg[CFG_DBITS-1:0] = DIN[CFG_DBITS-1:0];
+    end
+  endgenerate
+  
+  case (CFG_DBITS)
+		1: begin
+          defparam U1.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, MODE_1, MODE_1, MODE_1, MODE_1, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, MODE_1, MODE_1, MODE_1, MODE_1, SYNC_FIFO
+            };
+		end
+
+		2: begin
+          defparam U1.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, MODE_2, MODE_2, MODE_2, MODE_2, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, MODE_2, MODE_2, MODE_2, MODE_2, SYNC_FIFO
+            };
+		end
+
+		4: begin
+          defparam U1.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, MODE_4, MODE_4, MODE_4, MODE_4, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, MODE_4, MODE_4, MODE_4, MODE_4, SYNC_FIFO
+            };
+		end
+		8, 9: begin
+          defparam U1.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, MODE_9, MODE_9, MODE_9, MODE_9, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, MODE_9, MODE_9, MODE_9, MODE_9, SYNC_FIFO
+            };
+		end
+
+		16, 18: begin
+          defparam U1.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, MODE_18, MODE_18, MODE_18, MODE_18, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, MODE_18, MODE_18, MODE_18, MODE_18, SYNC_FIFO
+            };
+		end
+		32, 36: begin
+          defparam U1.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, MODE_36, MODE_36, MODE_36, MODE_36, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, MODE_36, MODE_36, MODE_36, MODE_36, SYNC_FIFO
+            };
+		end
+		default: begin
+          defparam U1.MODE_BITS = { 1'b0,
+                11'd10, 11'd10, 4'd0, MODE_36, MODE_36, MODE_36, MODE_36, 1'd0,
+                UPAF_DBITS, UPAE_DBITS, 4'd0, MODE_36, MODE_36, MODE_36, MODE_36, SYNC_FIFO
+            };
+		end
+	endcase
+  
+
+ 	TDP36K U1 (
+		.RESET_ni(1'b1),
+		.WDATA_A1_i(in_reg[17:0]),
+		.WDATA_A2_i(in_reg[35:18]),
+		.RDATA_A1_o(fifo_flags),
+		.RDATA_A2_o(),
+		.ADDR_A1_i(14'h0),
+		.ADDR_A2_i(14'h0),
+		.CLK_A1_i(Push_Clk),
+		.CLK_A2_i(1'b0),
+		.REN_A1_i(1'b1),
+		.REN_A2_i(1'b0),
+		.WEN_A1_i(PUSH),
+		.WEN_A2_i(1'b0),
+		.BE_A1_i(2'b11),
+		.BE_A2_i(2'b11),
+
+		.WDATA_B1_i(18'h0),
+		.WDATA_B2_i(18'h0),
+		.RDATA_B1_o(out_reg[17:0]),
+		.RDATA_B2_o(out_reg[35:18]),
+		.ADDR_B1_i(14'h0),
+		.ADDR_B2_i(14'h0),
+		.CLK_B1_i(Pop_Clk),
+		.CLK_B2_i(1'b0),
+		.REN_B1_i(POP),
+		.REN_B2_i(1'b0),
+		.WEN_B1_i(1'b0),
+		.WEN_B2_i(1'b0),
+		.BE_B1_i(2'b11),
+		.BE_B2_i(2'b11),
+
+		.FLUSH1_i(Async_Flush),
+		.FLUSH2_i(1'b0)
+	);
+
+  assign DOUT[CFG_DBITS-1 : 0] = out_reg[CFG_DBITS-1 : 0];
+
+endmodule
+
+module FIFO_18K_BLK (
+    DIN,
+    PUSH,
+    POP,
+    Push_Clk,
+    Pop_Clk,
+    Async_Flush,
+    Overrun_Error,
+    Full_Watermark,
+    Almost_Full,
+    Full,
+    Underrun_Error,
+    Empty_Watermark,
+    Almost_Empty,
+    Empty,
+    DOUT
+);
+  
+  parameter CFG_DBITS = 18;
+  parameter UPAE_DBITS = 11'd10;
+  parameter UPAF_DBITS = 11'd10;
+  parameter SYNC_FIFO = 0;
+
+  input wire Push_Clk, Pop_Clk;
+  input wire PUSH, POP;
+  input wire [CFG_DBITS-1:0] DIN;
+  input wire Async_Flush;
+  output wire [CFG_DBITS-1:0] DOUT;
+  output wire Almost_Full, Almost_Empty;
+  output wire Full, Empty;
+  output wire Full_Watermark, Empty_Watermark;
+  output wire Overrun_Error, Underrun_Error;
+  
+ 	BRAM2x18_FIFO  #(
+      .CFG_DBITS(CFG_DBITS), 
+      .UPAE_DBITS1(UPAE_DBITS),
+      .UPAF_DBITS1(UPAF_DBITS),
+      .SYNC_FIFO1(SYNC_FIFO), 
+      .UPAE_DBITS2(),
+      .UPAF_DBITS2(),
+      .SYNC_FIFO2()         
+       ) U1
+      (
+      .DIN1(DIN),
+      .PUSH1(PUSH),
+      .POP1(POP),
+      .Push_Clk1(Push_Clk),
+      .Pop_Clk1(Pop_Clk),
+      .Async_Flush1(Async_Flush),
+      .Overrun_Error1(Overrun_Error),
+      .Full_Watermark1(Full_Watermark),
+      .Almost_Full1(Almost_Full),
+      .Full1(Full),
+      .Underrun_Error1(Underrun_Error),
+      .Empty_Watermark1(Empty_Watermark),
+      .Almost_Empty1(Almost_Empty),
+      .Empty1(Empty),
+      .DOUT1(DOUT),
+      
+      .DIN2(),
+      .PUSH2(),
+      .POP2(),
+      .Push_Clk2(),
+      .Pop_Clk2(),
+      .Async_Flush2(),
+      .Overrun_Error2(),
+      .Full_Watermark2(),
+      .Almost_Full2(),
+      .Full2(),
+      .Underrun_Error2(),
+      .Empty_Watermark2(),
+      .Almost_Empty2(),
+      .Empty2(),
+      .DOUT2()
+	);
+
+endmodule
+
+
 (* blackbox *)
 module QL_DSP1 (
     input wire [19:0] a,
