@@ -18,10 +18,10 @@ Counts the number of arithmetic cells in each module, also providing a histogram
 
 * If you run after `maccmap`, you will see `$fa` and `$alu` counts.
 
-* WARNING: the bitwidth for $macc cells is not currently correct since it doesn't parse the config of multiple inputs.
+* WARNING: the bitwidth for $macc cells is not currently correct since this pass doesn't parse how `$macc`'s inputs are actually concatenations of multiple inputs.
 
 
-This plugin uses C++17.
+* This plugin uses C++17.
 
 Sample script:
 ```
