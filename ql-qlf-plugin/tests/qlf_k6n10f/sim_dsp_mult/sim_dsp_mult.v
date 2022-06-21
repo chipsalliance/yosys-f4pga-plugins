@@ -48,14 +48,14 @@ module tb();
     wire signed [37:0] Z;
 
     dsp_t1_sim # (
+        .OUTPUT_SELECT      (3'd0),
+        .REGISTER_INPUTS    (1'd0)
     ) uut (
         .a_i            	(A),
         .b_i            	(B),
         .unsigned_a_i   	(1'h0),
         .unsigned_b_i   	(1'h0),
         .feedback_i     	(3'h0),
-	.register_inputs_i	(1'h0),
-	.output_select_i	(3'h0),
         .z_o            	(Z)
     );
 

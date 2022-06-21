@@ -200,17 +200,17 @@ void create_ql_macc_dsp(ql_dsp_macc_pm &pm)
     cell->setPort(RTLIL::escape_id("unsigned_b_i"), RTLIL::SigSpec(b_signed ? RTLIL::S0 : RTLIL::S1));
 
     // Connect config ports
-    cell->setPort(RTLIL::escape_id("saturate_enable_i"), RTLIL::SigSpec(RTLIL::S0));
-    cell->setPort(RTLIL::escape_id("shift_right_i"), RTLIL::SigSpec(RTLIL::S0, 6));
-    cell->setPort(RTLIL::escape_id("round_i"), RTLIL::SigSpec(RTLIL::S0));
-    cell->setPort(RTLIL::escape_id("register_inputs_i"), RTLIL::SigSpec(RTLIL::S0));
+    cell->setParam(RTLIL::escape_id("SATURATE_ENABLE"), RTLIL::Const(RTLIL::S0));
+    cell->setParam(RTLIL::escape_id("SHIFT_RIGHT"), RTLIL::Const(RTLIL::S0, 6));
+    cell->setParam(RTLIL::escape_id("ROUND"), RTLIL::Const(RTLIL::S0));
+    cell->setParam(RTLIL::escape_id("REGISTER_INPUTS"), RTLIL::Const(RTLIL::S0));
 
     bool subtract = (st.add->type == RTLIL::escape_id("$sub"));
     cell->setPort(RTLIL::escape_id("subtract_i"), RTLIL::SigSpec(subtract ? RTLIL::S1 : RTLIL::S0));
 
     // 3 - output post acc
     // 1 - output pre acc
-    cell->setPort(RTLIL::escape_id("output_select_i"), out_ff ? RTLIL::Const(1, 3) : RTLIL::Const(3, 3));
+    cell->setParam(RTLIL::escape_id("OUTPUT_SELECT"), out_ff ? RTLIL::Const(1, 3) : RTLIL::Const(3, 3));
 
     // Mark the cells for removal
     pm.autoremove(st.mul);

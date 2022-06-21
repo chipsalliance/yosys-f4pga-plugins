@@ -33,7 +33,13 @@ module \$__QL_MUL20X18 (input [19:0] A, input [17:0] B, output [37:0] Y);
                (B_SIGNED) ? {{(18 - B_WIDTH){B[B_WIDTH-1]}}, B} :
                             {{(18 - B_WIDTH){1'b0}},         B};
 
-    dsp_t1_20x18x64 _TECHMAP_REPLACE_ (
+    dsp_t1_20x18x64 # (
+        .OUTPUT_SELECT       (3'd0),
+        .SATURATE_ENABLE     (1'd0),
+        .SHIFT_RIGHT         (6'd0),
+        .ROUND               (1'd0),
+        .REGISTER_INPUTS     (1'd0)
+    ) _TECHMAP_REPLACE_ (
         .a_i                (a),
         .b_i                (b),
         .acc_fir_i          (6'd0),
@@ -43,13 +49,7 @@ module \$__QL_MUL20X18 (input [19:0] A, input [17:0] B, output [37:0] Y);
         .load_acc_i         (1'b0),
         .unsigned_a_i       (!A_SIGNED),
         .unsigned_b_i       (!B_SIGNED),
-
-        .output_select_i    (3'd0),
-        .saturate_enable_i  (1'b0),
-        .shift_right_i      (6'd0),
-        .round_i            (1'b0),
-        .subtract_i         (1'b0),
-        .register_inputs_i  (1'b0)
+	.subtract_i         (1'b0)
     );
 
     assign Y = z;
@@ -75,7 +75,13 @@ module \$__QL_MUL10X9 (input [9:0] A, input [8:0] B, output [18:0] Y);
                (B_SIGNED) ? {{( 9 - B_WIDTH){B[B_WIDTH-1]}}, B} :
                             {{( 9 - B_WIDTH){1'b0}},         B};
 
-    dsp_t1_10x9x32 _TECHMAP_REPLACE_ (
+    dsp_t1_10x9x32 # (
+        .OUTPUT_SELECT       (3'd0),
+        .SATURATE_ENABLE     (1'd0),
+        .SHIFT_RIGHT         (6'd0),
+        .ROUND               (1'd0),
+        .REGISTER_INPUTS     (1'd0)
+    ) _TECHMAP_REPLACE_ (
         .a_i                (a),
         .b_i                (b),
         .acc_fir_i          (6'd0),
@@ -85,13 +91,7 @@ module \$__QL_MUL10X9 (input [9:0] A, input [8:0] B, output [18:0] Y);
         .load_acc_i         (1'b0),
         .unsigned_a_i       (!A_SIGNED),
         .unsigned_b_i       (!B_SIGNED),
-
-        .output_select_i    (3'd0),
-        .saturate_enable_i  (1'b0),
-        .shift_right_i      (6'd0),
-        .round_i            (1'b0),
-        .subtract_i         (1'b0),
-        .register_inputs_i  (1'b0)
+	.subtract_i         (1'b0)
     );
 
     assign Y = z;

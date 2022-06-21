@@ -90,6 +90,11 @@ module tb();
     wire signed [37:0] Z;
 
     dsp_t1_sim # (
+        .OUTPUT_SELECT      (3'd1),
+        .SATURATE_ENABLE    (1'd0),
+        .SHIFT_RIGHT        (6'd10),
+        .ROUND              (1'd1),
+        .REGISTER_INPUTS    (1'd0)
     ) uut (
         .clock_i		(clk),
         .s_reset		(rst),
@@ -100,12 +105,7 @@ module tb();
         .unsigned_b_i		(1'b0),
         .feedback_i		(stb),
         .load_acc_i		(1'b1),
-        .shift_right_i		(6'd10),
-	.register_inputs_i	(1'b0),
-	.output_select_i	(3'h1),
-	.round_i		(1'b1),
-	.saturate_enable_i	(1'b1),
-	.subtract_i		(1'b0),
+        .subtract_i		(1'b0),
         .z_o			(Z)
     );
 

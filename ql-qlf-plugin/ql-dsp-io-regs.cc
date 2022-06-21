@@ -4,10 +4,14 @@
 USING_YOSYS_NAMESPACE
 PRIVATE_NAMESPACE_BEGIN
 
+#define MODE_BITS_REGISTER_INPUTS_ID 92
+#define MODE_BITS_OUTPUT_SELECT_START_ID 81
+#define MODE_BITS_OUTPUT_SELECT_WIDTH 3
+
 // ============================================================================
 
-const std::vector<std::string> ports2del_mult = {"feedback", "load_acc", "saturate_enable", "shift_right", "round", "subtract", "acc_fir", "dly_b"};
-const std::vector<std::string> ports2del_mult_add_acc = {"saturate_enable", "shift_right", "round", "acc_fir", "dly_b"};
+const std::vector<std::string> ports2del_mult = {"feedback", "load_acc", "subtract", "acc_fir", "dly_b"};
+const std::vector<std::string> ports2del_mult_add_acc = {"acc_fir", "dly_b"};
 
 void ql_dsp_io_regs_pass(RTLIL::Module *module)
 {
@@ -19,19 +23,14 @@ void ql_dsp_io_regs_pass(RTLIL::Module *module)
             bool del_clk = false;
 
             // Get DSP configuration
-            const RTLIL::SigSpec *register_inputs;
-            register_inputs = &dsp->getPort(RTLIL::escape_id("register_inputs"));
-            if (!register_inputs)
-                log_error("register_inputs port not found!");
-            auto reg_in_c = register_inputs->as_const();
-            int reg_in_i = reg_in_c.as_int();
+            auto mode_bits = &dsp->getParam(RTLIL::escape_id("MODE_BITS"));
+            RTLIL::Const register_inputs;
+            register_inputs = mode_bits->bits.at(MODE_BITS_REGISTER_INPUTS_ID);
+            int reg_in_i = register_inputs.as_int();
 
-            const RTLIL::SigSpec *output_select;
-            output_select = &dsp->getPort(RTLIL::escape_id("output_select"));
-            if (!output_select)
-                log_error("output_select port not found!");
-            auto out_sel_c = output_select->as_const();
-            int out_sel_i = out_sel_c.as_int();
+            RTLIL::Const output_select;
+            output_select = mode_bits->extract(MODE_BITS_OUTPUT_SELECT_START_ID, MODE_BITS_OUTPUT_SELECT_WIDTH);
+            int out_sel_i = output_select.as_int();
 
             // Build new type name
             std::string new_type = cell_type;

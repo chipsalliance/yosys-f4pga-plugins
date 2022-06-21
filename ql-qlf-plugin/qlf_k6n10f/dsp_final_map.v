@@ -28,13 +28,7 @@ module dsp_t1_20x18x64 (
     input         load_acc_i,
     input         unsigned_a_i,
     input         unsigned_b_i,
-
-    input  [2:0]  output_select_i,
-    input         saturate_enable_i,
-    input  [5:0]  shift_right_i,
-    input         round_i,
-    input         subtract_i,
-    input         register_inputs_i
+    input         subtract_i
 );
 
     parameter [19:0] COEFF_0 = 20'd0;
@@ -42,8 +36,25 @@ module dsp_t1_20x18x64 (
     parameter [19:0] COEFF_2 = 20'd0;
     parameter [19:0] COEFF_3 = 20'd0;
 
+    parameter [2:0] OUTPUT_SELECT   = 3'd0;
+    parameter [0:0] SATURATE_ENABLE = 1'd0;
+    parameter [5:0] SHIFT_RIGHT     = 6'd0;
+    parameter [0:0] ROUND           = 1'd0;
+    parameter [0:0] REGISTER_INPUTS = 1'd0;
+
     QL_DSP2 # (
-        .MODE_BITS          ({COEFF_3, COEFF_2, COEFF_1, COEFF_0})
+        .MODE_BITS ({
+            REGISTER_INPUTS,
+            ROUND,
+            SHIFT_RIGHT,
+            SATURATE_ENABLE,
+            OUTPUT_SELECT,
+            1'b0, // Not fractured
+            COEFF_3,
+            COEFF_2,
+            COEFF_1,
+            COEFF_0
+        })
     ) _TECHMAP_REPLACE_ (
         .a                  (a_i),
         .b                  (b_i),
@@ -58,14 +69,7 @@ module dsp_t1_20x18x64 (
         .load_acc           (load_acc_i),
         .unsigned_a         (unsigned_a_i),
         .unsigned_b         (unsigned_b_i),
-
-        .f_mode             (1'b0), // No fracturation
-        .output_select      (output_select_i),
-        .saturate_enable    (saturate_enable_i),
-        .shift_right        (shift_right_i),
-        .round              (round_i),
-        .subtract           (subtract_i),
-        .register_inputs    (register_inputs_i)
+        .subtract           (subtract_i)
     );
 
 endmodule
@@ -85,13 +89,7 @@ module dsp_t1_10x9x32 (
     input         load_acc_i,
     input         unsigned_a_i,
     input         unsigned_b_i,
-
-    input  [2:0]  output_select_i,
-    input         saturate_enable_i,
-    input  [5:0]  shift_right_i,
-    input         round_i,
-    input         subtract_i,
-    input         register_inputs_i
+    input         subtract_i
 );
 
     parameter [9:0] COEFF_0 = 10'd0;
@@ -99,14 +97,28 @@ module dsp_t1_10x9x32 (
     parameter [9:0] COEFF_2 = 10'd0;
     parameter [9:0] COEFF_3 = 10'd0;
 
+    parameter [2:0] OUTPUT_SELECT   = 3'd0;
+    parameter [0:0] SATURATE_ENABLE = 1'd0;
+    parameter [5:0] SHIFT_RIGHT     = 6'd0;
+    parameter [0:0] ROUND           = 1'd0;
+    parameter [0:0] REGISTER_INPUTS = 1'd0;
+
     wire [37:0] z;
     wire [17:0] dly_b;
 
     QL_DSP2 # (
-        .MODE_BITS          ({10'd0, COEFF_3,
-                              10'd0, COEFF_2,
-                              10'd0, COEFF_1,
-                              10'd0, COEFF_0})
+        .MODE_BITS  ({
+            REGISTER_INPUTS,
+            ROUND,
+            SHIFT_RIGHT,
+            SATURATE_ENABLE,
+            OUTPUT_SELECT,
+            1'b1, // Fractured
+            10'd0, COEFF_3,
+            10'd0, COEFF_2,
+            10'd0, COEFF_1,
+            10'd0, COEFF_0
+        })
     ) _TECHMAP_REPLACE_ (
         .a                  ({10'd0, a_i}),
         .b                  ({ 9'd0, b_i}),
@@ -121,14 +133,7 @@ module dsp_t1_10x9x32 (
         .load_acc           (load_acc_i),
         .unsigned_a         (unsigned_a_i),
         .unsigned_b         (unsigned_b_i),
-
-        .f_mode             (1'b1), // Enable fractuation, Use the lower half
-        .output_select      (output_select_i),
-        .saturate_enable    (saturate_enable_i),
-        .shift_right        (shift_right_i),
-        .round              (round_i),
-        .subtract           (subtract_i),
-        .register_inputs    (register_inputs_i)
+        .subtract           (subtract_i)
     );
 
     assign z_o = z[18:0];

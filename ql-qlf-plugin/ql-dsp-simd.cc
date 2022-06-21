@@ -73,18 +73,16 @@ struct QlDspSimdPass : public Pass {
                                                                             std::make_pair("unsigned_a_i", "unsigned_a"),
                                                                             std::make_pair("unsigned_b_i", "unsigned_b"),
 
-                                                                            std::make_pair("output_select_i", "output_select"),
-                                                                            std::make_pair("saturate_enable_i", "saturate_enable"),
-                                                                            std::make_pair("shift_right_i", "shift_right"),
-                                                                            std::make_pair("round_i", "round"),
-                                                                            std::make_pair("subtract_i", "subtract"),
-                                                                            std::make_pair("register_inputs_i", "register_inputs")};
+                                                                            std::make_pair("subtract_i", "subtract")};
 
     // DSP data ports and how to map them to ports of the target DSP cell
     const std::vector<std::pair<std::string, std::string>> m_DspDataPorts = {
       std::make_pair("a_i", "a"), std::make_pair("b_i", "b"),         std::make_pair("acc_fir_i", "acc_fir"),
       std::make_pair("z_o", "z"), std::make_pair("dly_b_o", "dly_b"),
     };
+
+    // DSP Parameters
+    const std::vector<std::string> m_DspParams2Mode = {"OUTPUT_SELECT", "SATURATE_ENABLE", "SHIFT_RIGHT", "ROUND", "REGISTER_INPUTS"};
 
     // DSP parameters
     const std::vector<std::string> m_DspParams = {"COEFF_3", "COEFF_2", "COEFF_1", "COEFF_0"};
@@ -216,12 +214,18 @@ struct QlDspSimdPass : public Pass {
                         mode_bits.insert(mode_bits.end(), val_a.begin(), val_a.end());
                         mode_bits.insert(mode_bits.end(), val_b.begin(), val_b.end());
                     }
+                    mode_bits.push_back(RTLIL::S1); // MODE_BITS[80] == F_MODE : Enable fractured mode
+                    for (const auto &it : m_DspParams2Mode) {
+                        log_assert(dsp_a->getParam(RTLIL::escape_id(it)) == dsp_b->getParam(RTLIL::escape_id(it)));
+                        auto param = dsp_a->getParam(RTLIL::escape_id(it));
+                        if (param.size() > 1) {
+                            mode_bits.insert(mode_bits.end(), param.bits.begin(), param.bits.end());
+                        } else {
+                            mode_bits.push_back(param.bits[0]);
+                        }
+                    }
                     simd->setParam(RTLIL::escape_id("MODE_BITS"), RTLIL::Const(mode_bits));
-                    log_assert(mode_bits.size() == 80);
-
-                    // Enable the fractured mode by connecting the control
-                    // port.
-                    simd->setPort(RTLIL::escape_id("f_mode"), RTLIL::S1);
+                    log_assert(mode_bits.size() == 93);
 
                     // Mark DSP parts for removal
                     cellsToRemove.push_back(dsp_a);
