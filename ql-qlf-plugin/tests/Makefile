@@ -16,36 +16,39 @@
 
 # The bram test will be enable in a future PR after it's been fixed.
 
-TESTS = consts \
-	dffs \
-	latches \
-	shreg \
-	iob_no_flatten \
-	full_adder \
-	mac_unit \
-	multiplier \
-	logic \
-	mux \
-	tribuf \
-	fsm \
-	pp3_bram \
-    qlf_k6n10f/dsp_mult \
+TESTS = \
+    consts \
+    dffs \
+    latches \
+    shreg \
+    iob_no_flatten \
+    full_adder \
+    mac_unit \
+    multiplier \
+    logic \
+    mux \
+    tribuf \
+    fsm \
+    pp3_bram \
     qlf_k6n10f/dsp_simd \
+    qlf_k6n10f/dsp_mult \
     qlf_k6n10f/dsp_macc \
-#	qlf_k6n10_bram \
+#   qlf_k6n10_bram \
 
 SIM_TESTS = \
     qlf_k6n10f/sim_dsp_mult \
     qlf_k6n10f/sim_dsp_mult_r \
     qlf_k6n10f/sim_dsp_fir \
-    qlf_k6n10f/sim_tc36fifo
+    qlf_k6n10f/sim_tc36fifo \
+    qlf_k6n10f/sim_dsp_simd_presynth \
 
 # Those tests perform synthesis and simulation of synthesis results
 POST_SYNTH_SIM_TESTS = \
     qlf_k6n10f/bram_tdp \
     qlf_k6n10f/bram_sdp \
     qlf_k6n10f/bram_tdp_split \
-    qlf_k6n10f/bram_sdp_split
+    qlf_k6n10f/bram_sdp_split \
+    qlf_k6n10f/sim_dsp_simd
 
 include $(shell pwd)/../../Makefile_test.common
 
