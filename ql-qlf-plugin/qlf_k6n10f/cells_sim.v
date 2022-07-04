@@ -1658,6 +1658,8 @@ module QL_DSP2_MULT ( // TODO: Name subject to change
     // Port not available in architecture file
     input  wire       reset,
 
+    input  wire [2:0] feedback,
+
     input  wire       unsigned_a,
     input  wire       unsigned_b,
 
@@ -1684,13 +1686,13 @@ module QL_DSP2_MULT ( // TODO: Name subject to change
 
         .f_mode(f_mode),
 
-        .feedback(3'b0),
+        .feedback(feedback),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
 
-        .output_select(3'b0),   // unregistered output: a * b (0)
-        .register_inputs(1'b0)  // unregistered inputs
+        .output_select(output_select),    // unregistered output: a * b (0)
+        .register_inputs(register_inputs) // unregistered inputs
     );
 endmodule
 
@@ -1704,6 +1706,8 @@ module QL_DSP2_MULT_REGIN ( // TODO: Name subject to change
     // Port not available in architecture file
     input  wire       reset,
 
+    input  wire [2:0] feedback,
+
     input  wire       unsigned_a,
     input  wire       unsigned_b,
 
@@ -1728,16 +1732,16 @@ module QL_DSP2_MULT_REGIN ( // TODO: Name subject to change
 
         .f_mode(f_mode),
 
-        .feedback(3'b0),
+        .feedback(feedback),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(3'b0),   // unregistered output: a * b (0)
-        .register_inputs(1'b1)  // registered inputs
+        .output_select(output_select),    // unregistered output: a * b (0)
+        .register_inputs(register_inputs) // registered inputs
     );
 endmodule
 
@@ -1751,6 +1755,8 @@ module QL_DSP2_MULT_REGOUT ( // TODO: Name subject to change
     // Port not available in architecture file
     input  wire       reset,
 
+    input  wire [2:0] feedback,
+
     input  wire       unsigned_a,
     input  wire       unsigned_b,
     input  wire       f_mode,
@@ -1774,16 +1780,16 @@ module QL_DSP2_MULT_REGOUT ( // TODO: Name subject to change
 
         .f_mode(f_mode),
 
-        .feedback(3'b0),
+        .feedback(feedback),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(3'b100), // registered output: a * b (4)
-        .register_inputs(1'b0)  // unregistered inputs
+        .output_select(output_select),    // registered output: a * b (4)
+        .register_inputs(register_inputs) // unregistered inputs
     );
 endmodule
 
@@ -1797,6 +1803,8 @@ module QL_DSP2_MULT_REGIN_REGOUT ( // TODO: Name subject to change
     // Port not available in architecture file
     input  wire       reset,
 
+    input  wire [2:0] feedback,
+
     input  wire       unsigned_a,
     input  wire       unsigned_b,
     input  wire       f_mode,
@@ -1820,16 +1828,16 @@ module QL_DSP2_MULT_REGIN_REGOUT ( // TODO: Name subject to change
 
         .f_mode(f_mode),
 
-        .feedback(3'b0),
+        .feedback(feedback),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(3'b100), // registered output: a * b (4)
-        .register_inputs(1'b1)  // registered inputs
+        .output_select(output_select),    // registered output: a * b (4)
+        .register_inputs(register_inputs) // registered inputs
     );
 endmodule
 
@@ -1878,11 +1886,11 @@ module QL_DSP2_MULTADD (
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(output_select),  // unregistered output: ACCin (2, 3)
+        .output_select(output_select),    // unregistered output: ACCin (2, 3)
         .subtract(subtract),
-        .register_inputs(1'b0)  // unregistered inputs
+        .register_inputs(register_inputs) // unregistered inputs
     );
 endmodule
 
@@ -1930,11 +1938,11 @@ module QL_DSP2_MULTADD_REGIN (
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(output_select),  // unregistered output: ACCin (2, 3)
+        .output_select(output_select),    // unregistered output: ACCin (2, 3)
         .subtract(subtract),
-        .register_inputs(1'b1)  // registered inputs
+        .register_inputs(register_inputs) // registered inputs
     );
 endmodule
 
@@ -1982,11 +1990,11 @@ module QL_DSP2_MULTADD_REGOUT (
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(output_select),  // registered output: ACCin (6, 7)
+        .output_select(output_select),    // registered output: ACCin (6, 7)
         .subtract(subtract),
-        .register_inputs(1'b0)  // unregistered inputs
+        .register_inputs(register_inputs) // unregistered inputs
     );
 endmodule
 
@@ -2034,11 +2042,11 @@ module QL_DSP2_MULTADD_REGIN_REGOUT (
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(output_select),  // registered output: ACCin (6, 7)
+        .output_select(output_select),    // registered output: ACCin (6, 7)
         .subtract(subtract),
-        .register_inputs(1'b1)  // registered inputs
+        .register_inputs(register_inputs) // registered inputs
     );
 endmodule
 
@@ -2080,8 +2088,8 @@ module QL_DSP2_MULTACC (
 
         .f_mode(f_mode),
 
-    .feedback(feedback),
-    .load_acc(load_acc),
+        .feedback(feedback),
+        .load_acc(load_acc),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
@@ -2089,9 +2097,9 @@ module QL_DSP2_MULTACC (
         .clk(clk),
         .reset(reset),
 
-        .output_select(1'b1),   // unregistered output: ACCout (1)
+        .output_select(output_select),    // unregistered output: ACCout (1)
         .subtract(subtract),
-        .register_inputs(1'b0)  // unregistered inputs
+        .register_inputs(register_inputs) // unregistered inputs
     );
 endmodule
 
@@ -2139,11 +2147,11 @@ module QL_DSP2_MULTACC_REGIN (
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(1'b1),   // unregistered output: ACCout (1)
+        .output_select(output_select),    // unregistered output: ACCout (1)
         .subtract(subtract),
-        .register_inputs(1'b1)  // registered inputs
+        .register_inputs(register_inputs) // registered inputs
     );
 endmodule
 
@@ -2185,17 +2193,17 @@ module QL_DSP2_MULTACC_REGOUT (
         .f_mode(f_mode),
 
         .feedback(feedback),
-    .load_acc(load_acc),
+        .load_acc(load_acc),
 
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(3'b101), // registered output: ACCout (5)
+        .output_select(output_select),    // registered output: ACCout (5)
         .subtract(subtract),
-        .register_inputs(1'b0)  // unregistered inputs
+        .register_inputs(register_inputs) // unregistered inputs
     );
 endmodule
 
@@ -2243,11 +2251,11 @@ module QL_DSP2_MULTACC_REGIN_REGOUT (
         .unsigned_b(unsigned_b),
 
         .clk(clk),
-    .reset(reset),
+        .reset(reset),
 
-        .output_select(3'b101), // registered output: ACCout (5)
+        .output_select(output_select),    // registered output: ACCout (5)
         .subtract(subtract),
-        .register_inputs(1'b1)  // registered inputs
+        .register_inputs(register_inputs) // registered inputs
     );
 endmodule
 
