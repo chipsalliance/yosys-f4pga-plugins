@@ -32,4 +32,4 @@ flatten
 
 plugin -i arith-stats
 arith-stats
-
+```
