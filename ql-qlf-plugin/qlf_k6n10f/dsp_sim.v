@@ -16,27 +16,6 @@
 
 `default_nettype none
 
-(* blackbox *)
-module QL_DSP1 (
-    input wire [19:0] a,
-    input wire [17:0] b,
-    (* clkbuf_sink *)
-    input wire clk0,
-    (* clkbuf_sink *)
-    input wire clk1,
-    input wire [ 1:0] feedback0,
-    input wire [ 1:0] feedback1,
-    input wire        load_acc0,
-    input wire        load_acc1,
-    input wire        reset0,
-    input wire        reset1,
-    output reg [37:0] z
-);
-    parameter MODE_BITS = 27'b00000000000000000000000000;
-endmodule  /* QL_DSP1 */
-
-
-
 // ---------------------------------------- //
 // ----- DSP cells simulation modules ----- //
 // --------- Control bits in ports -------- //
