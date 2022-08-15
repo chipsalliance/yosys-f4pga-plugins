@@ -227,89 +227,89 @@ struct UhdmSystemVerilogFrontend : public UhdmSurelogAstFrontend {
 } UhdmSystemVerilogFrontend;
 
 struct SystemVerilogDefaults : public Pass {
-	SystemVerilogDefaults() : Pass("systemverilog_defaults", "set default options for read_systemverilog") { }
-	void help() override
-	{
-		//   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
-		log("\n");
-		log("    systemverilog_defaults -add [options]\n");
-		log("\n");
-		log("Add the specified options to the list of default options to read_systemverilog.\n");
-		log("\n");
-		log("\n");
-		log("    systemverilog_defaults -clear\n");
-		log("\n");
-		log("Clear the list of Systemverilog default options.\n");
-		log("\n");
-		log("\n");
-		log("    systemverilog_defaults -push\n");
-		log("    systemverilog_defaults -pop\n");
-		log("\n");
-		log("Push or pop the list of default options to a stack. Note that -push does\n");
-		log("not imply -clear.\n");
-		log("\n");
-	}
-	void execute(std::vector<std::string> args, RTLIL::Design*) override
-	{
-		if (args.size() < 2)
-			cmd_error(args, 1, "Missing argument.");
+    SystemVerilogDefaults() : Pass("systemverilog_defaults", "set default options for read_systemverilog") { }
+    void help() override
+    {
+        //   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
+        log("\n");
+        log("    systemverilog_defaults -add [options]\n");
+        log("\n");
+        log("Add the specified options to the list of default options to read_systemverilog.\n");
+        log("\n");
+        log("\n");
+        log("    systemverilog_defaults -clear\n");
+        log("\n");
+        log("Clear the list of Systemverilog default options.\n");
+        log("\n");
+        log("\n");
+        log("    systemverilog_defaults -push\n");
+        log("    systemverilog_defaults -pop\n");
+        log("\n");
+        log("Push or pop the list of default options to a stack. Note that -push does\n");
+        log("not imply -clear.\n");
+        log("\n");
+    }
+    void execute(std::vector<std::string> args, RTLIL::Design*) override
+    {
+        if (args.size() < 2)
+            cmd_error(args, 1, "Missing argument.");
 
-		if (args[1] == "-add") {
-			systemverilog_defaults.insert(systemverilog_defaults.end(), args.begin()+2, args.end());
-			return;
-		}
+        if (args[1] == "-add") {
+            systemverilog_defaults.insert(systemverilog_defaults.end(), args.begin()+2, args.end());
+            return;
+        }
 
-		if (args.size() != 2)
-			cmd_error(args, 2, "Extra argument.");
+        if (args.size() != 2)
+            cmd_error(args, 2, "Extra argument.");
 
-		if (args[1] == "-clear") {
-			systemverilog_defaults.clear();
-			return;
-		}
+        if (args[1] == "-clear") {
+            systemverilog_defaults.clear();
+            return;
+        }
 
-		if (args[1] == "-push") {
-			systemverilog_defaults_stack.push_back(systemverilog_defaults);
-			return;
-		}
+        if (args[1] == "-push") {
+            systemverilog_defaults_stack.push_back(systemverilog_defaults);
+            return;
+        }
 
-		if (args[1] == "-pop") {
-			if (systemverilog_defaults_stack.empty()) {
-				systemverilog_defaults.clear();
-			} else {
-				systemverilog_defaults.swap(systemverilog_defaults_stack.back());
-				systemverilog_defaults_stack.pop_back();
-			}
-			return;
-		}
-	}
+        if (args[1] == "-pop") {
+            if (systemverilog_defaults_stack.empty()) {
+                systemverilog_defaults.clear();
+            } else {
+                systemverilog_defaults.swap(systemverilog_defaults_stack.back());
+                systemverilog_defaults_stack.pop_back();
+            }
+            return;
+        }
+    }
 } SystemVerilogDefaults;
 
 struct SystemVerilogDefines : public Pass {
-	SystemVerilogDefines() : Pass("systemverilog_defines", "define and undefine systemverilog defines") {
+    SystemVerilogDefines() : Pass("systemverilog_defines", "define and undefine systemverilog defines") {
         systemverilog_defines.push_back ("-PYOSYS=1");
     }
-	void help() override
-	{
-		//   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
-		log("\n");
-		log("    systemverilog_defines [options]\n");
-		log("\n");
-		log("Define and undefine systemverilog preprocessor macros.\n");
-		log("\n");
-		log("    -Dname[=definition]\n");
-		log("        define the preprocessor symbol 'name' and set its optional value\n");
-		log("        'definition'\n");
-		log("\n");
-		log("    -Uname[=definition]\n");
-		log("        undefine the preprocessor symbol 'name'\n");
-		log("\n");
-		log("    -reset\n");
-		log("        clear list of defined preprocessor symbols\n");
-		log("\n");
-		log("    -list\n");
-		log("        list currently defined preprocessor symbols\n");
-		log("\n");
-	}
+    void help() override
+    {
+        //   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
+        log("\n");
+        log("    systemverilog_defines [options]\n");
+        log("\n");
+        log("Define and undefine systemverilog preprocessor macros.\n");
+        log("\n");
+        log("    -Dname[=definition]\n");
+        log("        define the preprocessor symbol 'name' and set its optional value\n");
+        log("        'definition'\n");
+        log("\n");
+        log("    -Uname[=definition]\n");
+        log("        undefine the preprocessor symbol 'name'\n");
+        log("\n");
+        log("    -reset\n");
+        log("        clear list of defined preprocessor symbols\n");
+        log("\n");
+        log("    -list\n");
+        log("        list currently defined preprocessor symbols\n");
+        log("\n");
+    }
     void remove(const std::string name)
     {
         auto it = systemverilog_defines.begin();
@@ -338,58 +338,58 @@ struct SystemVerilogDefines : public Pass {
                        name.c_str(), value.c_str());
         }
     }
-	void execute(std::vector<std::string> args, RTLIL::Design *design) override
-	{
-		size_t argidx;
-		for (argidx = 1; argidx < args.size(); argidx++) {
-			std::string arg = args[argidx];
-			if (arg == "-D" && argidx+1 < args.size()) {
-				std::string name = args[++argidx], value;
-				size_t equal = name.find('=');
-				if (equal != std::string::npos) {
-					value = name.substr(equal+1);
-					name = name.substr(0, equal);
-                    systemverilog_defines.push_back ("-P"+name+"="+value);
-				} else
-                    systemverilog_defines.push_back ("-P"+name);
-				continue;
-			}
-			if (arg.compare(0, 2, "-D") == 0) {
-				size_t equal = arg.find('=', 2);
-				std::string name = arg.substr(2, equal-2);
-				std::string value;
-				if (equal != std::string::npos) {
-					value = arg.substr(equal+1);
+    void execute(std::vector<std::string> args, RTLIL::Design *design) override
+    {
+        size_t argidx;
+        for (argidx = 1; argidx < args.size(); argidx++) {
+            std::string arg = args[argidx];
+            if (arg == "-D" && argidx+1 < args.size()) {
+                std::string name = args[++argidx], value;
+                size_t equal = name.find('=');
+                if (equal != std::string::npos) {
+                    value = name.substr(equal+1);
+                    name = name.substr(0, equal);
                     systemverilog_defines.push_back ("-P"+name+"="+value);
                 } else
                     systemverilog_defines.push_back ("-P"+name);
-				continue;
-			}
-			if (arg == "-U" && argidx+1 < args.size()) {
-				std::string name = args[++argidx];
+                continue;
+            }
+            if (arg.compare(0, 2, "-D") == 0) {
+                size_t equal = arg.find('=', 2);
+                std::string name = arg.substr(2, equal-2);
+                std::string value;
+                if (equal != std::string::npos) {
+                    value = arg.substr(equal+1);
+                    systemverilog_defines.push_back ("-P"+name+"="+value);
+                } else
+                    systemverilog_defines.push_back ("-P"+name);
+                continue;
+            }
+            if (arg == "-U" && argidx+1 < args.size()) {
+                std::string name = args[++argidx];
                 this->remove (name);
-				continue;
-			}
-			if (arg.compare(0, 2, "-U") == 0) {
-				std::string name = arg.substr(2);
+                continue;
+            }
+            if (arg.compare(0, 2, "-U") == 0) {
+                std::string name = arg.substr(2);
                 this->remove (name);
-				continue;
-			}
-			if (arg == "-reset") {
+                continue;
+            }
+            if (arg == "-reset") {
                 systemverilog_defines.erase (systemverilog_defines.begin()+1,
                                              systemverilog_defines.end());
-				continue;
-			}
-			if (arg == "-list") {
+                continue;
+            }
+            if (arg == "-list") {
                 this->dump ();
-				continue;
-			}
-			break;
-		}
+                continue;
+            }
+            break;
+        }
 
-		if (args.size() != argidx)
-			cmd_error(args, argidx, "Extra argument.");
-	}
+        if (args.size() != argidx)
+            cmd_error(args, argidx, "Extra argument.");
+    }
 } SystemVerilogDefines;
 
 YOSYS_NAMESPACE_END
