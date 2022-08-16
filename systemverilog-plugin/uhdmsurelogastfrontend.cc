@@ -128,25 +128,31 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
     AST::AstNode *parse(std::string filename) override
     {
         std::vector<const char *> cstrings;
+        bool link = false;
         cstrings.reserve(this->args.size() +
                          systemverilog_defaults.size() +
                          systemverilog_defines.size());
-        for (size_t i = 0; i < this->args.size(); ++i)
+        for (size_t i = 0; i < this->args.size(); ++i) {
             cstrings.push_back(const_cast<char *>(this->args[i].c_str()));
-
-        // Add systemverilog defaults args
-        for (size_t i = 0; i < systemverilog_defaults.size(); ++i) {
-            // Convert args to surelog compatible
-            if (systemverilog_defaults[i] == "-defer")
-                this->shared.defer = true;
-            // Pass any remainings args directly to surelog
-            else
-                cstrings.push_back(const_cast<char *>(systemverilog_defaults[i].c_str()));
+            if (this->args[i] == "-link")
+                link = true;
         }
 
-        // Add systemverilog defines args
-        for (size_t i = 0; i < systemverilog_defines.size(); ++i)
-            cstrings.push_back(const_cast<char *>(systemverilog_defines[i].c_str()));
+        if (!link) {
+            // Add systemverilog defaults args
+            for (size_t i = 0; i < systemverilog_defaults.size(); ++i) {
+                // Convert args to surelog compatible
+                if (systemverilog_defaults[i] == "-defer")
+                    this->shared.defer = true;
+                // Pass any remainings args directly to surelog
+                else
+                    cstrings.push_back(const_cast<char *>(systemverilog_defaults[i].c_str()));
+            }
+
+            // Add systemverilog defines args
+            for (size_t i = 0; i < systemverilog_defines.size(); ++i)
+                cstrings.push_back(const_cast<char *>(systemverilog_defines[i].c_str()));
+        }
 
         auto symbolTable = std::make_unique<SURELOG::SymbolTable>();
         auto errors = std::make_unique<SURELOG::ErrorContainer>(symbolTable.get());
