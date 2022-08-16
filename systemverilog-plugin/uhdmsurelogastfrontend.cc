@@ -110,8 +110,14 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
             cstrings.push_back(const_cast<char *>(this->args[i].c_str()));
 
         // Add systemverilog defaults args
-        for (size_t i = 0; i < systemverilog_defaults.size(); ++i)
-            cstrings.push_back(const_cast<char *>(systemverilog_defaults[i].c_str()));
+        for (size_t i = 0; i < systemverilog_defaults.size(); ++i) {
+            // Convert args to surelog compatible
+            if (systemverilog_defaults[i] == "-defer")
+                this->shared.defer = true;
+            // Pass any remainings args directly to surelog
+            else
+                cstrings.push_back(const_cast<char *>(systemverilog_defaults[i].c_str()));
+        }
 
         // Add systemverilog defines args
         for (size_t i = 0; i < systemverilog_defines.size(); ++i)
