@@ -237,8 +237,10 @@ struct SynthQuickLogicPass : public ScriptPass {
 
             // Read simulation library
             readVelArgs = family_path + "/cells_sim.v";
-            if (family == "qlf_k6n10f")
+            if (family == "qlf_k6n10f") {
                 readVelArgs += family_path + "/dsp_sim.v";
+                readVelArgs += family_path + "/brams_sim.v";
+            }
 
             // Use -nomem2reg here to prevent Yosys from complaining about
             // some block ram cell models. After all the only part of the cells
@@ -370,26 +372,14 @@ struct SynthQuickLogicPass : public ScriptPass {
             }
 
             // Data width to specialized cell type width map
-            const std::unordered_map<int, int> dataWidth = {
-                {36, 36},
-                {32, 36},
-                {18, 18},
-                {16, 18},
-                {9,   9},
-                {8,   9},
-                {4,   4},
-                {2,   2},
-                {1,   1}
-            };
+            const std::unordered_map<int, int> dataWidth = {{36, 36}, {32, 36}, {18, 18}, {16, 18}, {9, 9}, {8, 9}, {4, 4}, {2, 2}, {1, 1}};
 
             // Perform a series of 'chtype' passess
-            for (const auto& ww : dataWidth) {
-                for (const auto& rw : dataWidth) {
+            for (const auto &ww : dataWidth) {
+                for (const auto &rw : dataWidth) {
                     auto cmd = stringf(
-                        "chtype -set TDP36K_BRAM_WR_X%d_RD_X%d_nonsplit t:TDP36K a:is_inferred=1 %%i a:wr_data_width=%d %%i a:rd_data_width=%d %%i",
-                        ww.second, rw.second,
-                        ww.first,  rw.first
-                    );
+                      "chtype -set TDP36K_BRAM_WR_X%d_RD_X%d_nonsplit t:TDP36K a:is_inferred=1 %%i a:wr_data_width=%d %%i a:rd_data_width=%d %%i",
+                      ww.second, rw.second, ww.first, rw.first);
                     run(cmd);
                 }
             }
