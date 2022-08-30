@@ -227,6 +227,8 @@ module BRAM2x18_TDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, C1ADDR, C1DATA,
 	wire PORT_B2_WEN = H1EN[0];
 	wire [CFG_ENABLE_H-1:0] PORT_B2_BE = {H1EN[1],H1EN[0]};
 
+    (* rd_data_width = CFG_DBITS *)
+    (* wr_data_width = CFG_DBITS *)
 	TDP36K  _TECHMAP_REPLACE_ (
 		.WDATA_A1_i(PORT_A1_WDATA),
 		.RDATA_A1_o(PORT_A1_RDATA),
@@ -443,6 +445,8 @@ module BRAM2x18_SDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, C1ADDR, C1DATA,
 	wire PORT_B2_WEN = D1EN[0];
 	wire [CFG_ENABLE_D-1:0] PORT_B2_BE = {D1EN[1],D1EN[0]};
 
+    (* rd_data_width = CFG_DBITS *)
+    (* wr_data_width = CFG_DBITS *)
 	TDP36K  _TECHMAP_REPLACE_ (
 		.WDATA_A1_i(PORT_A1_WDATA),
 		.RDATA_A1_o(PORT_A1_RDATA),
