@@ -1420,7 +1420,7 @@ module \_$_mem_v2_asymmetric (RD_ADDR, RD_ARST, RD_CLK, RD_DATA, RD_EN, RD_SRST,
 endmodule
 
 // ============================================================================
-// TDP38K write width 1 functional modes
+// TDP36K write width 1 functional modes
 
 module TDP36K_BRAM_WR_X1_RD_X1_nonsplit (
     RESET_ni,
@@ -1855,7 +1855,7 @@ module TDP36K_BRAM_WR_X1_RD_X36_nonsplit (
 endmodule
 
 // ============================================================================
-// TDP38K write width 2 functional modes
+// TDP36K write width 2 functional modes
 
 module TDP36K_BRAM_WR_X2_RD_X1_nonsplit (
     RESET_ni,
@@ -2290,7 +2290,7 @@ module TDP36K_BRAM_WR_X2_RD_X36_nonsplit (
 endmodule
 
 // ============================================================================
-// TDP38K write width 4 functional modes
+// TDP36K write width 4 functional modes
 
 module TDP36K_BRAM_WR_X4_RD_X1_nonsplit (
     RESET_ni,
@@ -2725,7 +2725,7 @@ module TDP36K_BRAM_WR_X4_RD_X36_nonsplit (
 endmodule
 
 // ============================================================================
-// TDP38K write width 9 functional modes
+// TDP36K write width 9 functional modes
 
 module TDP36K_BRAM_WR_X9_RD_X1_nonsplit (
     RESET_ni,
@@ -3160,7 +3160,7 @@ module TDP36K_BRAM_WR_X9_RD_X36_nonsplit (
 endmodule
 
 // ============================================================================
-// TDP38K write width 18 functional modes
+// TDP36K write width 18 functional modes
 
 module TDP36K_BRAM_WR_X18_RD_X1_nonsplit (
     RESET_ni,
@@ -3595,7 +3595,7 @@ module TDP36K_BRAM_WR_X18_RD_X36_nonsplit (
 endmodule
 
 // ============================================================================
-// TDP38K write width 36 functional modes
+// TDP36K write width 36 functional modes
 
 module TDP36K_BRAM_WR_X36_RD_X1_nonsplit (
     RESET_ni,
@@ -3958,6 +3958,1821 @@ module TDP36K_BRAM_WR_X36_RD_X18_nonsplit (
 endmodule
 
 module TDP36K_BRAM_WR_X36_RD_X36_nonsplit (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+// ============================================================================
+// TDP36K (split mode) write width 1 functional modes
+
+module TDP36K_BRAM_WR_X1_RD_X1_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X1_RD_X2_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X1_RD_X4_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X1_RD_X9_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X1_RD_X18_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+// ============================================================================
+// TDP36K (split mode) write width 2 functional modes
+
+module TDP36K_BRAM_WR_X2_RD_X1_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X2_RD_X2_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X2_RD_X4_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X2_RD_X9_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X2_RD_X18_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+// ============================================================================
+// TDP36K (split mode) write width 4 functional modes
+
+module TDP36K_BRAM_WR_X4_RD_X1_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X4_RD_X2_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X4_RD_X4_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X4_RD_X9_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X4_RD_X18_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+// ============================================================================
+// TDP36K (split mode) write width 9 functional modes
+
+module TDP36K_BRAM_WR_X9_RD_X1_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X9_RD_X2_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X9_RD_X4_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X9_RD_X9_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X9_RD_X18_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+// ============================================================================
+// TDP36K (split mode) write width 18 functional modes
+
+module TDP36K_BRAM_WR_X18_RD_X1_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X18_RD_X2_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X18_RD_X4_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X18_RD_X9_split (
+    RESET_ni,
+    WEN_A1_i,   WEN_B1_i,
+    REN_A1_i,   REN_B1_i,
+    CLK_A1_i,   CLK_B1_i,
+    BE_A1_i,    BE_B1_i,
+    ADDR_A1_i,  ADDR_B1_i,
+    WDATA_A1_i, WDATA_B1_i,
+    RDATA_A1_o, RDATA_B1_o,
+    FLUSH1_i,
+    WEN_A2_i,   WEN_B2_i,
+    REN_A2_i,   REN_B2_i,
+    CLK_A2_i,   CLK_B2_i,
+    BE_A2_i,    BE_B2_i,
+    ADDR_A2_i,  ADDR_B2_i,
+    WDATA_A2_i, WDATA_B2_i,
+    RDATA_A2_o, RDATA_B2_o,
+    FLUSH2_i
+);
+    parameter [80:0] MODE_BITS = 81'd0;
+
+    input  RESET_ni;
+    input  WEN_A1_i, WEN_B1_i;
+    input  REN_A1_i, REN_B1_i;
+    input  WEN_A2_i, WEN_B2_i;
+    input  REN_A2_i, REN_B2_i;
+
+    (* clkbuf_sink *)
+    input  CLK_A1_i;
+    (* clkbuf_sink *)
+    input  CLK_B1_i;
+    (* clkbuf_sink *)
+    input  CLK_A2_i;
+    (* clkbuf_sink *)
+    input  CLK_B2_i;
+
+    input  [ 1:0] BE_A1_i,    BE_B1_i;
+    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  [17:0] WDATA_A1_i, WDATA_B1_i;
+    output [17:0] RDATA_A1_o, RDATA_B1_o;
+
+    input  FLUSH1_i;
+
+    input  [ 1:0] BE_A2_i,    BE_B2_i;
+    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  [17:0] WDATA_A2_i, WDATA_B2_i;
+    output [17:0] RDATA_A2_o, RDATA_B2_o;
+
+    input  FLUSH2_i;
+
+    TDP36K #(.MODE_BITS(MODE_BITS)) bram (
+        .RESET_ni   (RESET_ni),   
+        .WEN_A1_i   (WEN_A1_i),   .WEN_B1_i   (WEN_B1_i),
+        .REN_A1_i   (REN_A1_i),   .REN_B1_i   (REN_B1_i),
+        .CLK_A1_i   (CLK_A1_i),   .CLK_B1_i   (CLK_B1_i),
+        .BE_A1_i    (BE_A1_i),    .BE_B1_i    (BE_B1_i),
+        .ADDR_A1_i  (ADDR_A1_i),  .ADDR_B1_i  (ADDR_B1_i),
+        .WDATA_A1_i (WDATA_A1_i), .WDATA_B1_i (WDATA_B1_i),
+        .RDATA_A1_o (RDATA_A1_o), .RDATA_B1_o (RDATA_B1_o),
+        .FLUSH1_i   (FLUSH1_i),
+        .WEN_A2_i   (WEN_A2_i),   .WEN_B2_i   (WEN_B2_i),
+        .REN_A2_i   (REN_A2_i),   .REN_B2_i   (REN_B2_i),
+        .CLK_A2_i   (CLK_A2_i),   .CLK_B2_i   (CLK_B2_i),
+        .BE_A2_i    (BE_A2_i),    .BE_B2_i    (BE_B2_i),
+        .ADDR_A2_i  (ADDR_A2_i),  .ADDR_B2_i  (ADDR_B2_i),
+        .WDATA_A2_i (WDATA_A2_i), .WDATA_B2_i (WDATA_B2_i),
+        .RDATA_A2_o (RDATA_A2_o), .RDATA_B2_o (RDATA_B2_o),
+        .FLUSH2_i   (FLUSH2_i)
+    );
+
+endmodule
+
+module TDP36K_BRAM_WR_X18_RD_X18_split (
     RESET_ni,
     WEN_A1_i,   WEN_B1_i,
     REN_A1_i,   REN_B1_i,
