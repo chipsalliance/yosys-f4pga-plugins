@@ -129,9 +129,7 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
     {
         std::vector<const char *> cstrings;
         bool link = false;
-        cstrings.reserve(this->args.size() +
-                         systemverilog_defaults.size() +
-                         systemverilog_defines.size());
+        cstrings.reserve(this->args.size() + systemverilog_defaults.size() + systemverilog_defines.size());
         for (size_t i = 0; i < this->args.size(); ++i) {
             cstrings.push_back(const_cast<char *>(this->args[i].c_str()));
             if (this->args[i] == "-link")
@@ -239,7 +237,7 @@ struct UhdmSystemVerilogFrontend : public UhdmSurelogAstFrontend {
 } UhdmSystemVerilogFrontend;
 
 struct SystemVerilogDefaults : public Pass {
-    SystemVerilogDefaults() : Pass("systemverilog_defaults", "set default options for read_systemverilog") { }
+    SystemVerilogDefaults() : Pass("systemverilog_defaults", "set default options for read_systemverilog") {}
     void help() override
     {
         //   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
@@ -261,13 +259,13 @@ struct SystemVerilogDefaults : public Pass {
         log("not imply -clear.\n");
         log("\n");
     }
-    void execute(std::vector<std::string> args, RTLIL::Design*) override
+    void execute(std::vector<std::string> args, RTLIL::Design *) override
     {
         if (args.size() < 2)
             cmd_error(args, 1, "Missing argument.");
 
         if (args[1] == "-add") {
-            systemverilog_defaults.insert(systemverilog_defaults.end(), args.begin()+2, args.end());
+            systemverilog_defaults.insert(systemverilog_defaults.end(), args.begin() + 2, args.end());
             return;
         }
 
@@ -297,8 +295,9 @@ struct SystemVerilogDefaults : public Pass {
 } SystemVerilogDefaults;
 
 struct SystemVerilogDefines : public Pass {
-    SystemVerilogDefines() : Pass("systemverilog_defines", "define and undefine systemverilog defines") {
-        systemverilog_defines.push_back ("-PYOSYS=1");
+    SystemVerilogDefines() : Pass("systemverilog_defines", "define and undefine systemverilog defines")
+    {
+        systemverilog_defines.push_back("-PYOSYS=1");
     }
     void help() override
     {
@@ -329,11 +328,11 @@ struct SystemVerilogDefines : public Pass {
             std::string nm;
             size_t equal = (*it).find('=', 2);
             if (equal == std::string::npos)
-                nm = (*it).substr (2, std::string::npos);
+                nm = (*it).substr(2, std::string::npos);
             else
-                nm = (*it).substr (2, equal-2);
+                nm = (*it).substr(2, equal - 2);
             if (name == nm)
-                systemverilog_defines.erase (it);
+                systemverilog_defines.erase(it);
             else
                 it++;
         }
@@ -343,11 +342,10 @@ struct SystemVerilogDefines : public Pass {
         for (size_t i = 0; i < systemverilog_defines.size(); ++i) {
             std::string name, value = "";
             size_t equal = systemverilog_defines[i].find('=', 2);
-            name = systemverilog_defines[i].substr (2, equal-2);
+            name = systemverilog_defines[i].substr(2, equal - 2);
             if (equal != std::string::npos)
-                value = systemverilog_defines[i].substr(equal+1, std::string::npos);
-            Yosys::log("`define %s %s\n",
-                       name.c_str(), value.c_str());
+                value = systemverilog_defines[i].substr(equal + 1, std::string::npos);
+            Yosys::log("`define %s %s\n", name.c_str(), value.c_str());
         }
     }
     void execute(std::vector<std::string> args, RTLIL::Design *design) override
@@ -355,45 +353,44 @@ struct SystemVerilogDefines : public Pass {
         size_t argidx;
         for (argidx = 1; argidx < args.size(); argidx++) {
             std::string arg = args[argidx];
-            if (arg == "-D" && argidx+1 < args.size()) {
+            if (arg == "-D" && argidx + 1 < args.size()) {
                 std::string name = args[++argidx], value;
                 size_t equal = name.find('=');
                 if (equal != std::string::npos) {
-                    value = name.substr(equal+1);
+                    value = name.substr(equal + 1);
                     name = name.substr(0, equal);
-                    systemverilog_defines.push_back ("-P"+name+"="+value);
+                    systemverilog_defines.push_back("-P" + name + "=" + value);
                 } else
-                    systemverilog_defines.push_back ("-P"+name);
+                    systemverilog_defines.push_back("-P" + name);
                 continue;
             }
             if (arg.compare(0, 2, "-D") == 0) {
                 size_t equal = arg.find('=', 2);
-                std::string name = arg.substr(2, equal-2);
+                std::string name = arg.substr(2, equal - 2);
                 std::string value;
                 if (equal != std::string::npos) {
-                    value = arg.substr(equal+1);
-                    systemverilog_defines.push_back ("-P"+name+"="+value);
+                    value = arg.substr(equal + 1);
+                    systemverilog_defines.push_back("-P" + name + "=" + value);
                 } else
-                    systemverilog_defines.push_back ("-P"+name);
+                    systemverilog_defines.push_back("-P" + name);
                 continue;
             }
-            if (arg == "-U" && argidx+1 < args.size()) {
+            if (arg == "-U" && argidx + 1 < args.size()) {
                 std::string name = args[++argidx];
-                this->remove (name);
+                this->remove(name);
                 continue;
             }
             if (arg.compare(0, 2, "-U") == 0) {
                 std::string name = arg.substr(2);
-                this->remove (name);
+                this->remove(name);
                 continue;
             }
             if (arg == "-reset") {
-                systemverilog_defines.erase (systemverilog_defines.begin()+1,
-                                             systemverilog_defines.end());
+                systemverilog_defines.erase(systemverilog_defines.begin() + 1, systemverilog_defines.end());
                 continue;
             }
             if (arg == "-list") {
-                this->dump ();
+                this->dump();
                 continue;
             }
             break;
