@@ -799,42 +799,42 @@ module BRAM2x18_TDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, C1ADDR, C1DATA,
     localparam MODE_2 = 3'b110; // 2-bit
     localparam MODE_1 = 3'b101; // 1-bit
 
-    input CLK1;
-    input CLK2;
-    input CLK3;
-    input CLK4;
+    input wire CLK1;
+    input wire CLK2;
+    input wire CLK3;
+    input wire CLK4;
 
-    input [CFG_ABITS-1:0] A1ADDR;
-    output [CFG_DBITS-1:0] A1DATA;
-    input A1EN;
+    input  wire [CFG_ABITS-1:0] A1ADDR;
+    output wire [CFG_DBITS-1:0] A1DATA;
+    input  wire A1EN;
 
-    input [CFG_ABITS-1:0] B1ADDR;
-    input [CFG_DBITS-1:0] B1DATA;
-    input [CFG_ENABLE_B-1:0] B1EN;
+    input  wire [CFG_ABITS-1:0] B1ADDR;
+    input  wire [CFG_DBITS-1:0] B1DATA;
+    input  wire [CFG_ENABLE_B-1:0] B1EN;
 
-    input [CFG_ABITS-1:0] C1ADDR;
-    output [CFG_DBITS-1:0] C1DATA;
-    input C1EN;
+    input  wire [CFG_ABITS-1:0] C1ADDR;
+    output wire [CFG_DBITS-1:0] C1DATA;
+    input  wire C1EN;
 
-    input [CFG_ABITS-1:0] D1ADDR;
-    input [CFG_DBITS-1:0] D1DATA;
-    input [CFG_ENABLE_D-1:0] D1EN;
+    input  wire [CFG_ABITS-1:0] D1ADDR;
+    input  wire [CFG_DBITS-1:0] D1DATA;
+    input  wire [CFG_ENABLE_D-1:0] D1EN;
 
-    input [CFG_ABITS-1:0] E1ADDR;
-    output [CFG_DBITS-1:0] E1DATA;
-    input E1EN;
+    input  wire [CFG_ABITS-1:0] E1ADDR;
+    output wire [CFG_DBITS-1:0] E1DATA;
+    input  wire E1EN;
 
-    input [CFG_ABITS-1:0] F1ADDR;
-    input [CFG_DBITS-1:0] F1DATA;
-    input [CFG_ENABLE_F-1:0] F1EN;
+    input  wire [CFG_ABITS-1:0] F1ADDR;
+    input  wire [CFG_DBITS-1:0] F1DATA;
+    input  wire [CFG_ENABLE_F-1:0] F1EN;
 
-    input [CFG_ABITS-1:0] G1ADDR;
-    output [CFG_DBITS-1:0] G1DATA;
-    input G1EN;
+    input  wire [CFG_ABITS-1:0] G1ADDR;
+    output wire [CFG_DBITS-1:0] G1DATA;
+    input  wire G1EN;
 
-    input [CFG_ABITS-1:0] H1ADDR;
-    input [CFG_DBITS-1:0] H1DATA;
-    input [CFG_ENABLE_H-1:0] H1EN;
+    input  wire [CFG_ABITS-1:0] H1ADDR;
+    input  wire [CFG_DBITS-1:0] H1DATA;
+    input  wire [CFG_ENABLE_H-1:0] H1EN;
 
     wire FLUSH1;
     wire FLUSH2;
@@ -1031,24 +1031,24 @@ module BRAM2x18_SDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, C1ADDR, C1DATA,
     localparam MODE_2 = 3'b110; // 2-bit
     localparam MODE_1 = 3'b101; // 1-bit
 
-    input CLK1;
-    input CLK2;
+    input  wire CLK1;
+    input  wire CLK2;
 
-    input [CFG_ABITS-1:0] A1ADDR;
-    output [CFG_DBITS-1:0] A1DATA;
-    input A1EN;
+    input  wire [CFG_ABITS-1:0] A1ADDR;
+    output wire [CFG_DBITS-1:0] A1DATA;
+    input  wire A1EN;
 
-    input [CFG_ABITS-1:0] B1ADDR;
-    input [CFG_DBITS-1:0] B1DATA;
-    input [CFG_ENABLE_B-1:0] B1EN;
+    input  wire [CFG_ABITS-1:0] B1ADDR;
+    input  wire [CFG_DBITS-1:0] B1DATA;
+    input  wire [CFG_ENABLE_B-1:0] B1EN;
 
-    input [CFG_ABITS-1:0] C1ADDR;
-    output [CFG_DBITS-1:0] C1DATA;
-    input C1EN;
+    input  wire [CFG_ABITS-1:0] C1ADDR;
+    output wire [CFG_DBITS-1:0] C1DATA;
+    input  wire C1EN;
 
-    input [CFG_ABITS-1:0] D1ADDR;
-    input [CFG_DBITS-1:0] D1DATA;
-    input [CFG_ENABLE_D-1:0] D1EN;
+    input  wire [CFG_ABITS-1:0] D1ADDR;
+    input  wire [CFG_DBITS-1:0] D1DATA;
+    input  wire [CFG_ENABLE_D-1:0] D1EN;
 
     wire FLUSH1;
     wire FLUSH2;
@@ -1277,18 +1277,18 @@ module \_$_mem_v2_asymmetric (RD_ADDR, RD_ARST, RD_CLK, RD_DATA, RD_EN, RD_SRST,
     localparam MODE_2   = 3'b010;   // 32-bit
     localparam MODE_1   = 3'b001;   // 32-bit
 
-    input RD_CLK;
-    input WR_CLK;
-    input RD_ARST;
-    input RD_SRST;
+    input  wire RD_CLK;
+    input  wire WR_CLK;
+    input  wire RD_ARST;
+    input  wire RD_SRST;
 
-    input [CFG_ABITS-1:0] RD_ADDR;
-    output [CFG_DBITS-1:0] RD_DATA;
-    input RD_EN;
+    input  wire [CFG_ABITS-1:0] RD_ADDR;
+    output wire [CFG_DBITS-1:0] RD_DATA;
+    input  wire RD_EN;
 
-    input [CFG_ABITS-1:0] WR_ADDR;
-    input [CFG_DBITS-1:0] WR_DATA;
-    input [CFG_ENABLE_B-1:0] WR_EN;
+    input  wire [CFG_ABITS-1:0] WR_ADDR;
+    input  wire [CFG_DBITS-1:0] WR_DATA;
+    input  wire [CFG_ENABLE_B-1:0] WR_EN;
 
     wire [14:0] RD_ADDR_15;
     wire [14:0] WR_ADDR_15;
@@ -1443,34 +1443,34 @@ module TDP36K_BRAM_WR_X1_RD_X1_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input wire RESET_ni;
+    input wire WEN_A1_i, WEN_B1_i;
+    input wire REN_A1_i, REN_B1_i;
+    input wire WEN_A2_i, WEN_B2_i;
+    input wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -1515,34 +1515,34 @@ module TDP36K_BRAM_WR_X1_RD_X2_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -1587,34 +1587,34 @@ module TDP36K_BRAM_WR_X1_RD_X4_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -1659,34 +1659,34 @@ module TDP36K_BRAM_WR_X1_RD_X9_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -1731,34 +1731,34 @@ module TDP36K_BRAM_WR_X1_RD_X18_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -1803,34 +1803,34 @@ module TDP36K_BRAM_WR_X1_RD_X36_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -1878,34 +1878,34 @@ module TDP36K_BRAM_WR_X2_RD_X1_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -1950,34 +1950,34 @@ module TDP36K_BRAM_WR_X2_RD_X2_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2022,34 +2022,34 @@ module TDP36K_BRAM_WR_X2_RD_X4_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2094,34 +2094,34 @@ module TDP36K_BRAM_WR_X2_RD_X9_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2166,34 +2166,34 @@ module TDP36K_BRAM_WR_X2_RD_X18_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2238,34 +2238,34 @@ module TDP36K_BRAM_WR_X2_RD_X36_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2313,34 +2313,34 @@ module TDP36K_BRAM_WR_X4_RD_X1_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2385,34 +2385,34 @@ module TDP36K_BRAM_WR_X4_RD_X2_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2457,34 +2457,34 @@ module TDP36K_BRAM_WR_X4_RD_X4_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2529,34 +2529,34 @@ module TDP36K_BRAM_WR_X4_RD_X9_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2601,34 +2601,34 @@ module TDP36K_BRAM_WR_X4_RD_X18_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2673,34 +2673,34 @@ module TDP36K_BRAM_WR_X4_RD_X36_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2748,34 +2748,34 @@ module TDP36K_BRAM_WR_X9_RD_X1_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2820,34 +2820,34 @@ module TDP36K_BRAM_WR_X9_RD_X2_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2892,34 +2892,34 @@ module TDP36K_BRAM_WR_X9_RD_X4_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -2964,34 +2964,34 @@ module TDP36K_BRAM_WR_X9_RD_X9_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3036,34 +3036,34 @@ module TDP36K_BRAM_WR_X9_RD_X18_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3108,34 +3108,34 @@ module TDP36K_BRAM_WR_X9_RD_X36_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3183,34 +3183,34 @@ module TDP36K_BRAM_WR_X18_RD_X1_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3255,34 +3255,34 @@ module TDP36K_BRAM_WR_X18_RD_X2_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3327,34 +3327,34 @@ module TDP36K_BRAM_WR_X18_RD_X4_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3399,34 +3399,34 @@ module TDP36K_BRAM_WR_X18_RD_X9_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3471,34 +3471,34 @@ module TDP36K_BRAM_WR_X18_RD_X18_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3543,34 +3543,34 @@ module TDP36K_BRAM_WR_X18_RD_X36_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3618,34 +3618,34 @@ module TDP36K_BRAM_WR_X36_RD_X1_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3690,34 +3690,34 @@ module TDP36K_BRAM_WR_X36_RD_X2_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3762,34 +3762,34 @@ module TDP36K_BRAM_WR_X36_RD_X4_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3834,34 +3834,34 @@ module TDP36K_BRAM_WR_X36_RD_X9_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3906,34 +3906,34 @@ module TDP36K_BRAM_WR_X36_RD_X18_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -3978,34 +3978,34 @@ module TDP36K_BRAM_WR_X36_RD_X36_nonsplit (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4053,34 +4053,34 @@ module TDP36K_BRAM_WR_X1_RD_X1_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4125,34 +4125,34 @@ module TDP36K_BRAM_WR_X1_RD_X2_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4197,34 +4197,34 @@ module TDP36K_BRAM_WR_X1_RD_X4_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4269,34 +4269,34 @@ module TDP36K_BRAM_WR_X1_RD_X9_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4341,34 +4341,34 @@ module TDP36K_BRAM_WR_X1_RD_X18_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4416,34 +4416,34 @@ module TDP36K_BRAM_WR_X2_RD_X1_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4488,34 +4488,34 @@ module TDP36K_BRAM_WR_X2_RD_X2_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4560,34 +4560,34 @@ module TDP36K_BRAM_WR_X2_RD_X4_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4632,34 +4632,34 @@ module TDP36K_BRAM_WR_X2_RD_X9_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4704,34 +4704,34 @@ module TDP36K_BRAM_WR_X2_RD_X18_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4779,34 +4779,34 @@ module TDP36K_BRAM_WR_X4_RD_X1_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4851,34 +4851,34 @@ module TDP36K_BRAM_WR_X4_RD_X2_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4923,34 +4923,34 @@ module TDP36K_BRAM_WR_X4_RD_X4_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -4995,34 +4995,34 @@ module TDP36K_BRAM_WR_X4_RD_X9_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5067,34 +5067,34 @@ module TDP36K_BRAM_WR_X4_RD_X18_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5142,34 +5142,34 @@ module TDP36K_BRAM_WR_X9_RD_X1_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5214,34 +5214,34 @@ module TDP36K_BRAM_WR_X9_RD_X2_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5286,34 +5286,34 @@ module TDP36K_BRAM_WR_X9_RD_X4_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5358,34 +5358,34 @@ module TDP36K_BRAM_WR_X9_RD_X9_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5430,34 +5430,34 @@ module TDP36K_BRAM_WR_X9_RD_X18_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5505,34 +5505,34 @@ module TDP36K_BRAM_WR_X18_RD_X1_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5577,34 +5577,34 @@ module TDP36K_BRAM_WR_X18_RD_X2_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5649,34 +5649,34 @@ module TDP36K_BRAM_WR_X18_RD_X4_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5721,34 +5721,34 @@ module TDP36K_BRAM_WR_X18_RD_X9_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
@@ -5793,34 +5793,34 @@ module TDP36K_BRAM_WR_X18_RD_X18_split (
 );
     parameter [80:0] MODE_BITS = 81'd0;
 
-    input  RESET_ni;
-    input  WEN_A1_i, WEN_B1_i;
-    input  REN_A1_i, REN_B1_i;
-    input  WEN_A2_i, WEN_B2_i;
-    input  REN_A2_i, REN_B2_i;
+    input  wire RESET_ni;
+    input  wire WEN_A1_i, WEN_B1_i;
+    input  wire REN_A1_i, REN_B1_i;
+    input  wire WEN_A2_i, WEN_B2_i;
+    input  wire REN_A2_i, REN_B2_i;
 
     (* clkbuf_sink *)
-    input  CLK_A1_i;
+    input  wire CLK_A1_i;
     (* clkbuf_sink *)
-    input  CLK_B1_i;
+    input  wire CLK_B1_i;
     (* clkbuf_sink *)
-    input  CLK_A2_i;
+    input  wire CLK_A2_i;
     (* clkbuf_sink *)
-    input  CLK_B2_i;
+    input  wire CLK_B2_i;
 
-    input  [ 1:0] BE_A1_i,    BE_B1_i;
-    input  [14:0] ADDR_A1_i,  ADDR_B1_i;
-    input  [17:0] WDATA_A1_i, WDATA_B1_i;
-    output [17:0] RDATA_A1_o, RDATA_B1_o;
+    input  wire [ 1:0] BE_A1_i,    BE_B1_i;
+    input  wire [14:0] ADDR_A1_i,  ADDR_B1_i;
+    input  wire [17:0] WDATA_A1_i, WDATA_B1_i;
+    output wire [17:0] RDATA_A1_o, RDATA_B1_o;
 
-    input  FLUSH1_i;
+    input  wire FLUSH1_i;
 
-    input  [ 1:0] BE_A2_i,    BE_B2_i;
-    input  [13:0] ADDR_A2_i,  ADDR_B2_i;
-    input  [17:0] WDATA_A2_i, WDATA_B2_i;
-    output [17:0] RDATA_A2_o, RDATA_B2_o;
+    input  wire [ 1:0] BE_A2_i,    BE_B2_i;
+    input  wire [13:0] ADDR_A2_i,  ADDR_B2_i;
+    input  wire [17:0] WDATA_A2_i, WDATA_B2_i;
+    output wire [17:0] RDATA_A2_o, RDATA_B2_o;
 
-    input  FLUSH2_i;
+    input  wire FLUSH2_i;
 
     TDP36K #(.MODE_BITS(MODE_BITS)) bram (
         .RESET_ni   (RESET_ni),   
