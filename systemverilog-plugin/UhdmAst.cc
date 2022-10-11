@@ -3527,6 +3527,9 @@ void UhdmAst::process_logic_typespec()
     }
     visit_one_to_many({vpiRange}, obj_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
+    if (vpi_get(vpiSigned, obj_h) == true) {
+        current_node->is_signed = true;
+    }
 }
 
 void UhdmAst::process_int_typespec()
@@ -3536,7 +3539,9 @@ void UhdmAst::process_int_typespec()
     current_node = make_ast_node(AST::AST_WIRE);
     packed_ranges.push_back(make_range(31, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
-    current_node->is_signed = true;
+    if (vpi_get(vpiSigned, obj_h) == true) {
+        current_node->is_signed = true;
+    }
 }
 
 void UhdmAst::process_shortint_typespec()
@@ -3546,7 +3551,9 @@ void UhdmAst::process_shortint_typespec()
     current_node = make_ast_node(AST::AST_WIRE);
     packed_ranges.push_back(make_range(15, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
-    current_node->is_signed = true;
+    if (vpi_get(vpiSigned, obj_h) == true) {
+        current_node->is_signed = true;
+    }
 }
 
 void UhdmAst::process_longint_typespec()
@@ -3556,7 +3563,9 @@ void UhdmAst::process_longint_typespec()
     current_node = make_ast_node(AST::AST_WIRE);
     packed_ranges.push_back(make_range(63, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
-    current_node->is_signed = true;
+    if (vpi_get(vpiSigned, obj_h) == true) {
+        current_node->is_signed = true;
+    }
 }
 
 void UhdmAst::process_byte_typespec()
@@ -3566,7 +3575,9 @@ void UhdmAst::process_byte_typespec()
     current_node = make_ast_node(AST::AST_WIRE);
     packed_ranges.push_back(make_range(7, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
-    current_node->is_signed = true;
+    if (vpi_get(vpiSigned, obj_h) == true) {
+        current_node->is_signed = true;
+    }
 }
 
 void UhdmAst::process_time_typespec()
@@ -3629,6 +3640,9 @@ void UhdmAst::process_bit_typespec()
             current_node->children.push_back(node);
         }
     });
+    if (vpi_get(vpiSigned, obj_h) == true) {
+        current_node->is_signed = true;
+    }
 }
 
 void UhdmAst::process_repeat()
