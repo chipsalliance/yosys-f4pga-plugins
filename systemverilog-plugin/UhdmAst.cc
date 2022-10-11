@@ -4114,6 +4114,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiAssignment:
         process_assignment();
         break;
+    case vpiInterfaceTypespec:
     case vpiRefVar:
     case vpiRefObj:
         current_node = make_ast_node(AST::AST_IDENTIFIER);
