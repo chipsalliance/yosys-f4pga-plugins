@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstring>
 #include <functional>
+#include <limits>
 #include <regex>
 #include <string>
 #include <vector>
@@ -1094,7 +1095,22 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         // Surelog reports constant integers as a unsigned, but by default int is signed
         // so we are treating here UInt in the same way as if they would be Int
         case vpiUIntVal:
+            if (val.value.uint > std::numeric_limits<std::uint32_t>::max()) {
+                // an integer is by default signed, so use 'sd despite the variant vpiUIntVal
+                strValType = "'sd";
+                string str_value = std::to_string(val.value.uint);
+                val.value.str = strdup(str_value.c_str());
+                break;
+            }
+            [[fallthrough]];
         case vpiIntVal: {
+            if (val.value.integer > std::numeric_limits<std::int32_t>::max()) {
+                strValType = "'sd";
+                string str_value = std::to_string(val.value.integer);
+                val.value.str = strdup(str_value.c_str());
+                break;
+            }
+
             int size = -1;
             bool is_signed = false;
             // Surelog sometimes report size as part of vpiTypespec (e.g. int_typespec)
@@ -1116,7 +1132,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 size = 32;
                 is_signed = true;
             }
-            auto c = AST::AstNode::mkconst_int(val.value.integer, is_signed, size > 0 ? size : 32);
+            auto c = AST::AstNode::mkconst_int(val.format == vpiUIntVal ? val.value.uint : val.value.integer, is_signed, size > 0 ? size : 32);
             if (size == 0 || size == -1)
                 c->is_unsized = true;
             return c;
