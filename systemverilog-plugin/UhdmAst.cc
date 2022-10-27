@@ -1325,6 +1325,7 @@ static void add_or_replace_child(AST::AstNode *parent, AST::AstNode *child)
                 if (child->type == AST::AST_MEMORY)
                     child->type = AST::AST_WIRE;
             }
+            child->is_signed = (*it)->is_signed;
             if (!(*it)->children.empty() && child->children.empty()) {
                 // This is a bit ugly, but if the child we're replacing has children and
                 // our node doesn't, we copy its children to not lose any information
@@ -3527,6 +3528,7 @@ void UhdmAst::process_logic_typespec()
     }
     visit_one_to_many({vpiRange}, obj_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
+    current_node->is_signed = vpi_get(vpiSigned, obj_h);
 }
 
 void UhdmAst::process_int_typespec()
@@ -3536,7 +3538,7 @@ void UhdmAst::process_int_typespec()
     current_node = make_ast_node(AST::AST_WIRE);
     packed_ranges.push_back(make_range(31, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
-    current_node->is_signed = true;
+    current_node->is_signed = vpi_get(vpiSigned, obj_h);
 }
 
 void UhdmAst::process_shortint_typespec()
@@ -3546,7 +3548,7 @@ void UhdmAst::process_shortint_typespec()
     current_node = make_ast_node(AST::AST_WIRE);
     packed_ranges.push_back(make_range(15, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
-    current_node->is_signed = true;
+    current_node->is_signed = vpi_get(vpiSigned, obj_h);
 }
 
 void UhdmAst::process_longint_typespec()
@@ -3556,7 +3558,7 @@ void UhdmAst::process_longint_typespec()
     current_node = make_ast_node(AST::AST_WIRE);
     packed_ranges.push_back(make_range(63, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
-    current_node->is_signed = true;
+    current_node->is_signed = vpi_get(vpiSigned, obj_h);
 }
 
 void UhdmAst::process_byte_typespec()
@@ -3566,7 +3568,7 @@ void UhdmAst::process_byte_typespec()
     current_node = make_ast_node(AST::AST_WIRE);
     packed_ranges.push_back(make_range(7, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
-    current_node->is_signed = true;
+    current_node->is_signed = vpi_get(vpiSigned, obj_h);
 }
 
 void UhdmAst::process_time_typespec()
@@ -3629,6 +3631,7 @@ void UhdmAst::process_bit_typespec()
             current_node->children.push_back(node);
         }
     });
+    current_node->is_signed = vpi_get(vpiSigned, obj_h);
 }
 
 void UhdmAst::process_repeat()
@@ -3782,6 +3785,7 @@ void UhdmAst::process_port()
                     current_node->children = std::move(node->children);
                 }
             }
+            current_node->is_signed = node->is_signed;
             delete node;
         }
     });
