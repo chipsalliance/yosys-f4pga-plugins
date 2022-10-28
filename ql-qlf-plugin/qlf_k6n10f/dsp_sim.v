@@ -1092,7 +1092,7 @@ module dsp_t1_sim_cfg_ports # (
     wire       rnd        = register_inputs_i ? r_rnd : round_i;
 
     wire       sat_d1     = register_inputs_i  ?  r_sat_d1 : saturate_enable_i;
-    wire       sat_d2     = output_select_i[1] ?  sat_d1   : r_sat_d2;
+    wire       sat_d2     = output_select_i[1] ?  r_sat_d1   : r_sat_d2;
 
     wire       rnd_d1     = register_inputs_i  ?  r_rnd_d1 : round_i;
     wire       rnd_d2     = output_select_i[1] ?  rnd_d1   : r_rnd_d2;
@@ -1138,8 +1138,8 @@ module dsp_t1_sim_cfg_ports # (
     wire [NBITS_ACC-1:0] add_a = (subtract) ? (~mult_xtnd + 1) : mult_xtnd;
     wire [NBITS_ACC-1:0] add_b = (feedback == 3'h0) ? acc :
                                  (feedback == 3'h1) ? {{NBITS_ACC}{1'b0}} :
-                                    (acc_fir < 6'd44 ? acc_fir_int << acc_fir :
-                                                       acc_fir_int << 6'd44);
+                                                    (acc_fir < 6'd44 ? acc_fir_int << acc_fir :
+                                                                       acc_fir_int << 6'd44);
 
     wire [NBITS_ACC-1:0] add_o = add_a + add_b;
 
@@ -1159,20 +1159,20 @@ module dsp_t1_sim_cfg_ports # (
     wire [NBITS_ACC-1:0] acc_out = (output_select_i[1]) ? add_o : acc;
 
     // Round, shift, saturate
-    wire [NBITS_ACC-1:0] acc_rnd = (rnd_d2 && (shift_right_i != 0)) ? (acc_out + ({{(NBITS_ACC-1){1'b0}}, 1'b1} << (shift_right_i - 1))) :
+    wire [NBITS_ACC-1:0] acc_rnd = (rnd_d2 && (shift_d2 != 0)) ? (acc_out + ({{(NBITS_ACC-1){1'b0}}, 1'b1} << (shift_d2 - 1))) :
                                                                     acc_out;
 
-    wire [NBITS_ACC-1:0] acc_shr = (unsigned_mode) ? (acc_rnd  >> shift_right_i) :
-                                                     (acc_rnd >>> shift_right_i);
+    wire [NBITS_ACC-1:0] acc_shr = acc_rnd >>> shift_d2;
 
-    wire [NBITS_ACC-1:0] acc_sat_u = (acc_shr[NBITS_ACC-1:NBITS_Z] != 0) ? {{(NBITS_ACC-NBITS_Z){1'b0}},{NBITS_Z{1'b1}}} :
-                                                                           {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}};
+    wire [NBITS_ACC-1:0] acc_sat_u = (&acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b1) ? {NBITS_ACC{1'b0}} :
+                                     (|acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b0  ? {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}}:
+                                                                                 {{(NBITS_ACC-NBITS_Z){1'b0}},{NBITS_Z{1'b1}}});
 
     wire [NBITS_ACC-1:0] acc_sat_s = ((|acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b0) ||
                                       (&acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b1)) ? {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}} :
                                                                                    {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_ACC-1],{NBITS_Z-1{~acc_shr[NBITS_ACC-1]}}}};
 
-    wire [NBITS_ACC-1:0] acc_sat = (sat_d2) ? ((unsigned_mode) ? acc_sat_u : acc_sat_s) : acc_shr;
+    wire [NBITS_ACC-1:0] acc_sat = sat_d2 ? (unsigned_mode ? acc_sat_u : acc_sat_s) : acc_shr;
 
     // Output signals
     wire [NBITS_ACC-1:0] z0;
