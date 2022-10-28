@@ -1173,12 +1173,12 @@ module dsp_t1_sim_cfg_ports # (
     wire [NBITS_ACC-1:0] acc_sat = (sat_d2) ? ((unsigned_mode) ? acc_sat_u : acc_sat_s) : acc_shr;
 
     // Output signals
-    wire [NBITS_Z-1:0]  z0;
-    reg  [NBITS_Z-1:0]  z1;
-    wire [NBITS_Z-1:0]  z2;
+    wire [NBITS_ACC-1:0] z0;
+    reg  [NBITS_ACC-1:0] z1;
+    wire [NBITS_ACC-1:0] z2;
 
-    assign z0 = mult_xtnd[NBITS_Z-1:0];
-    assign z2 = acc_sat[NBITS_Z-1:0];
+    assign z0 = unsigned_mode ? mult_xtnd >> shift_d2 : mult_xtnd >>> shift_d2;
+    assign z2 = acc_sat;
 
     initial z1 <= 0;
 
@@ -1186,18 +1186,18 @@ module dsp_t1_sim_cfg_ports # (
         if (s_reset)
             z1 <= 0;
         else begin
-            z1 <= (output_select_i == 3'b100) ? z0 : z2;
+            z1 <= (output_select_i == 3'b100) ? mult_xtnd : z2;
         end
 
     // Output mux
-    assign z_o = (output_select_i == 3'h0) ?   z0 :
-                 (output_select_i == 3'h1) ?   z2 :
-                 (output_select_i == 3'h2) ?   z2 :
-                 (output_select_i == 3'h3) ?   z2 :
-                 (output_select_i == 3'h4) ?   z1 :
-                 (output_select_i == 3'h5) ?   z1 :
-                 (output_select_i == 3'h6) ?   z1 :
-                           z1;  // if output_select_i == 3'h7
+    assign z_o = (output_select_i == 3'h0) ?   mult_xtnd[NBITS_Z-1:0] :
+                 (output_select_i == 3'h1) ?   z2[NBITS_Z-1:0] :
+                 (output_select_i == 3'h2) ?   z2[NBITS_Z-1:0] :
+                 (output_select_i == 3'h3) ?   z2[NBITS_Z-1:0] :
+                 (output_select_i == 3'h4) ?   z1[NBITS_Z-1:0] :
+                 (output_select_i == 3'h5) ?   z1[NBITS_Z-1:0] :
+                 (output_select_i == 3'h6) ?   z1[NBITS_Z-1:0] :
+                           z1[NBITS_Z-1:0];  // if output_select_i == 3'h7
 
     // B input delayed passthrough
     initial dly_b_o <= 0;
