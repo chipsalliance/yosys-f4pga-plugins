@@ -1132,12 +1132,14 @@ module dsp_t1_sim_cfg_ports # (
         {{(NBITS_ACC-NBITS_A-NBITS_B){mult[NBITS_A+NBITS_B-1]}}, mult[NBITS_A+NBITS_B-1:0]};
 
     // Adder
-    wire [NBITS_ACC-1:0] acc_fir_int = unsigned_a ? {{(NBITS_ACC-NBITS_A){1'b0}},         a} :
+    wire [NBITS_ACC-1:0] acc_fir_int = unsigned_a ? {{(NBITS_ACC-NBITS_A){1'b0}}, a} :
                                                     {{(NBITS_ACC-NBITS_A){a[NBITS_A-1]}}, a} ;
 
     wire [NBITS_ACC-1:0] add_a = (subtract) ? (~mult_xtnd + 1) : mult_xtnd;
-    wire [NBITS_ACC-1:0] add_b = (feedback_i == 3'h0) ? acc :
-                                 (feedback_i == 3'h1) ? {{NBITS_ACC}{1'b0}} : (acc_fir_int << acc_fir);
+    wire [NBITS_ACC-1:0] add_b = (feedback == 3'h0) ? acc :
+                                 (feedback == 3'h1) ? {{NBITS_ACC}{1'b0}} :
+                                    (acc_fir < 6'd44 ? acc_fir_int << acc_fir :
+                                                       acc_fir_int << 6'd44);
 
     wire [NBITS_ACC-1:0] add_o = add_a + add_b;
 
