@@ -470,10 +470,13 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
         // we get left range for first children, and right range for last children
         left = AST::AstNode::mkconst_int(current_struct_elem->children.front()->range_left, true);
         right = AST::AstNode::mkconst_int(current_struct_elem->children.back()->range_right, true);
+    } else if (current_struct_elem->type == AST::AST_UNION) {
+        left = AST::AstNode::mkconst_int(current_struct_elem->range_left, true);
+        right = AST::AstNode::mkconst_int(current_struct_elem->range_right, true);
     } else {
-        // Structs currently can only have AST_STRUCT or AST_STRUCT_ITEM
-        // so, it should never happen
-        log_error("Found %s elem in struct that is currently unsupported!\n", type2str(current_struct_elem->type).c_str());
+        // Structs currently can only have AST_STRUCT, AST_STRUCT_ITEM, or AST_UNION.
+        log_file_error(current_struct_elem->filename, current_struct_elem->location.first_line,
+                       "Accessing struct member of type %s is unsupported.\n", type2str(current_struct_elem->type).c_str());
     }
 
     auto elem_size =
@@ -549,7 +552,8 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
                 log_error("Unhandled range select (AST_STRUCT) in AST_DOT!\n");
             }
         } else {
-            log_error("Found %s elem in struct that is currently unsupported!\n", type2str(current_struct_elem->type).c_str());
+            log_file_error(current_struct_elem->filename, current_struct_elem->location.first_line,
+                           "Accessing member of a slice of type %s is unsupported.\n", type2str(current_struct_elem->type).c_str());
         }
     }
     // Return range from the begining of *current* struct
@@ -561,11 +565,13 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
 static AST::AstNode *convert_dot(AST::AstNode *wire_node, AST::AstNode *node, AST::AstNode *dot)
 {
     AST::AstNode *struct_node = nullptr;
-    if (wire_node->type == AST::AST_STRUCT) {
+    if (wire_node->type == AST::AST_STRUCT || wire_node->type == AST::AST_UNION) {
         struct_node = wire_node;
     } else if (wire_node->attributes.count(ID::wiretype)) {
         log_assert(wire_node->attributes[ID::wiretype]->id2ast);
         struct_node = wire_node->attributes[ID::wiretype]->id2ast;
+    } else {
+        log_file_error(wire_node->filename, wire_node->location.first_line, "Unsupported node type: %s\n", type2str(wire_node->type).c_str());
     }
     log_assert(struct_node);
     auto expanded = expand_dot(struct_node, dot);
