@@ -1013,6 +1013,10 @@ module dsp_t1_sim_cfg_ports # (
     reg         r_sat;
     reg         r_rnd;
     reg [NBITS_ACC-1:0] acc;
+    reg                 r_sat_d1;
+    reg                 r_sat_d2;
+    reg                 r_rnd_d1;
+    reg                 r_rnd_d2;
 
     initial begin
         r_a          <= 0;
@@ -1046,6 +1050,10 @@ module dsp_t1_sim_cfg_ports # (
             r_load_acc   <= 0;
             r_sat    <= 0;
             r_rnd    <= 0;
+            r_sat_d1 <= 0;
+            r_sat_d2 <= 0;
+            r_rnd_d1 <= 0;
+            r_rnd_d2 <= 0;
 
         end else begin
 
@@ -1062,6 +1070,10 @@ module dsp_t1_sim_cfg_ports # (
             r_load_acc   <= load_acc_i;
             r_sat    <= r_sat;
             r_rnd    <= r_rnd;
+            r_sat_d1 <= saturate_enable_i;
+            r_sat_d2 <= sat_d1;
+            r_rnd_d1 <= round_i;
+            r_rnd_d2 <= rnd_d1;
 
         end
     end
@@ -1076,8 +1088,14 @@ module dsp_t1_sim_cfg_ports # (
     wire [2:0] feedback   = register_inputs_i ? r_feedback   : feedback_i;
     wire       load_acc   = register_inputs_i ? r_load_acc   : load_acc_i;
     wire       subtract   = register_inputs_i ? r_subtract   : subtract_i;
-    wire       sat    = register_inputs_i ? r_sat : saturate_enable_i;
-    wire       rnd    = register_inputs_i ? r_rnd : round_i;
+    wire       sat        = register_inputs_i ? r_sat : saturate_enable_i;
+    wire       rnd        = register_inputs_i ? r_rnd : round_i;
+
+    wire       sat_d1     = register_inputs_i  ?  r_sat_d1 : saturate_enable_i;
+    wire       sat_d2     = output_select_i[1] ?  sat_d1   : r_sat_d2;
+
+    wire       rnd_d1     = register_inputs_i  ?  r_rnd_d1 : round_i;
+    wire       rnd_d2     = output_select_i[1] ?  rnd_d1   : r_rnd_d2;
 
     // Shift right control
     wire [5:0] shift_d1 = register_inputs_i ? r_shift_d1 : shift_right_i;
@@ -1139,7 +1157,7 @@ module dsp_t1_sim_cfg_ports # (
     wire [NBITS_ACC-1:0] acc_out = (output_select_i[1]) ? add_o : acc;
 
     // Round, shift, saturate
-    wire [NBITS_ACC-1:0] acc_rnd = (rnd && (shift_right_i != 0)) ? (acc_out + ({{(NBITS_ACC-1){1'b0}}, 1'b1} << (shift_right_i - 1))) :
+    wire [NBITS_ACC-1:0] acc_rnd = (rnd_d2 && (shift_right_i != 0)) ? (acc_out + ({{(NBITS_ACC-1){1'b0}}, 1'b1} << (shift_right_i - 1))) :
                                                                     acc_out;
 
     wire [NBITS_ACC-1:0] acc_shr = (unsigned_mode) ? (acc_rnd  >> shift_right_i) :
@@ -1152,7 +1170,7 @@ module dsp_t1_sim_cfg_ports # (
                                       (&acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b1)) ? {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}} :
                                                                                    {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_ACC-1],{NBITS_Z-1{~acc_shr[NBITS_ACC-1]}}}};
 
-    wire [NBITS_ACC-1:0] acc_sat = (sat) ? ((unsigned_mode) ? acc_sat_u : acc_sat_s) : acc_shr;
+    wire [NBITS_ACC-1:0] acc_sat = (sat_d2) ? ((unsigned_mode) ? acc_sat_u : acc_sat_s) : acc_shr;
 
     // Output signals
     wire [NBITS_Z-1:0]  z0;
