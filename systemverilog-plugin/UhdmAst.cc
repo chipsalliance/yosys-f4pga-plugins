@@ -2271,7 +2271,7 @@ void UhdmAst::process_assignment(const UHDM::BaseClass *object)
     AST::AstNodeType node_type;
     current_node = make_ast_node(type);
 
-    if (op_type && op_type != 82) {
+    if (op_type && op_type != vpiAssignmentOp) {
         simple_assign = false;
         visit_one_to_one({vpiLhs}, obj_h, [&](AST::AstNode *node) {
             if (node) {
