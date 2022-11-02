@@ -2265,22 +2265,20 @@ void UhdmAst::process_cont_assign()
 void UhdmAst::process_assignment(const UHDM::BaseClass *object)
 {
     auto type = vpi_get(vpiBlocking, obj_h) == 1 ? AST::AST_ASSIGN_EQ : AST::AST_ASSIGN_LE;
-    bool simple_assign = true;
     bool shift_unsigned = false;
     int op_type = vpi_get(vpiOpType, obj_h);
     AST::AstNodeType node_type;
     current_node = make_ast_node(type);
 
-    if (op_type && op_type != vpiAssignmentOp) {
-        simple_assign = false;
-        visit_one_to_one({vpiLhs}, obj_h, [&](AST::AstNode *node) {
-            if (node) {
-                if (node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) {
-                    node->type = AST::AST_IDENTIFIER;
-                }
-                current_node->children.push_back(node);
+    visit_one_to_one({vpiLhs, vpiRhs}, obj_h, [&](AST::AstNode *node) {
+        if (node) {
+            if (node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) {
+                node->type = AST::AST_IDENTIFIER;
             }
-        });
+            current_node->children.push_back(node);
+        }
+    });
+    if (op_type && op_type != vpiAssignmentOp) {
         switch (op_type) {
         case vpiSubOp:
             node_type = AST::AST_SUB;
@@ -2329,25 +2327,14 @@ void UhdmAst::process_assignment(const UHDM::BaseClass *object)
                          op_type);
             return;
         }
-        current_node->children.push_back(make_ast_node(node_type));
-    }
-
-    visit_one_to_one({vpiLhs, vpiRhs}, obj_h, [&](AST::AstNode *node) {
-        if (node) {
-            if (node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) {
-                node->type = AST::AST_IDENTIFIER;
-            }
-            if (!simple_assign) {
-                log_assert(current_node->children.size() == 2);
-                current_node->children[1]->children.push_back(node);
-            } else
-                current_node->children.push_back(node);
+        log_assert(current_node->children.size() == 2);
+        auto child_node = new AST::AstNode(node_type, current_node->children[0]->clone(), current_node->children[1]);
+        current_node->children[1] = child_node;
+        if (shift_unsigned) {
+            log_assert(current_node->children[1]->children.size() == 2);
+            auto unsigned_node = new AST::AstNode(AST::AST_TO_UNSIGNED, current_node->children[1]->children[1]);
+            current_node->children[1]->children[1] = unsigned_node;
         }
-    });
-    if (shift_unsigned) {
-        log_assert(current_node->children[1]->children.size() == 2);
-        auto unsigned_node = new AST::AstNode(AST::AST_TO_UNSIGNED, current_node->children[1]->children[1]);
-        current_node->children[1]->children[1] = unsigned_node;
     }
     if (current_node->children.size() == 1 && current_node->children[0]->type == AST::AST_WIRE) {
         auto top_node = find_ancestor({AST::AST_MODULE});
