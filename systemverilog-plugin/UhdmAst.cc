@@ -2262,10 +2262,8 @@ void UhdmAst::process_cont_assign()
         process_cont_assign_net();
 }
 
-void UhdmAst::process_assignment()
+void UhdmAst::process_assignment(const UHDM::BaseClass *object)
 {
-    const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
-    const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
     auto type = vpi_get(vpiBlocking, obj_h) == 1 ? AST::AST_ASSIGN_EQ : AST::AST_ASSIGN_LE;
     bool simple_assign = true;
     bool shift_unsigned = false;
@@ -4189,7 +4187,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiAssignStmt:
     case vpiAssignment:
-        process_assignment();
+        process_assignment(object);
         break;
     case vpiInterfaceTypespec:
     case vpiRefVar:
