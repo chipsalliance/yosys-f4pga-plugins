@@ -93,7 +93,7 @@ class UhdmAst
     void process_cont_assign();
     void process_cont_assign_net();
     void process_cont_assign_var_init();
-    void process_assignment();
+    void process_assignment(const UHDM::BaseClass *object);
     void process_net();
     void process_packed_array_net();
     void process_array_net(const UHDM::BaseClass *object);

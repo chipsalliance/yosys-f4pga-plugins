@@ -2269,10 +2269,14 @@ void UhdmAst::process_cont_assign()
         process_cont_assign_net();
 }
 
-void UhdmAst::process_assignment()
+void UhdmAst::process_assignment(const UHDM::BaseClass *object)
 {
     auto type = vpi_get(vpiBlocking, obj_h) == 1 ? AST::AST_ASSIGN_EQ : AST::AST_ASSIGN_LE;
+    bool shift_unsigned = false;
+    int op_type = vpi_get(vpiOpType, obj_h);
+    AST::AstNodeType node_type;
     current_node = make_ast_node(type);
+
     visit_one_to_one({vpiLhs, vpiRhs}, obj_h, [&](AST::AstNode *node) {
         if (node) {
             if (node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) {
@@ -2281,6 +2285,64 @@ void UhdmAst::process_assignment()
             current_node->children.push_back(node);
         }
     });
+    if (op_type && op_type != vpiAssignmentOp) {
+        switch (op_type) {
+        case vpiSubOp:
+            node_type = AST::AST_SUB;
+            break;
+        case vpiDivOp:
+            node_type = AST::AST_DIV;
+            break;
+        case vpiModOp:
+            node_type = AST::AST_MOD;
+            break;
+        case vpiLShiftOp:
+            node_type = AST::AST_SHIFT_LEFT;
+            shift_unsigned = true;
+            break;
+        case vpiRShiftOp:
+            node_type = AST::AST_SHIFT_RIGHT;
+            shift_unsigned = true;
+            break;
+        case vpiAddOp:
+            node_type = AST::AST_ADD;
+            break;
+        case vpiMultOp:
+            node_type = AST::AST_MUL;
+            break;
+        case vpiBitAndOp:
+            node_type = AST::AST_BIT_AND;
+            break;
+        case vpiBitOrOp:
+            node_type = AST::AST_BIT_OR;
+            break;
+        case vpiBitXorOp:
+            node_type = AST::AST_BIT_XOR;
+            break;
+        case vpiArithLShiftOp:
+            node_type = AST::AST_SHIFT_SLEFT;
+            shift_unsigned = true;
+            break;
+        case vpiArithRShiftOp:
+            node_type = AST::AST_SHIFT_SRIGHT;
+            shift_unsigned = true;
+            break;
+        default:
+            delete current_node;
+            current_node = nullptr;
+            report_error("%s:%d: Encountered unhandled compound assignment with operation type %d\n", object->VpiFile().c_str(), object->VpiLineNo(),
+                         op_type);
+            return;
+        }
+        log_assert(current_node->children.size() == 2);
+        auto child_node = new AST::AstNode(node_type, current_node->children[0]->clone(), current_node->children[1]);
+        current_node->children[1] = child_node;
+        if (shift_unsigned) {
+            log_assert(current_node->children[1]->children.size() == 2);
+            auto unsigned_node = new AST::AstNode(AST::AST_TO_UNSIGNED, current_node->children[1]->children[1]);
+            current_node->children[1]->children[1] = unsigned_node;
+        }
+    }
     if (current_node->children.size() == 1 && current_node->children[0]->type == AST::AST_WIRE) {
         auto top_node = find_ancestor({AST::AST_MODULE});
         if (!top_node)
@@ -4122,7 +4184,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiAssignStmt:
     case vpiAssignment:
-        process_assignment();
+        process_assignment(object);
         break;
     case vpiInterfaceTypespec:
     case vpiRefVar:
