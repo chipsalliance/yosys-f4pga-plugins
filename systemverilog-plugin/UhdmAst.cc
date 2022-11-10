@@ -3874,6 +3874,8 @@ void UhdmAst::process_port()
         case vpiStructVar:
         case vpiUnionVar:
         case vpiEnumVar:
+        case vpiBitVar:
+        case vpiByteVar:
         case vpiShortIntVar:
         case vpiLongIntVar:
         case vpiIntVar:
