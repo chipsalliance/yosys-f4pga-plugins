@@ -1567,6 +1567,13 @@ void UhdmAst::process_design()
             pair.second = nullptr;
         }
     }
+    if (!shared.debug_flag) {
+        // Ranges were already converted, erase obsolete attributes
+        visitEachDescendant(current_node, [&](AST::AstNode *node) {
+            node->attributes.erase(UhdmAst::packed_ranges());
+            node->attributes.erase(UhdmAst::unpacked_ranges());
+        });
+    }
 }
 
 void UhdmAst::simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_node)
