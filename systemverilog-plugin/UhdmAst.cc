@@ -1891,27 +1891,27 @@ void UhdmAst::process_typespec_member()
         break;
     }
     case vpiByteTypespec: {
-        current_node->is_signed = true;
+        current_node->is_signed = vpi_get(vpiSigned, typespec_h);
         packed_ranges.push_back(make_range(7, 0));
         shared.report.mark_handled(typespec_h);
         break;
     }
     case vpiShortIntTypespec: {
-        current_node->is_signed = true;
+        current_node->is_signed = vpi_get(vpiSigned, typespec_h);
         packed_ranges.push_back(make_range(15, 0));
         shared.report.mark_handled(typespec_h);
         break;
     }
     case vpiIntTypespec:
     case vpiIntegerTypespec: {
-        current_node->is_signed = true;
+        current_node->is_signed = vpi_get(vpiSigned, typespec_h);
         packed_ranges.push_back(make_range(31, 0));
         shared.report.mark_handled(typespec_h);
         break;
     }
     case vpiTimeTypespec:
     case vpiLongIntTypespec: {
-        current_node->is_signed = true;
+        current_node->is_signed = vpi_get(vpiSigned, typespec_h);
         packed_ranges.push_back(make_range(63, 0));
         shared.report.mark_handled(typespec_h);
         break;
@@ -2016,7 +2016,7 @@ void UhdmAst::process_enum_typespec()
         case vpiByteTypespec:
         case vpiIntTypespec:
         case vpiIntegerTypespec: {
-            current_node->is_signed = true;
+            current_node->is_signed = vpi_get(vpiSigned, typespec_h);
             shared.report.mark_handled(typespec_h);
             break;
         }
@@ -2078,7 +2078,7 @@ void UhdmAst::process_int_var()
     auto right_const = AST::AstNode::mkconst_int(0, true);
     auto range = new AST::AstNode(AST::AST_RANGE, left_const, right_const);
     current_node->children.push_back(range);
-    current_node->is_signed = true;
+    current_node->is_signed = vpi_get(vpiSigned, obj_h);
     visit_default_expr(obj_h);
 }
 
