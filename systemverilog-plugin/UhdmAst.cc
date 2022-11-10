@@ -2559,6 +2559,7 @@ void UhdmAst::process_io_decl()
                 current_node->is_logic = node->is_logic;
                 current_node->is_reg = node->is_reg;
             }
+            current_node->is_signed = node->is_signed;
             delete node;
         }
     });
@@ -3559,6 +3560,7 @@ void UhdmAst::process_logic_var()
             current_node->children.push_back(wiretype_node);
             current_node->is_custom_type = true;
         }
+        current_node->is_signed = node->is_signed;
         delete node;
     });
     // TODO: Handling below seems similar to other typespec accesses for range. Candidate for extraction to a function.
