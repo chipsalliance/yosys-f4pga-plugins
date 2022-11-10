@@ -1071,25 +1071,32 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
 {
     s_vpi_value val;
     vpi_get_value(obj_h, &val);
-    std::string strValType;
+    std::string strValType = "'";
+    bool is_signed = false;
+    if (vpiHandle typespec_h = vpi_handle(vpiTypespec, obj_h)) {
+        is_signed = vpi_get(vpiSigned, typespec_h);
+        if (is_signed) {
+            strValType += "s";
+        }
+    }
     if (val.format) { // Needed to handle parameter nodes without typespecs and constants
         switch (val.format) {
         case vpiScalarVal:
             return AST::AstNode::mkconst_int(val.value.scalar, false, 1);
         case vpiBinStrVal: {
-            strValType = "'b";
+            strValType += "b";
             break;
         }
         case vpiDecStrVal: {
-            strValType = "'d";
+            strValType += "d";
             break;
         }
         case vpiHexStrVal: {
-            strValType = "'h";
+            strValType += "h";
             break;
         }
         case vpiOctStrVal: {
-            strValType = "'o";
+            strValType += "o";
             break;
         }
         // Surelog reports constant integers as a unsigned, but by default int is signed
@@ -1112,7 +1119,6 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             }
 
             int size = -1;
-            bool is_signed = false;
             // Surelog sometimes report size as part of vpiTypespec (e.g. int_typespec)
             // if it is the case, we need to set size to the left_range of first packed range
             visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
@@ -1130,7 +1136,6 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             // above by vpi*StrVal
             if (size == 64) {
                 size = 32;
-                is_signed = true;
             }
             auto c = AST::AstNode::mkconst_int(val.format == vpiUIntVal ? val.value.uint : val.value.integer, is_signed, size > 0 ? size : 32);
             if (size == 0 || size == -1)
