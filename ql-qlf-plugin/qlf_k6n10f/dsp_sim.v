@@ -1936,7 +1936,7 @@ module QL_DSP2_MULTADD (
         .unsigned_a(unsigned_a),
         .unsigned_b(unsigned_b),
 
-        .clk(1'b0),
+        //.clk(1'b0),
         .reset(reset),
 
         .output_select(output_select),      // unregistered output: ACCin (2, 3)
