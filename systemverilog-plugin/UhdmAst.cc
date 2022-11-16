@@ -1277,8 +1277,21 @@ AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::Ast
     if (auto filename = vpi_get_str(vpiFile, obj_h)) {
         node->filename = filename;
     }
-    if (unsigned int line = vpi_get(vpiLineNo, obj_h)) {
-        node->location.first_line = node->location.last_line = line;
+    if (unsigned int first_line = vpi_get(vpiLineNo, obj_h)) {
+        node->location.first_line = first_line;
+    }
+    if (unsigned int last_line = vpi_get(vpiEndLineNo, obj_h)) {
+        node->location.last_line = last_line;
+    } else {
+        node->location.last_line = node->location.first_line;
+    }
+    if (unsigned int first_col = vpi_get(vpiColumnNo, obj_h)) {
+        node->location.first_column = first_col;
+    }
+    if (unsigned int last_col = vpi_get(vpiEndColumnNo, obj_h)) {
+        node->location.last_column = last_col;
+    } else {
+        node->location.last_column = node->location.first_column;
     }
     node->children = children;
     return node;
@@ -1557,6 +1570,13 @@ void UhdmAst::process_design()
             delete pair.second;
             pair.second = nullptr;
         }
+    }
+    if (!shared.debug_flag) {
+        // Ranges were already converted, erase obsolete attributes
+        visitEachDescendant(current_node, [&](AST::AstNode *node) {
+            node->attributes.erase(UhdmAst::packed_ranges());
+            node->attributes.erase(UhdmAst::unpacked_ranges());
+        });
     }
 }
 
