@@ -27,6 +27,11 @@ module sh_dff(
     initial Q <= 1'b0;
     always @(posedge C)
         Q <= D;
+		
+    specify
+      (posedge C => (Q +: D)) = 0;
+      $setuphold(posedge C, D, 0, 0);
+    endspecify
 
 endmodule
 
@@ -40,87 +45,15 @@ module adder_carry(
 );
     assign sumout = p ^ cin;
     assign cout = p ? cin : g;
-
-endmodule
-
-(* abc9_box, lib_whitebox *)
-module adder_lut5(
-   output wire lut5_out,
-   (* abc9_carry *)
-   output wire cout,
-   input wire [0:4] in,
-   (* abc9_carry *)
-   input wire cin
-);
-    parameter [0:15] LUT=0;
-    parameter IN2_IS_CIN = 0;
-
-    wire [0:4] li = (IN2_IS_CIN) ? {in[0], in[1], cin, in[3], in[4]} : {in[0], in[1], in[2], in[3],in[4]};
-
-    // Output function
-    wire [0:15] s1 = li[0] ?
-        {LUT[0], LUT[2], LUT[4], LUT[6], LUT[8], LUT[10], LUT[12], LUT[14], LUT[16], LUT[18], LUT[20], LUT[22], LUT[24], LUT[26], LUT[28], LUT[30]}:
-        {LUT[1], LUT[3], LUT[5], LUT[7], LUT[9], LUT[11], LUT[13], LUT[15], LUT[17], LUT[19], LUT[21], LUT[23], LUT[25], LUT[27], LUT[29], LUT[31]};
-
-    wire [0:7] s2 = li[1] ? {s1[0], s1[2], s1[4], s1[6], s1[8], s1[10], s1[12], s1[14]} :
-                            {s1[1], s1[3], s1[5], s1[7], s1[9], s1[11], s1[13], s1[15]};
-
-    wire [0:3] s3 = li[2] ? {s2[0], s2[2], s2[4], s2[6]} : {s2[1], s2[3], s2[5], s2[7]};
-    wire [0:1] s4 = li[3] ? {s3[0], s3[2]} : {s3[1], s3[3]};
-
-    assign lut5_out = li[4] ? s4[0] : s4[1];
-
-    // Carry out function
-    assign cout = (s3[2]) ? cin : s3[3];
-
-endmodule
-
-(* abc9_lut=1, lib_whitebox *)
-module frac_lut6(
-    input wire [0:5] in,
-    output wire [0:3] lut4_out,
-    output wire [0:1] lut5_out,
-    output wire lut6_out
-);
-    parameter [0:63] LUT = 0;
-    // Effective LUT input
-    wire [0:5] li = in;
-
-    // Output function
-    wire [0:31] s1 = li[0] ?
-    {LUT[0] , LUT[2] , LUT[4] , LUT[6] , LUT[8] , LUT[10], LUT[12], LUT[14], 
-     LUT[16], LUT[18], LUT[20], LUT[22], LUT[24], LUT[26], LUT[28], LUT[30],
-     LUT[32], LUT[34], LUT[36], LUT[38], LUT[40], LUT[42], LUT[44], LUT[46],
-     LUT[48], LUT[50], LUT[52], LUT[54], LUT[56], LUT[58], LUT[60], LUT[62]}:
-    {LUT[1] , LUT[3] , LUT[5] , LUT[7] , LUT[9] , LUT[11], LUT[13], LUT[15], 
-     LUT[17], LUT[19], LUT[21], LUT[23], LUT[25], LUT[27], LUT[29], LUT[31],
-     LUT[33], LUT[35], LUT[37], LUT[39], LUT[41], LUT[43], LUT[45], LUT[47],
-     LUT[49], LUT[51], LUT[53], LUT[55], LUT[57], LUT[59], LUT[61], LUT[63]};
-
-    wire [0:15] s2 = li[1] ?
-    {s1[0] , s1[2] , s1[4] , s1[6] , s1[8] , s1[10], s1[12], s1[14],
-     s1[16], s1[18], s1[20], s1[22], s1[24], s1[26], s1[28], s1[30]}:
-    {s1[1] , s1[3] , s1[5] , s1[7] , s1[9] , s1[11], s1[13], s1[15],
-     s1[17], s1[19], s1[21], s1[23], s1[25], s1[27], s1[29], s1[31]};
-
-    wire [0:7] s3 = li[2] ?
-    {s2[0], s2[2], s2[4], s2[6], s2[8], s2[10], s2[12], s2[14]}:
-    {s2[1], s2[3], s2[5], s2[7], s2[9], s2[11], s2[13], s2[15]};
-
-    wire [0:3] s4 = li[3] ? {s3[0], s3[2], s3[4], s3[6]}:
-                            {s3[1], s3[3], s3[5], s3[7]};
-
-    wire [0:1] s5 = li[4] ? {s4[0], s4[2]} : {s4[1], s4[3]};
-
-    assign lut4_out[0] = s4[0];
-    assign lut4_out[1] = s4[1];
-    assign lut4_out[2] = s4[2];
-    assign lut4_out[3] = s4[3];
-
-    assign lut5_out[0] = s5[0];
-    assign lut5_out[1] = s5[1];
-
-    assign lut6_out = li[5] ? s5[0] : s5[1];
+	
+    specify
+        (p => sumout) = 0;
+        (g => sumout) = 0;
+        (cin => sumout) = 0;
+        (p => cout) = 0;
+        (g => cout) = 0;
+        (cin => cout) = 0;
+    endspecify
 
 endmodule
 
@@ -136,6 +69,11 @@ module dff(
     always @(posedge C)
       Q <= D;
 
+    specify
+	    (posedge C=>(Q+:D)) = 0;
+	    $setuphold(posedge C, D, 0, 0);
+    endspecify
+
 endmodule
 
 (* abc9_flop, lib_whitebox *)
@@ -149,6 +87,11 @@ module dffn(
 
     always @(negedge C)
       Q <= D;
+	  
+    specify
+	    (negedge C=>(Q+:D)) = 0;
+	    $setuphold(negedge C, D, 0, 0);
+    endspecify
 
 endmodule
 
@@ -172,6 +115,18 @@ module dffsre(
       else if (E)
         Q <= D;
 
+    specify
+      (posedge C => (Q +: D)) = 0;
+      (R => Q) = 0;
+      (S => Q) = 0;
+      $setuphold(posedge C, D, 0, 0);
+      $setuphold(posedge C, E, 0, 0);
+      $setuphold(posedge C, R, 0, 0);
+      $setuphold(posedge C, S, 0, 0);
+      $recrem(posedge R, posedge C, 0, 0);
+      $recrem(posedge S, posedge C, 0, 0);
+    endspecify
+
 endmodule
 
 (* abc9_flop, lib_whitebox *)
@@ -193,6 +148,18 @@ module dffnsre(
         Q <= 1'b1;
       else if (E)
         Q <= D;
+		
+    specify
+      (negedge C => (Q +: D)) = 0;
+      (R => Q) = 0;
+      (S => Q) = 0;
+      $setuphold(negedge C, D, 0, 0);
+      $setuphold(negedge C, E, 0, 0);
+      $setuphold(negedge C, R, 0, 0);
+      $setuphold(negedge C, S, 0, 0);
+      $recrem(posedge R, negedge C, 0, 0);
+      $recrem(posedge S, negedge C, 0, 0);
+    endspecify
 
 endmodule
 
@@ -215,6 +182,14 @@ module sdffsre(
         Q <= 1'b1;
       else if (E)
         Q <= D;
+		
+    specify
+        (posedge C => (Q +: D)) = 0;
+        $setuphold(posedge C, D, 0, 0);
+        $setuphold(posedge C, R, 0, 0);
+        $setuphold(posedge C, S, 0, 0);
+        $setuphold(posedge C, E, 0, 0);
+    endspecify
 
 endmodule
 
@@ -237,6 +212,14 @@ module sdffnsre(
         Q <= 1'b1;
       else if (E)
         Q <= D;
+		
+    specify
+        (negedge C => (Q +: D)) = 0;
+        $setuphold(negedge C, D, 0, 0);
+        $setuphold(negedge C, R, 0, 0);
+        $setuphold(negedge C, S, 0, 0);
+        $setuphold(negedge C, E, 0, 0);
+    endspecify
 
 endmodule
 
@@ -260,6 +243,14 @@ module latchsre (
         else if (E && G)
           Q <= D;
       end
+	  
+    specify
+      (posedge G => (Q +: D)) = 0;
+      $setuphold(posedge G, D, 0, 0);
+      $setuphold(posedge G, E, 0, 0);
+      $setuphold(posedge G, R, 0, 0);
+      $setuphold(posedge G, S, 0, 0);
+    endspecify      
 
 endmodule
 
@@ -283,114 +274,17 @@ module latchnsre (
         else if (E && !G)
           Q <= D;
       end
+	  
+    specify
+      (negedge G => (Q +: D)) = 0;
+      $setuphold(negedge G, D, 0, 0);
+      $setuphold(negedge G, E, 0, 0);
+      $setuphold(negedge G, R, 0, 0);
+      $setuphold(negedge G, S, 0, 0);
+    endspecify 
 
 endmodule
 
-
-module TDP_BRAM18 (
-    (* clkbuf_sink *)
-    input wire CLOCKA,
-    (* clkbuf_sink *)
-    input wire CLOCKB,
-    input wire READENABLEA,
-    input wire READENABLEB,
-    input wire [13:0] ADDRA,
-    input wire [13:0] ADDRB,
-    input wire [15:0] WRITEDATAA,
-    input wire [15:0] WRITEDATAB,
-    input wire [1:0] WRITEDATAAP,
-    input wire [1:0] WRITEDATABP,
-    input wire WRITEENABLEA,
-    input wire WRITEENABLEB,
-    input wire [1:0] BYTEENABLEA,
-    input wire [1:0] BYTEENABLEB,
-    //input wire [2:0] WRITEDATAWIDTHA,
-    //input wire [2:0] WRITEDATAWIDTHB,
-    //input wire [2:0] READDATAWIDTHA,
-    //input wire [2:0] READDATAWIDTHB,
-    output wire [15:0] READDATAA,
-    output wire [15:0] READDATAB,
-    output wire [1:0] READDATAAP,
-    output wire [1:0] READDATABP
-);
-    parameter INITP_00 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INITP_01 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INITP_02 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INITP_03 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INITP_04 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INITP_05 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INITP_06 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INITP_07 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_00 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_01 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_02 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_03 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_04 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_05 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_06 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_07 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_08 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_09 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_0A = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_0B = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_0C = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_0D = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_0E = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_0F = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_10 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_11 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_12 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_13 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_14 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_15 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_16 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_17 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_18 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_19 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_1A = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_1B = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_1C = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_1D = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_1E = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_1F = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_20 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_21 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_22 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_23 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_24 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_25 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_26 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_27 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_28 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_29 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_2A = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_2B = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_2C = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_2D = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_2E = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_2F = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_30 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_31 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_32 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_33 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_34 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_35 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_36 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_37 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_38 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_39 = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_3A = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_3B = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_3C = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_3D = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_3E = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter INIT_3F = 256'h0000000000000000000000000000000000000000000000000000000000000000;
-    parameter integer READ_WIDTH_A = 0;
-    parameter integer READ_WIDTH_B = 0;
-    parameter integer WRITE_WIDTH_A = 0;
-    parameter integer WRITE_WIDTH_B = 0;
-
-endmodule
 
 module TDP36K (
     RESET_ni,
@@ -1689,3 +1583,4 @@ module \_$_mem_v2_asymmetric (RD_ADDR, RD_ARST, RD_CLK, RD_DATA, RD_EN, RD_SRST,
         .FLUSH2_i(FLUSH2)
     );
 endmodule
+
