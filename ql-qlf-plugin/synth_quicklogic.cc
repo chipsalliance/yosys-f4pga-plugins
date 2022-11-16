@@ -85,6 +85,9 @@ struct SynthQuickLogicPass : public ScriptPass {
         log("        By default use Block RAM in output netlist.\n");
         log("        Specifying this switch turns it off.\n");
         log("\n");
+        log("    -bram_types\n");
+        log("        Emit specialized BRAM cells for particular address and data width configurations \n");
+        log("\n");
         log("    -no_ff_map\n");
         log("        By default ff techmap is turned on. Specifying this switch turns it off.\n");
         log("\n");
@@ -103,6 +106,7 @@ struct SynthQuickLogicPass : public ScriptPass {
     bool nodsp;
     bool inferAdder;
     bool inferBram;
+    bool bramTypes;
     bool abcOpt;
     bool abc9;
     bool noffmap;
@@ -118,6 +122,7 @@ struct SynthQuickLogicPass : public ScriptPass {
         family = "qlf_k4n8";
         inferAdder = true;
         inferBram = true;
+        bramTypes = false;
         abcOpt = true;
         abc9 = true;
         noffmap = false;
@@ -179,6 +184,10 @@ struct SynthQuickLogicPass : public ScriptPass {
             }
             if (args[argidx] == "-no_bram") {
                 inferBram = false;
+                continue;
+            }
+            if (args[argidx] == "-bram_types") {
+                bramTypes = true;
                 continue;
             }
             if (args[argidx] == "-no_abc_opt") {
@@ -376,21 +385,24 @@ struct SynthQuickLogicPass : public ScriptPass {
             const std::unordered_map<int, int> dataWidth18 = {{18, 18}, {16, 18}, {9, 9}, {8, 9}, {4, 4}, {2, 2}, {1, 1}};
 
             // Perform a series of 'chtype' passess
-            for (const auto &ww : dataWidth18) {
-                for (const auto &rw : dataWidth18) {
-                    auto cmd = stringf("chtype -set TDP36K_BRAM_WR_X%d_RD_X%d_split t:TDP36K a:is_inferred=1 %%i a:is_split=1 %%i a:wr_data_width=%d "
-                                       "%%i a:rd_data_width=%d %%i",
-                                       ww.second, rw.second, ww.first, rw.first);
-                    run(cmd);
+            if (bramTypes) {
+                for (const auto &ww : dataWidth18) {
+                    for (const auto &rw : dataWidth18) {
+                        auto cmd =
+                          stringf("chtype -set TDP36K_BRAM_WR_X%d_RD_X%d_split t:TDP36K a:is_inferred=1 %%i a:is_split=1 %%i a:wr_data_width=%d "
+                                  "%%i a:rd_data_width=%d %%i",
+                                  ww.second, rw.second, ww.first, rw.first);
+                        run(cmd);
+                    }
                 }
-            }
 
-            for (const auto &ww : dataWidth36) {
-                for (const auto &rw : dataWidth36) {
-                    auto cmd = stringf(
-                      "chtype -set TDP36K_BRAM_WR_X%d_RD_X%d_nonsplit t:TDP36K a:is_inferred=1 %%i a:wr_data_width=%d %%i a:rd_data_width=%d %%i",
-                      ww.second, rw.second, ww.first, rw.first);
-                    run(cmd);
+                for (const auto &ww : dataWidth36) {
+                    for (const auto &rw : dataWidth36) {
+                        auto cmd = stringf(
+                          "chtype -set TDP36K_BRAM_WR_X%d_RD_X%d_nonsplit t:TDP36K a:is_inferred=1 %%i a:wr_data_width=%d %%i a:rd_data_width=%d %%i",
+                          ww.second, rw.second, ww.first, rw.first);
+                        run(cmd);
+                    }
                 }
             }
         }

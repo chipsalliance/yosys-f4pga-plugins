@@ -8,7 +8,7 @@ design -save bram_sdp
 
 select BRAM_SDP_36x1024
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_36x1024
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_36x1024 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -19,7 +19,7 @@ select -clear
 design -load bram_sdp
 select BRAM_SDP_32x1024
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_32x1024
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_32x1024 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -30,7 +30,7 @@ select -clear
 design -load bram_sdp
 select BRAM_SDP_18x2048
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_18x2048
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_18x2048 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -41,7 +41,7 @@ select -clear
 design -load bram_sdp
 select BRAM_SDP_16x2048
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_16x2048
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_16x2048 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -52,7 +52,7 @@ select -clear
 design -load bram_sdp
 select BRAM_SDP_9x4096
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_9x4096
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_9x4096 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -63,7 +63,7 @@ select -clear
 design -load bram_sdp
 select BRAM_SDP_8x4096
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_8x4096
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_8x4096 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -74,7 +74,7 @@ select -clear
 design -load bram_sdp
 select BRAM_SDP_4x8192
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_4x8192
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_4x8192 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -85,7 +85,7 @@ select -clear
 design -load bram_sdp
 select BRAM_SDP_2x16384
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_2x16384
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_2x16384 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -96,7 +96,7 @@ select -clear
 design -load bram_sdp
 select BRAM_SDP_1x32768
 select *
-synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_1x32768
+synth_quicklogic -family qlf_k6n10f -top BRAM_SDP_1x32768 -bram_types
 opt_expr -undriven
 opt_clean
 stat
