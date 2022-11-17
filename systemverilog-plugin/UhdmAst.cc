@@ -1998,42 +1998,67 @@ void UhdmAst::process_typespec_member()
 
 void UhdmAst::process_enum_typespec()
 {
+    // BaseTypespec specifies underlying type of the enum.
+    // The BaseTypespec has at most one explicit packed dimension (range).
+    // When base type is not specified in SystemVerilog code, it is assumed to be an int.
+    // Type of enum items (constants) is the same as the enum type.
     current_node = make_ast_node(AST::AST_ENUM);
+    bool has_base_type = false;
+    visit_one_to_one({vpiBaseTypespec}, obj_h, [&](AST::AstNode *node) {
+        has_base_type = true;
+        current_node->children = std::move(node->children);
+        current_node->attributes = std::move(node->attributes);
+        current_node->is_signed = node->is_signed;
+        current_node->is_logic = node->is_logic;
+        delete node;
+    });
+    if (!has_base_type) {
+        // Base typespec is `int` by default
+        // TODO (mglb): This is almost the same code as in `process_int_typespec()`. Put common code in dedicated function.
+        std::vector<AST::AstNode *> packed_ranges;
+        packed_ranges.push_back(make_range(31, 0));
+        add_multirange_wire(current_node, std::move(packed_ranges), {});
+        current_node->is_signed = true;
+    }
+    // We have to restore node's range_* properties if there's no range.
+    const auto range_left = current_node->range_left;
+    const auto range_right = current_node->range_right;
+    const auto range_valid = current_node->range_valid;
+    // Create a range from the typespec just for the purpose of copying it to consts.
+    convert_packed_unpacked_range(current_node);
+    const auto range_it = std::find_if(current_node->children.cbegin(), current_node->children.cend(),
+                                       [](const AST::AstNode *n) { return n->type == AST::AST_RANGE || n->type == AST::AST_MULTIRANGE; });
+    const auto *const range = range_it != current_node->children.cend() ? *range_it : nullptr;
+    if (range) {
+        current_node->children.erase(range_it);
+    } else {
+        current_node->range_left = range_left;
+        current_node->range_right = range_right;
+        current_node->range_valid = range_valid;
+    }
+
     visit_one_to_one({vpiTypedefAlias}, obj_h, [&](AST::AstNode *node) {
         if (node) {
-            current_node->attributes["\\enum_base_type"] = node->clone();
+            current_node->attributes["\\enum_base_type"] = node;
         }
     });
-    visit_one_to_many({vpiEnumConst}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
-    vpiHandle typespec_h = vpi_handle(vpiBaseTypespec, obj_h);
-    if (typespec_h) {
-        int typespec_type = vpi_get(vpiType, typespec_h);
-        switch (typespec_type) {
-        case vpiLogicTypespec: {
-            current_node->is_logic = true;
-            shared.report.mark_handled(typespec_h);
-            break;
+    visit_one_to_many({vpiEnumConst}, obj_h, [&](AST::AstNode *node) {
+        // Enum const must have the same type and ranges as the enum.
+        node->is_logic = current_node->is_logic;
+        node->is_signed = current_node->is_signed;
+        if (range) {
+            node->children.push_back(range->clone());
+            node->range_valid = true;
+        } else {
+            node->range_left = range_left;
+            node->range_right = range_right;
+            node->range_valid = range_valid;
         }
-        case vpiByteTypespec:
-        case vpiIntTypespec:
-        case vpiIntegerTypespec: {
-            current_node->is_signed = vpi_get(vpiSigned, typespec_h);
-            shared.report.mark_handled(typespec_h);
-            break;
-        }
-        case vpiBitTypespec: {
-            shared.report.mark_handled(typespec_h);
-            break;
-        }
-        default: {
-            const uhdm_handle *const handle = (const uhdm_handle *)typespec_h;
-            const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-            report_error("%s:%d: Encountered unhandled typespec in process_enum_typespec: '%s' of type '%s'\n", object->VpiFile().c_str(),
-                         object->VpiLineNo(), object->VpiName().c_str(), UHDM::VpiTypeName(typespec_h).c_str());
-            break;
-        }
-        }
-        vpi_release_handle(typespec_h);
+        // IMPORTANT: invalidates `range_it`!
+        current_node->children.push_back(node);
+    });
+    if (range) {
+        delete range;
     }
 }
 
@@ -2045,7 +2070,6 @@ void UhdmAst::process_enum_const()
         constant_node->filename = current_node->filename;
         constant_node->location = current_node->location;
         current_node->children.push_back(constant_node);
-        current_node->children.push_back(make_range(constant_node->range_left, constant_node->range_right, true));
     }
 }
 
