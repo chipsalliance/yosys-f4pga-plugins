@@ -163,6 +163,9 @@ module \$__QLF_FACTOR_BRAM36_TDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, C1
 	assign FLUSH1 = 1'b0;
 	assign FLUSH2 = 1'b0;
 
+    (* is_inferred = 1 *)
+    (* rd_data_width = CFG_DBITS *)
+    (* wr_data_width = CFG_DBITS *)
 	TDP36K _TECHMAP_REPLACE_ (
 		.RESET_ni(1'b1),
 		.WDATA_A1_i(B1DATA_TOTAL[17:0]),
@@ -233,6 +236,7 @@ module \$__QLF_FACTOR_BRAM18_TDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, C1
 	input [CFG_DBITS-1:0] D1DATA;
 	input [CFG_ENABLE_D-1:0] D1EN;
 
+    (* is_inferred = 1 *)
 	BRAM2x18_TDP #(
 		.CFG_ABITS(CFG_ABITS),
 		.CFG_DBITS(CFG_DBITS),
@@ -296,6 +300,7 @@ module \$__QLF_FACTOR_BRAM18_SDP (A1ADDR, A1DATA, A1EN, B1ADDR, B1DATA, B1EN, CL
 	input [CFG_DBITS-1:0] B1DATA;
 	input [CFG_ENABLE_B-1:0] B1EN;
 
+    (* is_inferred = 1 *)
 	BRAM2x18_SDP #(
 		.CFG_ABITS(CFG_ABITS),
 		.CFG_DBITS(CFG_DBITS),
@@ -446,6 +451,9 @@ module \$__QLF_FACTOR_BRAM36_SDP (CLK2, CLK3, A1ADDR, A1DATA, A1EN, B1ADDR, B1DA
 	assign FLUSH1 = 1'b0;
 	assign FLUSH2 = 1'b0;
 
+    (* is_inferred = 1 *)
+    (* rd_data_width = CFG_DBITS *)
+    (* wr_data_width = CFG_DBITS *)
 	TDP36K _TECHMAP_REPLACE_ (
 		.RESET_ni(1'b1),
 		.WDATA_A1_i(18'h3FFFF),
@@ -968,6 +976,9 @@ module \$__QLF_FACTOR_BRAM36_SDP_ASYMMETRIC (RD_ADDR, RD_ARST, RD_CLK, RD_DATA, 
 	wire PORT_A2_WEN = WR_EN;
 	wire [1:0] PORT_A2_BE = {PORT_A2_WEN, PORT_A2_WEN};
 
+    (* is_inferred = 1 *)
+    (* rd_data_width = RD_DATA_WIDTH *)
+    (* wr_data_width = WR_DATA_WIDTH *)
 	TDP36K _TECHMAP_REPLACE_ (
 		.RESET_ni(1'b1),
 
