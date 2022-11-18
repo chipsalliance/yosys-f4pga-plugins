@@ -3977,7 +3977,10 @@ void UhdmAst::process_parameter()
         }
         case vpiIntTypespec:
         case vpiIntegerTypespec: {
-            packed_ranges.push_back(make_range(31, 0));
+            visit_one_to_many({vpiRange}, typespec_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
+            if (packed_ranges.empty()) {
+                packed_ranges.push_back(make_range(31, 0));
+            }
             shared.report.mark_handled(typespec_h);
             break;
         }
