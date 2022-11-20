@@ -55,13 +55,13 @@ LDFLAGS := $(shell $(YOSYS_CONFIG) --ldflags) $(LDFLAGS)
 LDLIBS := $(shell $(YOSYS_CONFIG) --ldlibs) $(LDLIBS)
 EXTRA_FLAGS ?=
 
-DATA_DIR = $(DESTDIR)$(shell $(YOSYS_CONFIG) --datdir)
-PLUGINS_DIR = $(DATA_DIR)/plugins
+YOSYS_DATA_DIR = $(DESTDIR)$(shell $(YOSYS_CONFIG) --datdir)
+YOSYS_PLUGINS_DIR = $(YOSYS_DATA_DIR)/plugins
 
 OBJS := $(patsubst %.cc,%.o,$(SOURCES))
 DEPS ?=
 
-$(PLUGINS_DIR):
+$(YOSYS_PLUGINS_DIR):
 	@mkdir -p $@
 
 all: $(NAME).so
@@ -75,8 +75,8 @@ $(NAME).so: $(OBJS)
 ../pmgen.py:
 	@$(MAKE) -C .. pmgen.py
 
-install_plugin: $(NAME).so | $(PLUGINS_DIR)
-	install -D $< $(PLUGINS_DIR)/$<
+install_plugin: $(NAME).so | $(YOSYS_PLUGINS_DIR)
+	install -D $< $(YOSYS_PLUGINS_DIR)/$<
 
 test:
 	@$(MAKE) -C tests all
