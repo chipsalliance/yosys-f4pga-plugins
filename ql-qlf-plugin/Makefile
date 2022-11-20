@@ -14,6 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 NAME = ql-qlf
 SOURCES = synth_quicklogic.cc \
           ql-dsp.cc \
@@ -26,12 +28,10 @@ SOURCES = synth_quicklogic.cc \
           ql-dsp-io-regs.cc \
           ql-bram-asymmetric.cc
 
-DEPS = pmgen/ql-dsp-pm.h \
-       pmgen/ql-dsp-macc.h \
-       pmgen/ql-bram-asymmetric-wider-write.h \
-       pmgen/ql-bram-asymmetric-wider-read.h
-
 include ../Makefile_plugin.common
+
+# For pmgen/*.h
+CXXFLAGS += -I$(BUILD_DIR)
 
 COMMON          = common
 QLF_K4N8_DIR    = qlf_k4n8
@@ -78,28 +78,35 @@ VERILOG_MODULES = $(COMMON)/cells_sim.v         \
                   $(PP3_DIR)/bram_init_32.vh   \
                   $(PP3_DIR)/qlal4s3b_sim.v    \
                   $(PP3_DIR)/mult_sim.v        \
-                  $(PP3_DIR)/qlal3_sim.v       \
+                  $(PP3_DIR)/qlal3_sim.v
 
-pmgen:
-	mkdir -p pmgen
+PMGEN_OUT_DIR := $(BUILD_DIR)/pmgen
 
-pmgen/ql-dsp-pm.h: ../pmgen.py ql_dsp.pmg | pmgen
-	python3 ../pmgen.py -o $@ -p ql_dsp ql_dsp.pmg
+$(PMGEN_OUT_DIR):
+	mkdir -p $@
 
-pmgen/ql-dsp-macc.h: ../pmgen.py ql-dsp-macc.pmg | pmgen
-	python3 ../pmgen.py -o $@ -p ql_dsp_macc ql-dsp-macc.pmg
+DEPS := $(PMGEN_OUT_DIR)/ql-dsp-pm.h \
+        $(PMGEN_OUT_DIR)/ql-dsp-macc.h \
+        $(PMGEN_OUT_DIR)/ql-bram-asymmetric-wider-write.h \
+        $(PMGEN_OUT_DIR)/ql-bram-asymmetric-wider-read.h
 
-pmgen/ql-bram-asymmetric-wider-write.h: ../pmgen.py ql-bram-asymmetric-wider-write.pmg | pmgen
-	python3 ../pmgen.py -o $@ -p ql_bram_asymmetric_wider_write ql-bram-asymmetric-wider-write.pmg
+$(DEPS): $(PMGEN_PY) | $(PMGEN_OUT_DIR)
 
-pmgen/ql-bram-asymmetric-wider-read.h: ../pmgen.py ql-bram-asymmetric-wider-read.pmg | pmgen
-	python3 ../pmgen.py -o $@ -p ql_bram_asymmetric_wider_read ql-bram-asymmetric-wider-read.pmg
+$(OBJECTS): $(DEPS)
+
+$(PMGEN_OUT_DIR)/ql-dsp-pm.h: ql_dsp.pmg
+	python3 $(PMGEN_PY) -o $@ -p ql_dsp ql_dsp.pmg
+
+$(PMGEN_OUT_DIR)/ql-dsp-macc.h: ql-dsp-macc.pmg
+	python3 $(PMGEN_PY) -o $@ -p ql_dsp_macc ql-dsp-macc.pmg
+
+$(PMGEN_OUT_DIR)/ql-bram-asymmetric-wider-write.h: ql-bram-asymmetric-wider-write.pmg
+	python3 $(PMGEN_PY) -o $@ -p ql_bram_asymmetric_wider_write ql-bram-asymmetric-wider-write.pmg
+
+$(PMGEN_OUT_DIR)/ql-bram-asymmetric-wider-read.h: ql-bram-asymmetric-wider-read.pmg
+	python3 $(PMGEN_PY) -o $@ -p ql_bram_asymmetric_wider_read ql-bram-asymmetric-wider-read.pmg
 
 install_modules: $(VERILOG_MODULES)
 	$(foreach f,$^,install -D $(f) $(YOSYS_DATA_DIR)/quicklogic/$(f);)
 
 install: install_modules
-
-clean:
-	$(MAKE) -f ../Makefile_plugin.common $@
-	rm -rf pmgen
