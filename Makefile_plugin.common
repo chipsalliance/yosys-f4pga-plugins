@@ -85,13 +85,15 @@ _object_dir := $(abspath $(dir $(_object_abs)))
 _ALL_OBJECTS += $(_object_abs)
 _ALL_BUILD_SUBDIRS += $(_object_dir)
 
+-include $(abspath $(addprefix $(BUILD_DIR)/,$(source).d))
+
 $(_object_abs): TARGET_SOURCES := $(_source_abs)
 $(_object_abs): $(_source_abs) | $(_object_dir)
 endef
 $(foreach source,$(SOURCES),$(eval $(value _process-single-source-file)))
 
 $(_ALL_OBJECTS): $(_MAKEFILES)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(EXTRA_FLAGS) -c -o $@ $(TARGET_SOURCES)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(EXTRA_FLAGS) -MMD -c -o $@ $(TARGET_SOURCES)
 
 # Objects list for the purpose of adding extra dependencies after inclusion.
 # Example use: `$(OBJECTS): $(BUILD_DIR)/some-file.h`
