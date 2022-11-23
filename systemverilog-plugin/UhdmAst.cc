@@ -1136,6 +1136,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             // above by vpi*StrVal
             if (size == 64) {
                 size = 32;
+                is_signed = true;
             }
             auto c = AST::AstNode::mkconst_int(val.format == vpiUIntVal ? val.value.uint : val.value.integer, is_signed, size > 0 ? size : 32);
             if (size == 0 || size == -1)
