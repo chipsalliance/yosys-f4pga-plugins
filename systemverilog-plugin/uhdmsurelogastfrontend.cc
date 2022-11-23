@@ -149,7 +149,7 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
         // Should be called 1. for normal flow 2. after finishing with `-link`
         if (!this->shared.defer) {
             UHDM::Serializer serializer;
-            UHDM::SynthSubset *synthSubset = new UHDM::SynthSubset(&serializer, this->shared.nonSynthesizableObjects, false);
+            UHDM::SynthSubset *synthSubset = new UHDM::SynthSubset(&serializer, this->shared.nonSynthesizableObjects, false, true);
             synthSubset->listenDesigns(uhdm_design);
             delete synthSubset;
         }
