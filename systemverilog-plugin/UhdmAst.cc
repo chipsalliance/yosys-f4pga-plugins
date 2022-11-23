@@ -3267,14 +3267,13 @@ void UhdmAst::process_for()
     current_node->str = "$fordecl_block" + std::to_string(loop_id);
     auto loop = make_ast_node(AST::AST_FOR);
     loop->str = "$loop" + std::to_string(loop_id);
-    current_node->children.push_back(loop);
     visit_one_to_many({vpiForInitStmt}, obj_h, [&](AST::AstNode *node) {
         if (node->type == AST::AST_ASSIGN_LE)
             node->type = AST::AST_ASSIGN_EQ;
         auto lhs = node->children[0];
         if (lhs->type == AST::AST_WIRE) {
             auto *wire = lhs->clone();
-            wire->is_reg = true;
+            wire->is_logic = true;
             current_node->children.push_back(wire);
             lhs->type = AST::AST_IDENTIFIER;
             lhs->is_signed = false;
@@ -3301,6 +3300,7 @@ void UhdmAst::process_for()
             loop->children.push_back(node);
         }
     });
+    current_node->children.push_back(loop);
     transform_breaks_continues(loop, current_node);
 }
 
