@@ -1,21 +1,24 @@
-namespace AST
-{
-enum AstNodeTypeExtended {
-    AST_DOT = AST::AST_BIND + 1, // here we always want to point to the last element of yosys' AstNodeType
-    AST_BREAK,
-    AST_CONTINUE
-};
-}
+#include <algorithm>
+#include <string>
+#include <vector>
 
-static AST::AstNode *mkconst_real(double d)
+#include "UhdmAstUpstream.h"
+#include "frontends/ast/ast.h"
+
+YOSYS_NAMESPACE_BEGIN
+
+AST::AstNode *mkconst_real(double d)
 {
     AST::AstNode *node = new AST::AstNode(AST::AST_REALVALUE);
     node->realvalue = d;
     return node;
 }
+
 namespace VERILOG_FRONTEND
 {
+
 using namespace AST;
+
 // divide an arbitrary length decimal number by two and return the rest
 static int my_decimal_div_by_two(std::vector<uint8_t> &digits)
 {
@@ -120,7 +123,7 @@ static void my_strtobin(std::vector<RTLIL::State> &data, const char *str, int le
 }
 
 // convert the Verilog code for a constant to an AST node
-static AST::AstNode *const2ast(std::string code, char case_type, bool warn_z)
+AST::AstNode *const2ast(std::string code, char case_type, bool warn_z)
 {
     if (warn_z) {
         AST::AstNode *ret = const2ast(code, case_type, false);
@@ -214,3 +217,5 @@ static AST::AstNode *const2ast(std::string code, char case_type, bool warn_z)
     return NULL;
 }
 } // namespace VERILOG_FRONTEND
+
+YOSYS_NAMESPACE_END
