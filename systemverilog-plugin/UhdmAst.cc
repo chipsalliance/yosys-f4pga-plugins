@@ -3601,9 +3601,9 @@ void UhdmAst::process_sys_func_call()
         current_node->str = current_node->str.substr(1);
 }
 
-void UhdmAst::process_func_call()
+void UhdmAst::process_tf_call(AST::AstNodeType type)
 {
-    current_node = make_ast_node(AST::AST_FCALL);
+    current_node = make_ast_node(type);
     visit_one_to_many({vpiArgument}, obj_h, [&](AST::AstNode *node) {
         if (node) {
             if (node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) {
@@ -4344,10 +4344,10 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         process_sys_func_call();
         break;
     case vpiFuncCall:
-        process_func_call();
+        process_tf_call(AST::AST_FCALL);
         break;
     case vpiTaskCall:
-        current_node = make_ast_node(AST::AST_TCALL);
+        process_tf_call(AST::AST_TCALL);
         break;
     case vpiImmediateAssert:
         if (!shared.no_assert)

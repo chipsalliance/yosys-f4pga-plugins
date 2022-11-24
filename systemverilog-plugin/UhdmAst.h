@@ -127,7 +127,8 @@ class UhdmAst
     void process_function();
     void process_logic_var();
     void process_sys_func_call();
-    void process_func_call();
+    // use for task calls and function calls
+    void process_tf_call(AST::AstNodeType type);
     void process_immediate_assert();
     void process_hier_path();
     void process_logic_typespec();
