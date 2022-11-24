@@ -29,6 +29,7 @@
 #include <sys/param.h>
 #include <unistd.h>
 #endif
+#include <memory>
 
 #include "Surelog/ErrorReporting/Report.h"
 #include "Surelog/surelog.h"
@@ -41,42 +42,66 @@ extern void visit_object(vpiHandle obj_h, int indent, const char *relation, std:
 
 YOSYS_NAMESPACE_BEGIN
 
-std::vector<vpiHandle> executeCompilation(SURELOG::SymbolTable *symbolTable, SURELOG::ErrorContainer *errors, SURELOG::CommandLineParser *clp,
-                                          SURELOG::scompiler *compiler)
+// SURELOG::scompiler wrapper.
+// Owns UHDM/VPI resources used by designs returned from `execute`
+class Compiler
 {
-    bool success = true;
-    bool noFatalErrors = true;
-    unsigned int codedReturn = 0;
-    clp->setWriteUhdm(false);
-    errors->printMessages(clp->muteStdout());
-    std::vector<vpiHandle> the_design;
-    if (success && (!clp->help())) {
-        compiler = SURELOG::start_compiler(clp);
-        if (!compiler)
+  public:
+    Compiler() = default;
+    ~Compiler()
+    {
+        if (this->scompiler) {
+            SURELOG::shutdown_compiler(this->scompiler);
+        }
+    }
+
+    const std::vector<vpiHandle> &execute(std::unique_ptr<SURELOG::ErrorContainer> errors, std::unique_ptr<SURELOG::CommandLineParser> clp)
+    {
+        log_assert(!this->errors && !this->clp && !this->scompiler);
+
+        bool success = true;
+        bool noFatalErrors = true;
+        unsigned int codedReturn = 0;
+        clp->setWriteUhdm(false);
+        errors->printMessages(clp->muteStdout());
+        if (success && (!clp->help())) {
+            this->scompiler = SURELOG::start_compiler(clp.get());
+            if (!this->scompiler)
+                codedReturn |= 1;
+            this->designs.push_back(SURELOG::get_uhdm_design(this->scompiler));
+        }
+        SURELOG::ErrorContainer::Stats stats;
+        if (!clp->help()) {
+            stats = errors->getErrorStats();
+            if (stats.nbFatal)
+                codedReturn |= 1;
+            if (stats.nbSyntax)
+                codedReturn |= 2;
+        }
+        bool noFErrors = true;
+        if (!clp->help())
+            noFErrors = errors->printStats(stats, clp->muteStdout());
+        if (noFErrors == false) {
+            noFatalErrors = false;
+        }
+        if ((!noFatalErrors) || (!success) || (errors->getErrorStats().nbError))
             codedReturn |= 1;
-        the_design.push_back(SURELOG::get_uhdm_design(compiler));
+        if (codedReturn) {
+            log_error("Error when parsing design. Aborting!\n");
+        }
+
+        this->clp = std::move(clp);
+        this->errors = std::move(errors);
+
+        return this->designs;
     }
-    SURELOG::ErrorContainer::Stats stats;
-    if (!clp->help()) {
-        stats = errors->getErrorStats();
-        if (stats.nbFatal)
-            codedReturn |= 1;
-        if (stats.nbSyntax)
-            codedReturn |= 2;
-    }
-    bool noFErrors = true;
-    if (!clp->help())
-        noFErrors = errors->printStats(stats, clp->muteStdout());
-    if (noFErrors == false) {
-        noFatalErrors = false;
-    }
-    if ((!noFatalErrors) || (!success) || (errors->getErrorStats().nbError))
-        codedReturn |= 1;
-    if (codedReturn) {
-        log_error("Error when parsing design. Aborting!\n");
-    }
-    return the_design;
-}
+
+  private:
+    std::unique_ptr<SURELOG::ErrorContainer> errors = nullptr;
+    std::unique_ptr<SURELOG::CommandLineParser> clp = nullptr;
+    SURELOG::scompiler *scompiler = nullptr;
+    std::vector<vpiHandle> designs = {};
+};
 
 struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
     UhdmSurelogAstFrontend(std::string name, std::string short_help) : UhdmCommonFrontend(name, short_help) {}
@@ -98,9 +123,9 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
         for (size_t i = 0; i < this->args.size(); ++i)
             cstrings.push_back(const_cast<char *>(this->args[i].c_str()));
 
-        SURELOG::SymbolTable *symbolTable = new SURELOG::SymbolTable();
-        SURELOG::ErrorContainer *errors = new SURELOG::ErrorContainer(symbolTable);
-        SURELOG::CommandLineParser *clp = new SURELOG::CommandLineParser(errors, symbolTable, false, false);
+        auto symbolTable = std::make_unique<SURELOG::SymbolTable>();
+        auto errors = std::make_unique<SURELOG::ErrorContainer>(symbolTable.get());
+        auto clp = std::make_unique<SURELOG::CommandLineParser>(errors.get(), symbolTable.get(), false, false);
         bool success = clp->parseCommandLine(cstrings.size(), &cstrings[0]);
         if (!success) {
             log_error("Error parsing Surelog arguments!\n");
@@ -122,25 +147,21 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
             clp->setLink(true);
         }
 
-        SURELOG::scompiler *compiler = nullptr;
-        const std::vector<vpiHandle> uhdm_design = executeCompilation(symbolTable, errors, clp, compiler);
+        Compiler compiler;
+        const auto &uhdm_designs = compiler.execute(std::move(errors), std::move(clp));
+
         if (this->shared.debug_flag || !this->report_directory.empty()) {
-            for (auto design : uhdm_design) {
+            for (auto design : uhdm_designs) {
                 std::stringstream strstr;
                 UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : strstr);
             }
         }
 
-        SURELOG::shutdown_compiler(compiler);
-        delete clp;
-        delete symbolTable;
-        delete errors;
         // on parse_only mode, don't try to load design
         // into yosys
         if (this->shared.parse_only)
             return nullptr;
 
-        UhdmAst uhdm_ast(this->shared);
         if (this->shared.defer && !this->shared.link)
             return nullptr;
 
@@ -151,11 +172,12 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
             UHDM::Serializer serializer;
             UHDM::SynthSubset *synthSubset =
               make_new_object_with_optional_extra_true_arg<UHDM::SynthSubset>(&serializer, this->shared.nonSynthesizableObjects, false);
-            synthSubset->listenDesigns(uhdm_design);
+            synthSubset->listenDesigns(uhdm_designs);
             delete synthSubset;
         }
 
-        AST::AstNode *current_ast = uhdm_ast.visit_designs(uhdm_design);
+        UhdmAst uhdm_ast(this->shared);
+        AST::AstNode *current_ast = uhdm_ast.visit_designs(uhdm_designs);
         if (!this->report_directory.empty()) {
             this->shared.report.write(this->report_directory);
         }
