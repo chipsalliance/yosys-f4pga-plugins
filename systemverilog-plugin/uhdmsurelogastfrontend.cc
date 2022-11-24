@@ -152,8 +152,8 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
 
         if (this->shared.debug_flag || !this->report_directory.empty()) {
             for (auto design : uhdm_designs) {
-                std::stringstream strstr;
-                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : strstr);
+                std::ofstream null_stream;
+                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : null_stream);
             }
         }
 

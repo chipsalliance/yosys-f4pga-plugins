@@ -50,8 +50,8 @@ struct UhdmAstFrontend : public UhdmCommonFrontend {
         delete synthSubset;
         if (this->shared.debug_flag || !this->report_directory.empty()) {
             for (auto design : restoredDesigns) {
-                std::stringstream strstr;
-                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : strstr);
+                std::ofstream null_stream;
+                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : null_stream);
             }
         }
         UhdmAst uhdm_ast(this->shared);
