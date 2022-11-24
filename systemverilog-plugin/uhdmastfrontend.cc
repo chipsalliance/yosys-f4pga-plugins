@@ -44,7 +44,8 @@ struct UhdmAstFrontend : public UhdmCommonFrontend {
         UHDM::Serializer serializer;
 
         std::vector<vpiHandle> restoredDesigns = serializer.Restore(filename);
-        UHDM::SynthSubset *synthSubset = new UHDM::SynthSubset(&serializer, this->shared.nonSynthesizableObjects, false);
+        UHDM::SynthSubset *synthSubset =
+          make_new_object_with_optional_extra_true_arg<UHDM::SynthSubset>(&serializer, this->shared.nonSynthesizableObjects, false);
         synthSubset->listenDesigns(restoredDesigns);
         delete synthSubset;
         if (this->shared.debug_flag || !this->report_directory.empty()) {
