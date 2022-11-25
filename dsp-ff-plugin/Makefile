@@ -14,11 +14,13 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 NAME = dsp-ff
 SOURCES = dsp_ff.cc 
 
 include ../Makefile_plugin.common
 
 install:
-	install -D nexus-dsp_rules.txt $(DATA_DIR)/nexus/dsp_rules.txt
+	install -D nexus-dsp_rules.txt $(YOSYS_DATA_DIR)/nexus/dsp_rules.txt
 

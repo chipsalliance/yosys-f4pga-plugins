@@ -14,24 +14,43 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 NAME = systemverilog
 SOURCES = UhdmAst.cc \
-	  uhdmastfrontend.cc \
-	  uhdmcommonfrontend.cc \
-	  uhdmsurelogastfrontend.cc \
-	  uhdmastreport.cc
+          uhdmastfrontend.cc \
+          uhdmcommonfrontend.cc \
+          uhdmsurelogastfrontend.cc \
+          uhdmastreport.cc
 
 # Directory to search for Surelog and UHDM libraries
 UHDM_INSTALL_DIR ?= /usr/local
 
 include ../Makefile_plugin.common
 
-CPPFLAGS += -std=c++17 -Wall -W -Wextra \
-              -Wno-deprecated-declarations \
-              -Wno-unused-parameter \
-              -I${UHDM_INSTALL_DIR}/include \
-	      -I${UHDM_INSTALL_DIR}/include/Surelog
+CXXFLAGS += -std=c++17 -Wall -W -Wextra \
+            -Wno-deprecated-declarations \
+            -Wno-unused-parameter \
+            -I${UHDM_INSTALL_DIR}/include \
+            -I${UHDM_INSTALL_DIR}/include/Surelog
 
-CXXFLAGS += -Wno-unused-parameter
-LDFLAGS += -L${UHDM_INSTALL_DIR}/lib/uhdm -L${UHDM_INSTALL_DIR}/lib/surelog -L${UHDM_INSTALL_DIR}/lib -L${UHDM_INSTALL_DIR}/lib64/uhdm -L${UHDM_INSTALL_DIR}/lib64/surelog -L${UHDM_INSTALL_DIR}/lib64
-LDLIBS += -Wl,--whole-archive -luhdm -Wl,--no-whole-archive -lsurelog -lantlr4-runtime -lflatbuffers -lcapnp -lkj -ldl -lutil -lm -lrt -lpthread
+LDFLAGS += -L${UHDM_INSTALL_DIR}/lib/uhdm \
+           -L${UHDM_INSTALL_DIR}/lib/surelog \
+           -L${UHDM_INSTALL_DIR}/lib \
+           -L${UHDM_INSTALL_DIR}/lib64/uhdm \
+           -L${UHDM_INSTALL_DIR}/lib64/surelog \
+           -L${UHDM_INSTALL_DIR}/lib64
+
+LDLIBS += -Wl,--whole-archive \
+          -luhdm \
+          -Wl,--no-whole-archive \
+          -lsurelog \
+          -lantlr4-runtime \
+          -lflatbuffers \
+          -lcapnp \
+          -lkj \
+          -ldl \
+          -lutil \
+          -lm \
+          -lrt \
+          -lpthread
