@@ -18,6 +18,7 @@ PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 NAME = systemverilog
 SOURCES = UhdmAst.cc \
+          UhdmAstUpstream.cc \
           uhdmastfrontend.cc \
           uhdmcommonfrontend.cc \
           uhdmsurelogastfrontend.cc \

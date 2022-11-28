@@ -14,6 +14,8 @@
 #include <uhdm/uhdm.h>
 #include <uhdm/vpi_user.h>
 
+#include "UhdmAstUpstream.h"
+
 YOSYS_NAMESPACE_BEGIN
 
 /*static*/ const IdString &UhdmAst::partial()
@@ -124,8 +126,6 @@ static void copy_packed_unpacked_attribute(AST::AstNode *from, AST::AstNode *to)
         }
     }
 }
-
-#include "UhdmAstUpstream.cc"
 
 static int get_max_offset_struct(AST::AstNode *node)
 {
