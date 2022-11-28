@@ -1071,25 +1071,32 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
 {
     s_vpi_value val;
     vpi_get_value(obj_h, &val);
-    std::string strValType;
+    std::string strValType = "'";
+    bool is_signed = false;
+    if (vpiHandle typespec_h = vpi_handle(vpiTypespec, obj_h)) {
+        is_signed = vpi_get(vpiSigned, typespec_h);
+        if (is_signed) {
+            strValType += "s";
+        }
+    }
     if (val.format) { // Needed to handle parameter nodes without typespecs and constants
         switch (val.format) {
         case vpiScalarVal:
             return AST::AstNode::mkconst_int(val.value.scalar, false, 1);
         case vpiBinStrVal: {
-            strValType = "'b";
+            strValType += "b";
             break;
         }
         case vpiDecStrVal: {
-            strValType = "'d";
+            strValType += "d";
             break;
         }
         case vpiHexStrVal: {
-            strValType = "'h";
+            strValType += "h";
             break;
         }
         case vpiOctStrVal: {
-            strValType = "'o";
+            strValType += "o";
             break;
         }
         // Surelog reports constant integers as a unsigned, but by default int is signed
@@ -1112,7 +1119,6 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             }
 
             int size = -1;
-            bool is_signed = false;
             // Surelog sometimes report size as part of vpiTypespec (e.g. int_typespec)
             // if it is the case, we need to set size to the left_range of first packed range
             visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
@@ -1886,27 +1892,27 @@ void UhdmAst::process_typespec_member()
         break;
     }
     case vpiByteTypespec: {
-        current_node->is_signed = true;
+        current_node->is_signed = vpi_get(vpiSigned, typespec_h);
         packed_ranges.push_back(make_range(7, 0));
         shared.report.mark_handled(typespec_h);
         break;
     }
     case vpiShortIntTypespec: {
-        current_node->is_signed = true;
+        current_node->is_signed = vpi_get(vpiSigned, typespec_h);
         packed_ranges.push_back(make_range(15, 0));
         shared.report.mark_handled(typespec_h);
         break;
     }
     case vpiIntTypespec:
     case vpiIntegerTypespec: {
-        current_node->is_signed = true;
+        current_node->is_signed = vpi_get(vpiSigned, typespec_h);
         packed_ranges.push_back(make_range(31, 0));
         shared.report.mark_handled(typespec_h);
         break;
     }
     case vpiTimeTypespec:
     case vpiLongIntTypespec: {
-        current_node->is_signed = true;
+        current_node->is_signed = vpi_get(vpiSigned, typespec_h);
         packed_ranges.push_back(make_range(63, 0));
         shared.report.mark_handled(typespec_h);
         break;
@@ -2011,7 +2017,7 @@ void UhdmAst::process_enum_typespec()
         case vpiByteTypespec:
         case vpiIntTypespec:
         case vpiIntegerTypespec: {
-            current_node->is_signed = true;
+            current_node->is_signed = vpi_get(vpiSigned, typespec_h);
             shared.report.mark_handled(typespec_h);
             break;
         }
@@ -2073,7 +2079,7 @@ void UhdmAst::process_int_var()
     auto right_const = AST::AstNode::mkconst_int(0, true);
     auto range = new AST::AstNode(AST::AST_RANGE, left_const, right_const);
     current_node->children.push_back(range);
-    current_node->is_signed = true;
+    current_node->is_signed = vpi_get(vpiSigned, obj_h);
     visit_default_expr(obj_h);
 }
 
@@ -2554,6 +2560,7 @@ void UhdmAst::process_io_decl()
                 current_node->is_logic = node->is_logic;
                 current_node->is_reg = node->is_reg;
             }
+            current_node->is_signed = node->is_signed;
             delete node;
         }
     });
@@ -3261,14 +3268,13 @@ void UhdmAst::process_for()
     current_node->str = "$fordecl_block" + std::to_string(loop_id);
     auto loop = make_ast_node(AST::AST_FOR);
     loop->str = "$loop" + std::to_string(loop_id);
-    current_node->children.push_back(loop);
     visit_one_to_many({vpiForInitStmt}, obj_h, [&](AST::AstNode *node) {
         if (node->type == AST::AST_ASSIGN_LE)
             node->type = AST::AST_ASSIGN_EQ;
         auto lhs = node->children[0];
         if (lhs->type == AST::AST_WIRE) {
             auto *wire = lhs->clone();
-            wire->is_reg = true;
+            wire->is_logic = true;
             current_node->children.push_back(wire);
             lhs->type = AST::AST_IDENTIFIER;
             lhs->is_signed = false;
@@ -3295,6 +3301,7 @@ void UhdmAst::process_for()
             loop->children.push_back(node);
         }
     });
+    current_node->children.push_back(loop);
     transform_breaks_continues(loop, current_node);
 }
 
@@ -3554,6 +3561,7 @@ void UhdmAst::process_logic_var()
             current_node->children.push_back(wiretype_node);
             current_node->is_custom_type = true;
         }
+        current_node->is_signed = node->is_signed;
         delete node;
     });
     // TODO: Handling below seems similar to other typespec accesses for range. Candidate for extraction to a function.
@@ -3869,6 +3877,8 @@ void UhdmAst::process_port()
         case vpiStructVar:
         case vpiUnionVar:
         case vpiEnumVar:
+        case vpiBitVar:
+        case vpiByteVar:
         case vpiShortIntVar:
         case vpiLongIntVar:
         case vpiIntVar:
