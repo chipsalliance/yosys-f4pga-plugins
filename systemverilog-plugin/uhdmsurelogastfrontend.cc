@@ -132,6 +132,11 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
     {
         std::vector<const char *> cstrings;
         bool link = false;
+        if (this->shared.formal) {
+            systemverilog_defines.push_back("-DFORMAL=1");
+        } else {
+            systemverilog_defines.push_back("-DSYNTHESIS=1");
+        }
         cstrings.reserve(this->args.size() + systemverilog_defaults.size() + systemverilog_defines.size());
         for (size_t i = 0; i < this->args.size(); ++i) {
             cstrings.push_back(const_cast<char *>(this->args[i].c_str()));

@@ -120,6 +120,10 @@ void UhdmCommonFrontend::execute(std::istream *&f, std::string filename, std::ve
             this->shared.link = true;
             // Surelog needs it in the command line to link correctly
             unhandled_args.push_back(args[i]);
+        } else if (args[i] == "-formal") {
+            this->shared.formal = true;
+            // Surelog needs it in the command line to annotate UHDM
+            unhandled_args.push_back(args[i]);
         } else {
             unhandled_args.push_back(args[i]);
         }
