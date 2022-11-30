@@ -3959,6 +3959,8 @@ void UhdmAst::process_parameter()
     current_node = make_ast_node(type, {}, true);
     std::vector<AST::AstNode *> packed_ranges;   // comes before wire name
     std::vector<AST::AstNode *> unpacked_ranges; // comes after wire name
+    s_vpi_value val;
+    vpi_get_value(obj_h, &val);
     // currently unused, but save it for future use
     if (const char *imported = vpi_get_str(vpiImported, obj_h); imported != nullptr && strlen(imported) > 0) {
         current_node->attributes[UhdmAst::is_imported()] = AST::AstNode::mkconst_int(1, true);
@@ -3990,19 +3992,19 @@ void UhdmAst::process_parameter()
         case vpiIntegerTypespec: {
             visit_one_to_many({vpiRange}, typespec_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
             if (packed_ranges.empty()) {
-                packed_ranges.push_back(make_range(31, 0));
+                packed_ranges.push_back(make_range(val.value.integer ? val.value.integer : 31, 0));
             }
             shared.report.mark_handled(typespec_h);
             break;
         }
         case vpiShortIntTypespec: {
-            packed_ranges.push_back(make_range(15, 0));
+            packed_ranges.push_back(make_range(val.value.integer ? val.value.integer : 15, 0));
             shared.report.mark_handled(typespec_h);
             break;
         }
         case vpiTimeTypespec:
         case vpiLongIntTypespec: {
-            packed_ranges.push_back(make_range(63, 0));
+            packed_ranges.push_back(make_range(val.value.integer ? val.value.integer : 63, 0));
             shared.report.mark_handled(typespec_h);
             break;
         }
