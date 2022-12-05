@@ -14075,7 +14075,10 @@ module BRAM2x18_SFIFO (
   assign Empty2 = fifo2_flags[7];
   
   generate
-    if (WR_DATA_WIDTH == 9) begin
+    if (WR_DATA_WIDTH == 18) begin
+      assign in_reg1[17:0] = DIN1[17:0];
+      assign in_reg2[17:0] = DIN2[17:0];
+    end else if (WR_DATA_WIDTH == 9) begin
       assign in_reg1[17:0] = {1'b0, DIN1[8], 8'h0, DIN1[7:0]};
       assign in_reg2[17:0] = {1'b0, DIN2[8], 8'h0, DIN2[7:0]};
     end else begin
@@ -14084,7 +14087,7 @@ module BRAM2x18_SFIFO (
       assign in_reg2[17:WR_DATA_WIDTH]  = 0;
       assign in_reg2[WR_DATA_WIDTH-1:0] = DIN2[WR_DATA_WIDTH-1:0];
     end
-  endgenerate   
+  endgenerate     
   
  case (RD_DATA_WIDTH)
 	8, 9: begin
@@ -14625,7 +14628,10 @@ module BRAM2x18_AFIFO (
   assign Empty2 = fifo2_flags[7];
   
   generate
-    if (WR_DATA_WIDTH == 9) begin
+    if (WR_DATA_WIDTH == 18) begin
+      assign in_reg1[17:0] = DIN1[17:0];
+      assign in_reg2[17:0] = DIN2[17:0];
+    end else if (WR_DATA_WIDTH == 9) begin
       assign in_reg1[17:0] = {1'b0, DIN1[8], 8'h0, DIN1[7:0]};
       assign in_reg2[17:0] = {1'b0, DIN2[8], 8'h0, DIN2[7:0]};
     end else begin
