@@ -297,7 +297,7 @@ struct SystemVerilogDefaults : public Pass {
 struct SystemVerilogDefines : public Pass {
     SystemVerilogDefines() : Pass("systemverilog_defines", "define and undefine systemverilog defines")
     {
-        systemverilog_defines.push_back("-PYOSYS=1");
+        systemverilog_defines.push_back("-DYOSYS=1");
     }
     void help() override
     {
@@ -359,9 +359,9 @@ struct SystemVerilogDefines : public Pass {
                 if (equal != std::string::npos) {
                     value = name.substr(equal + 1);
                     name = name.substr(0, equal);
-                    systemverilog_defines.push_back("-P" + name + "=" + value);
+                    systemverilog_defines.push_back("-D" + name + "=" + value);
                 } else
-                    systemverilog_defines.push_back("-P" + name);
+                    systemverilog_defines.push_back("-D" + name);
                 continue;
             }
             if (arg.compare(0, 2, "-D") == 0) {
@@ -370,9 +370,9 @@ struct SystemVerilogDefines : public Pass {
                 std::string value;
                 if (equal != std::string::npos) {
                     value = arg.substr(equal + 1);
-                    systemverilog_defines.push_back("-P" + name + "=" + value);
+                    systemverilog_defines.push_back("-D" + name + "=" + value);
                 } else
-                    systemverilog_defines.push_back("-P" + name);
+                    systemverilog_defines.push_back("-D" + name);
                 continue;
             }
             if (arg == "-U" && argidx + 1 < args.size()) {
