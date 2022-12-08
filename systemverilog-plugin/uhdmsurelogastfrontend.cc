@@ -211,6 +211,9 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
             this->shared.report.write(this->report_directory);
         }
 
+        // FIXME: Check and reset remaining shared data
+        this->shared.top_nodes.clear();
+        this->shared.nonSynthesizableObjects.clear();
         return current_ast;
     }
     void call_log_header(RTLIL::Design *design) override { log_header(design, "Executing Verilog with UHDM frontend.\n"); }
