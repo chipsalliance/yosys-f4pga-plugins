@@ -357,25 +357,11 @@ struct SystemVerilogDefines : public Pass {
         for (argidx = 1; argidx < args.size(); argidx++) {
             std::string arg = args[argidx];
             if (arg == "-D" && argidx + 1 < args.size()) {
-                std::string name = args[++argidx], value;
-                size_t equal = name.find('=');
-                if (equal != std::string::npos) {
-                    value = name.substr(equal + 1);
-                    name = name.substr(0, equal);
-                    systemverilog_defines.push_back("-D" + name + "=" + value);
-                } else
-                    systemverilog_defines.push_back("-D" + name);
+                systemverilog_defines.push_back("-D" + args[++argidx]);
                 continue;
             }
             if (arg.compare(0, 2, "-D") == 0) {
-                size_t equal = arg.find('=', 2);
-                std::string name = arg.substr(2, equal - 2);
-                std::string value;
-                if (equal != std::string::npos) {
-                    value = arg.substr(equal + 1);
-                    systemverilog_defines.push_back("-D" + name + "=" + value);
-                } else
-                    systemverilog_defines.push_back("-D" + name);
+                systemverilog_defines.push_back(arg);
                 continue;
             }
             if (arg == "-U" && argidx + 1 < args.size()) {
