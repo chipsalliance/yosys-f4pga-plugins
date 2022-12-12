@@ -8,6 +8,8 @@ if { [info exists ::env(TMPDIR) ] } {
 }
 
 systemverilog_defines -DPONA
+systemverilog_defines -DPAKALA
+systemverilog_defines -UPAKALA
 read_systemverilog $::env(DESIGN_TOP).v
 hierarchy
 write_verilog

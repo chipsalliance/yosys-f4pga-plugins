@@ -22,5 +22,8 @@ module top (
 `ifndef PONA
   initial $stop("Define failed");
 `endif
+`ifdef PAKALA
+  initial $stop("Undefine failed");
+`endif
   assign out = clk;
 endmodule
