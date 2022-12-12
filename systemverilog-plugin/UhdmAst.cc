@@ -1708,7 +1708,7 @@ void UhdmAst::process_module()
                 }
             });
             visit_one_to_many({vpiModule, vpiInterface, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiGenScopeArray,
-                               vpiContAssign, vpiProcess, vpiClockingBlock, vpiAssertion},
+                               vpiProcess, vpiClockingBlock, vpiAssertion},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
                                       if (node->type == AST::AST_ASSIGN && node->children.size() < 2)
