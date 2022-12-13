@@ -18,7 +18,9 @@ TESTS = counter \
 		break_continue \
 		separate-compilation \
 		debug-flag \
-		report-flag
+		report-flag \
+		defines \
+		defaults
 
 include $(shell pwd)/../../Makefile_test.common
 
@@ -27,3 +29,5 @@ break_continue_verify = $(call diff_test,break_continue,out)
 separate-compilation_verify = true
 debug-flag_verify = true
 report-flag_verify = true
+defaults_verify = true
+defines_verify = true
