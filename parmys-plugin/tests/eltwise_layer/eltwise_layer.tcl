@@ -14,7 +14,7 @@ puts "Using parmys as partial mapper"
 
 parmys_arch -a k6FracN10LB_mem20K_complexDSP_customSB_22nm.xml
 
-read_verilog -sv -nolatches hard_block_include.v eltwise_layer.v
+read_verilog -sv -nolatches hard_block_include.v $::env(DESIGN_TOP).v
 
 
 # Check that there are no combinational loops
@@ -83,5 +83,5 @@ tee -o /dev/stdout stat
 
 hierarchy -check -auto-top -purge_lib
 
-write_blif -true + vcc -false + gnd -undef + unconn -blackbox eltwise_layer.yosys.blif
+write_blif -true + vcc -false + gnd -undef + unconn -blackbox $::env(DESIGN_TOP).yosys.blif
 

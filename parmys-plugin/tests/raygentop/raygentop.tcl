@@ -17,7 +17,7 @@ puts "Using parmys as partial mapper"
 parmys_arch -a k6_frac_N10_frac_chain_mem32K_40nm.xml
 
 
-read_verilog -sv -nolatches raygentop.v
+read_verilog -sv -nolatches $::env(DESIGN_TOP).v
 
 
 # Check that there are no combinational loops
@@ -89,5 +89,5 @@ tee -o /dev/stdout stat
 
 hierarchy -check -auto-top -purge_lib
 
-write_blif -true + vcc -false + gnd -undef + unconn -blackbox raygentop.yosys.blif
+write_blif -true + vcc -false + gnd -undef + unconn -blackbox $::env(DESIGN_TOP).yosys.blif
 

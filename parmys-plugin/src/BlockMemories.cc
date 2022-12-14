@@ -1064,8 +1064,8 @@ static void create_nrmw_dual_port_ram(block_memory_t *bram, netlist_t *netlist)
     int num_wr_ports = old_node->attributes->WR_PORTS;
 
     /* should have been resovled before this function */
-    oassert(num_rd_ports > 2);
-    oassert(num_wr_ports > 2);
+    oassert(num_rd_ports > 1);
+    oassert(num_wr_ports > 1);
 
     /* dual port ram signals */
     dp_ram_signals *signals = (dp_ram_signals *)vtr::calloc(1, sizeof(dp_ram_signals));
