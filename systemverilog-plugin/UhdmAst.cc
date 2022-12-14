@@ -17,6 +17,11 @@
 #include "third_party/yosys/const2ast.h"
 
 YOSYS_NAMESPACE_BEGIN
+namespace VERILOG_FRONTEND
+{
+extern bool sv_mode;
+}
+YOSYS_NAMESPACE_END
 
 namespace AST::Extended
 {

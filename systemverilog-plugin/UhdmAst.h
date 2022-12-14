@@ -174,10 +174,6 @@ class UhdmAst
     static const IdString &is_imported();
 };
 
-namespace VERILOG_FRONTEND
-{
-extern bool sv_mode;
-}
 YOSYS_NAMESPACE_END
 
 #endif
