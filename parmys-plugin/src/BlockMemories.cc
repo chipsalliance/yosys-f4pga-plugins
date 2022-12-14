@@ -1177,8 +1177,6 @@ static void create_2rw_multiplexed_dual_port_ram(block_memory_t *bram, netlist_t
     }
     /* first port does not have data, so the enable is GND */
     signals->we1 = get_zero_pin(netlist);
-    signal_list_t *we2_signal;
-    signal_list_t *vcc_signals;
     signals->we2 = bram->write_en->pins[0];
     /* OUTPUT */
     /* leaving out1 of dpram null, so it will create a new pins */
