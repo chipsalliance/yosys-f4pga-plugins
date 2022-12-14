@@ -23,6 +23,6 @@ raygentop_verify = true
 eltwise_layer_verify = true
 
 clean_modules:
-	@find . -name "net.dot" -or -name "*.yosys.blif" | xargs rm -rf
+	@find . -name "*.net.dot" -or -name "*.yosys.blif" | xargs rm -rf
 
 clean: clean_modules

@@ -45,6 +45,7 @@
 #include "multipliers.h"
 #include "netlist_cleanup.h"
 #include "netlist_statistic.h"
+#include "netlist_visualizer.h"
 #include "read_xml_config_file.h"
 #include "subtractions.h"
 
@@ -755,8 +756,6 @@ struct ParMYSPass : public Pass {
         double optimization_time = wall_time();
 
         if (odin_netlist) {
-            check_netlist(odin_netlist);
-
             /* point for all netlist optimizations. */
             log("Performing Optimization on the Netlist\n");
             if (hard_multipliers) {
@@ -857,6 +856,9 @@ struct ParMYSPass : public Pass {
         log("    -vtr_prim\n");
         log("        loads vtr primitives as modules, if the design uses vtr prmitives then this flag is mandatory for first run\n");
         log("\n");
+        log("    -viz\n");
+        log("        visualizes the netlist at 3 different stages: raw, optimized, and mapped.\n");
+        log("\n");
     }
     void execute(std::vector<std::string> args, RTLIL::Design *design) override
     {
@@ -864,6 +866,7 @@ struct ParMYSPass : public Pass {
         bool flag_config_file = false;
         bool flag_load_vtr_primitives = false;
         bool flag_no_pass = false;
+        bool flag_visualize = false;
         std::string arch_file_path;
         std::string config_file_path;
         std::string top_module_name;
@@ -892,6 +895,10 @@ struct ParMYSPass : public Pass {
             }
             if (args[argidx] == "-vtr_prim") {
                 flag_load_vtr_primitives = true;
+                continue;
+            }
+            if (args[argidx] == "-viz") {
+                flag_visualize = true;
                 continue;
             }
             if (args[argidx] == "-nopass") {
@@ -1042,6 +1049,9 @@ struct ParMYSPass : public Pass {
         try {
             elaborate(transformed);
             log("Successful Elaboration of the design by Odin-II\n");
+            if (flag_visualize) {
+                graphVizOutputNetlist(".", "netlist.elaborated.net", 111, transformed);
+            }
         } catch (vtr::VtrError &vtr_error) {
             log_error("Odin-II Failed to parse Verilog / load BLIF file: %s with exit code:%d \n", vtr_error.what(), ERROR_ELABORATION);
         }
@@ -1050,6 +1060,9 @@ struct ParMYSPass : public Pass {
         try {
             optimization(transformed);
             log("Successful Optimization of netlist by Odin-II\n");
+            if (flag_visualize) {
+                graphVizOutputNetlist(".", "netlist.optimized.net", 222, transformed);
+            }
         } catch (vtr::VtrError &vtr_error) {
             log_error("Odin-II Failed to perform netlist optimization %s with exit code:%d \n", vtr_error.what(), ERROR_OPTIMIZATION);
         }
@@ -1058,6 +1071,9 @@ struct ParMYSPass : public Pass {
         try {
             techmap(transformed);
             log("Successful Partial Technology Mapping by Odin-II\n");
+            if (flag_visualize) {
+                graphVizOutputNetlist(".", "netlist.mapped.net", 333, transformed);
+            }
         } catch (vtr::VtrError &vtr_error) {
             log_error("Odin-II Failed to perform partial mapping to target device %s with exit code:%d \n", vtr_error.what(), ERROR_TECHMAP);
         }

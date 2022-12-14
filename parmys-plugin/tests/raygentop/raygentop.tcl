@@ -72,7 +72,7 @@ techmap -map +/parmys/aldffe2dff.v
 
 opt -full
 
-parmys -a k6_frac_N10_frac_chain_mem32K_40nm.xml -nopass -c odin_config.xml
+parmys -a k6_frac_N10_frac_chain_mem32K_40nm.xml -nopass -c odin_config.xml -viz
 
 opt -full
 
