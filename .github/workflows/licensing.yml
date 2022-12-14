@@ -34,11 +34,10 @@ jobs:
           ./third_party/minilitex_ddr_arty/minilitex_ddr_arty.v
           ./third_party/VexRiscv_Lite/VexRiscv_Lite.v
           ./third_party/vtr/verilog/eltwise_layer.v
-          ./parmys-plugin/tests/raygentop/raygentop.v
-          ./parmys-plugin/tests/eltwise_layer/hard_block_include.v
-          ./parmys-plugin/tests/eltwise_layer/k6FracN10LB_mem20K_complexDSP_customSB_22nm.xml
-          ./parmys-plugin/tests/raygentop/k6_frac_N10_frac_chain_mem32K_40nm.xml
-          ./parmys-plugin/techlibs/vtr_primitives.v
+          ./third_party/vtr/verilog/raygentop.v
+          ./third_party/vtr/verilog/hard_block_include.v
+          ./third_party/vtr/arch/k6FracN10LB_mem20K_complexDSP_customSB_22nm.xml
+          ./third_party/vtr/arch/k6_frac_N10_frac_chain_mem32K_40nm.xml
         third_party: |
           ./third_party/googletest/
           ./third_party/libargparse/
