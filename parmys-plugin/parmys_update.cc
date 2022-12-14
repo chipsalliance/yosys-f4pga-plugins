@@ -289,7 +289,8 @@ void cell_node(nnode_t *node, short /*traverse_number*/, Yosys::Module *module, 
         break;
 
     case SMUX_2:
-        Yosys::log_error("SMUX_2\n");
+        define_SMUX_function_yosys(node, module);
+        // Yosys::log_error("SMUX_2\n");
         break;
 
     case FF_NODE:
@@ -517,4 +518,37 @@ void define_logical_function_yosys(nnode_t *node, Yosys::Module *module)
         cell->parameters[Yosys::ID::Y_WIDTH] = Yosys::RTLIL::Const(int(node->num_output_pins));
         cell->parameters[Yosys::ID::A_SIGNED] = Yosys::RTLIL::Const(false);
     }
+}
+
+void define_SMUX_function_yosys(nnode_t *node, Yosys::Module *module)
+{
+    Yosys::RTLIL::SigSpec input_sig_A, input_sig_B, input_sig_S, output_sig;
+
+    oassert(node->num_input_pins == 3); // s a b
+
+    nnet_t *s_net = node->input_pins[0]->net;
+    Yosys::Wire *s_wire = wire_net_driver(module, node, s_net, 0);
+    input_sig_S.append(s_wire);
+
+    nnet_t *a_net = node->input_pins[1]->net;
+    Yosys::Wire *a_wire = wire_net_driver(module, node, a_net, 0);
+    input_sig_A.append(a_wire);
+
+    nnet_t *b_net = node->input_pins[2]->net;
+    Yosys::Wire *b_wire = wire_net_driver(module, node, b_net, 0);
+    input_sig_B.append(b_wire);
+
+    oassert(node->num_output_pins == 1); // y
+    Yosys::RTLIL::Wire *out_wire = to_wire(node->name, module);
+    output_sig.append(out_wire);
+
+    Yosys::IdString celltype = ID($mux);
+    ;
+
+    Yosys::RTLIL::Cell *cell = module->addCell(NEW_ID, celltype);
+    cell->parameters[Yosys::ID::WIDTH] = Yosys::RTLIL::Const(int(1));
+    cell->setPort(Yosys::ID::S, input_sig_S);
+    cell->setPort(Yosys::ID::A, input_sig_A);
+    cell->setPort(Yosys::ID::B, input_sig_B);
+    cell->setPort(Yosys::ID::Y, output_sig);
 }

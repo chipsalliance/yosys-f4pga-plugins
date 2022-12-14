@@ -16,11 +16,13 @@
 
 TESTS = raygentop \
         eltwise_layer \
+		VexRiscv_Lite \
         
 include $(shell pwd)/../../Makefile_test.common
 
 raygentop_verify = true
 eltwise_layer_verify = true
+VexRiscv_Lite_verify = true
 
 clean_modules:
 	@find . -name "*.net.dot" -or -name "*.yosys.blif" | xargs rm -rf

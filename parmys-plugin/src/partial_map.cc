@@ -214,9 +214,9 @@ void partial_map_node(nnode_t *node, short traverse_number, netlist_t *netlist)
     case MULTI_PORT_MUX:
         instantiate_multi_port_mux(node, traverse_number, netlist);
         break;
-    // case MULTIPORT_nBIT_SMUX:
-    //     instantiate_multi_port_n_bits_mux(node, traverse_number, netlist);
-    //     break;
+    case MULTIPORT_nBIT_SMUX:
+        instantiate_multi_port_n_bits_mux(node, traverse_number, netlist);
+        break;
     case MULTIPLY: {
         mixer->partial_map_node(node, traverse_number, netlist);
         break;
@@ -264,7 +264,7 @@ void partial_map_node(nnode_t *node, short traverse_number, netlist_t *netlist)
     case CASE_NOT_EQUAL:
     case DIVIDE:
     case MODULO:
-    case MULTIPORT_nBIT_SMUX:
+    // case MULTIPORT_nBIT_SMUX:
     default:
         error_message(NETLIST, node->loc, "%s", "Partial map: node should have been converted to softer version.");
         break;
@@ -320,6 +320,212 @@ void instantiate_multi_port_mux(nnode_t *node, short mark, netlist_t * /*netlist
     }
     vtr::free(muxes);
     free_nnode(node);
+}
+
+/**
+ * (function: transform_to_single_bit_mux_nodes)
+ *
+ * @brief split the mux node read from yosys blif to
+ * the same type nodes with input/output width one
+ *
+ * @param node pointing to the mux node
+ * @param traverse_mark_number unique traversal mark for blif elaboration pass
+ * @param netlist pointer to the current netlist file
+ */
+nnode_t **transform_to_single_bit_mux_nodes(nnode_t *node, uintptr_t traverse_mark_number, netlist_t * /* netlist */)
+{
+    oassert(node->traverse_visited == traverse_mark_number);
+
+    int i, j;
+    /* to check all mux inputs have the same width(except [0] which is selector) */
+    for (i = 2; i < node->num_input_port_sizes; i++) {
+        oassert(node->input_port_sizes[i] == node->input_port_sizes[1]);
+    }
+
+    int selector_width = node->input_port_sizes[0];
+    int num_input_ports = node->num_input_port_sizes;
+    int num_mux_nodes = node->num_output_pins;
+
+    nnode_t **mux_node = (nnode_t **)vtr::calloc(num_mux_nodes, sizeof(nnode_t *));
+
+    /**
+     * input_port[0] -> SEL
+     * input_pin[SEL_WIDTH..n] -> MUX inputs
+     * output_pin[0..n-1] -> MUX outputs
+     */
+    for (i = 0; i < num_mux_nodes; i++) {
+        mux_node[i] = allocate_nnode(node->loc);
+
+        mux_node[i]->type = node->type;
+        mux_node[i]->traverse_visited = traverse_mark_number;
+
+        /* Name the mux based on the name of its output pin */
+        // const char* mux_base_name = node_name_based_on_op(mux_node[i]);
+        // mux_node[i]->name = (char*)vtr::malloc(sizeof(char) * (strlen(node->output_pins[i]->name) + strlen(mux_base_name) + 2));
+        // odin_sprintf(mux_node[i]->name, "%s_%s", node->output_pins[i]->name, mux_base_name);
+        mux_node[i]->name = node_name(mux_node[i], node->name);
+
+        add_input_port_information(mux_node[i], selector_width);
+        allocate_more_input_pins(mux_node[i], selector_width);
+
+        if (i == num_mux_nodes - 1) {
+            /**
+             * remap the SEL pins from the mux node
+             * to the last splitted mux node
+             */
+            for (j = 0; j < selector_width; j++) {
+                remap_pin_to_new_node(node->input_pins[j], mux_node[i], j);
+            }
+
+        } else {
+            /* add a copy of SEL pins from the mux node to the splitted mux nodes */
+            for (j = 0; j < selector_width; j++) {
+                add_input_pin_to_node(mux_node[i], copy_input_npin(node->input_pins[j]), j);
+            }
+        }
+
+        /**
+         * remap the input_pin[i+1]/output_pin[i] from the mux node to the
+         * last splitted ff node since we do not need it in dff node anymore
+         **/
+        int acc_port_sizes = selector_width;
+        for (j = 1; j < num_input_ports; j++) {
+            add_input_port_information(mux_node[i], 1);
+            allocate_more_input_pins(mux_node[i], 1);
+
+            remap_pin_to_new_node(node->input_pins[i + acc_port_sizes], mux_node[i], selector_width + j - 1);
+            acc_port_sizes += node->input_port_sizes[j];
+        }
+
+        /* output */
+        add_output_port_information(mux_node[i], 1);
+        allocate_more_output_pins(mux_node[i], 1);
+
+        remap_pin_to_new_node(node->output_pins[i], mux_node[i], 0);
+    }
+
+    // CLEAN UP
+    free_nnode(node);
+
+    return mux_node;
+}
+
+/**
+ * (function: instantiate_multi_port_n_bits_mux)
+ *
+ * @brief Makes the multiport n bits multiplexer into
+ * a series of 2-Mux-decoded
+ *
+ * [NOTE]: Selector should be the first port
+ *
+ * @param node pointing to the mux node
+ * @param traverse_mark_number unique traversal mark for blif elaboration pass
+ * @param netlist pointer to the current netlist file
+ */
+void instantiate_multi_port_n_bits_mux(nnode_t *node, short mark, netlist_t *netlist)
+{
+    int i, j;
+
+    char *name = vtr::strdup(node->name);
+    int num_single_muxes = node->num_output_pins;
+    /* This split the multiport n bit mux node into multiport 1 bit muxes*/
+    nnode_t **single_bit_muxes = transform_to_single_bit_mux_nodes(node, mark, netlist);
+
+    int cnt;
+    /* iterating over single bit muxes that has multiple (>2) port to turn them into 2-mux */
+    for (cnt = 0; cnt < num_single_muxes; cnt++) {
+        nnode_t *single_bit_mux = single_bit_muxes[cnt];
+
+        /* keeping the information of each single bit mux */
+        int num_expressions = single_bit_mux->num_input_port_sizes - 1;
+        int port_offset = single_bit_mux->input_port_sizes[0];
+        int selector_width = single_bit_mux->input_port_sizes[0];
+
+        /* need to reorder to turn to a smux, nothing more */
+        if (selector_width == 1 && num_expressions == 2) {
+            single_bit_mux->type = SMUX_2;
+            if (single_bit_mux->name)
+                vtr::free(single_bit_mux->name);
+
+            single_bit_mux->name = node_name(single_bit_mux, name);
+        } else {
+            nnode_t ***muxes = (nnode_t ***)vtr::calloc(selector_width, sizeof(nnode_t **));
+            /* to keep the internal output signals for future usage */
+            signal_list_t **output_signals = (signal_list_t **)vtr::calloc(selector_width, sizeof(signal_list_t *));
+            /* creating multiple stages to decode single bit mux into 2-mux */
+            for (i = 0; i < selector_width; i++) {
+                /* num of muxes in each stage */
+                int num_of_muxes = shift_left_value_with_overflow_check(0x1, selector_width - (i + 1), single_bit_mux->loc);
+                muxes[i] = (nnode_t **)vtr::calloc(num_of_muxes, sizeof(nnode_t *));
+                output_signals[i] = init_signal_list();
+
+                // single_bit_mux->input_pins[i] === selector[i]
+                npin_t *selector_pin = single_bit_mux->input_pins[selector_width - i - 1];
+
+                /* iterating over each single bit 2-mux to connect inputs */
+                for (j = 0; j < num_of_muxes; j++) {
+
+                    muxes[i][j] = make_2port_gate(SMUX_2, 1, 2, 1, single_bit_mux, mark);
+
+                    if (j != num_of_muxes - 1)
+                        add_input_pin_to_node(muxes[i][j], copy_input_npin(selector_pin), 0);
+                    else
+                        remap_pin_to_new_node(selector_pin, muxes[i][j], 0);
+
+                    /* connecting the single bit mux input pins into decoded 2-Muxes */
+                    if (i == 0) {
+                        remap_pin_to_new_node(single_bit_mux->input_pins[port_offset + j], muxes[i][j], 1);
+
+                        remap_pin_to_new_node(single_bit_mux->input_pins[port_offset + j + (num_expressions / 2)], muxes[i][j], 2);
+                    }
+                    /* connecting the outputs of internal 2-muxes to next level 2-muxes as input */
+                    else {
+                        add_input_pin_to_node(muxes[i][j], output_signals[i - 1]->pins[j], 1);
+
+                        add_input_pin_to_node(muxes[i][j], output_signals[i - 1]->pins[j + num_of_muxes], 2);
+                    }
+
+                    // Connect output pin to related input pin
+                    if (i != selector_width - 1) {
+                        npin_t *new_pin1 = allocate_npin();
+                        npin_t *new_pin2 = allocate_npin();
+                        nnet_t *new_net = allocate_nnet();
+                        new_net->name = make_full_ref_name(NULL, NULL, NULL, muxes[i][j]->name, j);
+                        /* hook the output pin into the node */
+                        add_output_pin_to_node(muxes[i][j], new_pin1, 0);
+                        /* hook up new pin 1 into the new net */
+                        add_driver_pin_to_net(new_net, new_pin1);
+                        /* hook up the new pin 2 to this new net */
+                        add_fanout_pin_to_net(new_net, new_pin2);
+
+                        // Storing the output pins of the current mux stage as the input of the next one
+                        add_pin_to_signal_list(output_signals[i], new_pin2);
+
+                    } else {
+                        remap_pin_to_new_node(single_bit_mux->output_pins[j], muxes[i][j], 0);
+                    }
+                }
+            }
+
+            // CLEAN UP per single mux
+            for (i = 0; i < selector_width; i++) {
+                vtr::free(muxes[i]);
+            }
+            vtr::free(muxes);
+
+            for (i = 0; i < selector_width; i++) {
+                free_signal_list(output_signals[i]);
+            }
+            vtr::free(output_signals);
+
+            // to free each single mux node
+            free_nnode(single_bit_mux);
+        }
+    }
+
+    // CLEAN UP
+    vtr::free(single_bit_muxes);
+    vtr::free(name);
 }
 
 /*---------------------------------------------------------------------------------------------
