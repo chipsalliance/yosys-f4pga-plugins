@@ -4,3 +4,9 @@
 [submodule "third_party/make-env"]
 	path = third_party/make-env
 	url = https://github.com/SymbiFlow/make-env.git
+[submodule "third_party/pugixml"]
+	path = third_party/pugixml
+	url = https://github.com/zeux/pugixml.git
+[submodule "third_party/libargparse"]
+	path = third_party/libargparse
+	url = https://github.com/kmurray/libargparse.git
