@@ -18,11 +18,11 @@ PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 NAME = systemverilog
 SOURCES = UhdmAst.cc \
-          UhdmAstUpstream.cc \
           uhdmastfrontend.cc \
           uhdmcommonfrontend.cc \
           uhdmsurelogastfrontend.cc \
-          uhdmastreport.cc
+          uhdmastreport.cc \
+          third_party/yosys/const2ast.cc
 
 # Directory to search for Surelog and UHDM libraries
 UHDM_INSTALL_DIR ?= /usr/local

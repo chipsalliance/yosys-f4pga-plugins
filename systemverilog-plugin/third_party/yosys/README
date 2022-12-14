@@ -1,0 +1,10 @@
+Files in this directory were copied from Yosys sources and slightly adapted.
+Original sources and their license available at https://github.com/YosysHQ/yosys.
+
+Copied files and their sources:
+
+- const2ast.cc: yosys/frontends/verilog/const2ast.cc
+
+Non-copied files placed here for interfacing purposes:
+
+- const2ast.h
