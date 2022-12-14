@@ -42,7 +42,10 @@ extern void visit_object(vpiHandle obj_h, int indent, const char *relation, std:
                          bool shallowVisit = false);
 }
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
+
+using namespace ::Yosys;
 
 // Store systemverilog defaults to be passed for every invocation of read_systemverilog
 static std::vector<std::string> systemverilog_defaults;
@@ -390,4 +393,4 @@ struct SystemVerilogDefines : public Pass {
     }
 } SystemVerilogDefines;
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin

@@ -23,14 +23,24 @@ extern bool sv_mode;
 }
 YOSYS_NAMESPACE_END
 
-namespace AST::Extended
+namespace systemverilog_plugin
+{
+
+using namespace ::Yosys;
+
+namespace AST
+{
+using namespace ::Yosys::AST;
+
+namespace Extended
 {
 enum AstNodeTypeExtended {
-    AST_DOT = AST::AST_BIND + 1, // here we always want to point to the last element of yosys' AstNodeType
+    AST_DOT = ::Yosys::AST::AST_BIND + 1, // here we always want to point to the last element of yosys' AstNodeType
     AST_BREAK,
     AST_CONTINUE
 };
 }
+} // namespace AST
 
 /*static*/ const IdString &UhdmAst::partial()
 {
@@ -4517,4 +4527,4 @@ void UhdmAst::report_error(const char *format, ...) const
     }
 }
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin
