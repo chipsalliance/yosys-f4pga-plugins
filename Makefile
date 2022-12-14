@@ -14,7 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-PLUGIN_LIST := fasm xdc params sdc ql-iob design_introspection integrateinv ql-qlf systemverilog uhdm dsp-ff parmys
+#PLUGIN_LIST := fasm xdc params sdc ql-iob design_introspection integrateinv ql-qlf systemverilog uhdm dsp-ff parmys
+PLUGIN_LIST := parmys
 PLUGINS := $(foreach plugin,$(PLUGIN_LIST),$(plugin).so)
 PLUGINS_INSTALL := $(foreach plugin,$(PLUGIN_LIST),install_$(plugin))
 PLUGINS_CLEAN := $(foreach plugin,$(PLUGIN_LIST),clean_$(plugin))
