@@ -857,7 +857,7 @@ struct ParMYSPass : public Pass {
         log("        loads vtr primitives as modules, if the design uses vtr prmitives then this flag is mandatory for first run\n");
         log("\n");
         log("    -viz\n");
-        log("        visualizes the netlist at 3 different stages: raw, optimized, and mapped.\n");
+        log("        visualizes the netlist at 3 different stages: elaborated, optimized, and mapped.\n");
         log("\n");
     }
     void execute(std::vector<std::string> args, RTLIL::Design *design) override
@@ -1050,7 +1050,8 @@ struct ParMYSPass : public Pass {
             elaborate(transformed);
             log("Successful Elaboration of the design by Odin-II\n");
             if (flag_visualize) {
-                graphVizOutputNetlist(".", "netlist.elaborated.net", 111, transformed);
+                graphVizOutputNetlist(DEFAULT_OUTPUT, "netlist.elaborated.net", 111, transformed);
+                log("Successful visualization of the elaborated netlist\n");
             }
         } catch (vtr::VtrError &vtr_error) {
             log_error("Odin-II Failed to parse Verilog / load BLIF file: %s with exit code:%d \n", vtr_error.what(), ERROR_ELABORATION);
@@ -1061,7 +1062,8 @@ struct ParMYSPass : public Pass {
             optimization(transformed);
             log("Successful Optimization of netlist by Odin-II\n");
             if (flag_visualize) {
-                graphVizOutputNetlist(".", "netlist.optimized.net", 222, transformed);
+                graphVizOutputNetlist(DEFAULT_OUTPUT, "netlist.optimized.net", 222, transformed);
+                log("Successful visualization of the optimized netlist\n");
             }
         } catch (vtr::VtrError &vtr_error) {
             log_error("Odin-II Failed to perform netlist optimization %s with exit code:%d \n", vtr_error.what(), ERROR_OPTIMIZATION);
@@ -1072,7 +1074,8 @@ struct ParMYSPass : public Pass {
             techmap(transformed);
             log("Successful Partial Technology Mapping by Odin-II\n");
             if (flag_visualize) {
-                graphVizOutputNetlist(".", "netlist.mapped.net", 333, transformed);
+                graphVizOutputNetlist(DEFAULT_OUTPUT, "netlist.mapped.net", 333, transformed);
+                log("Successful visualization of the mapped netlist\n");
             }
         } catch (vtr::VtrError &vtr_error) {
             log_error("Odin-II Failed to perform partial mapping to target device %s with exit code:%d \n", vtr_error.what(), ERROR_TECHMAP);
