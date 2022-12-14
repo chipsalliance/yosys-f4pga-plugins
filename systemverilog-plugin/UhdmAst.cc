@@ -73,6 +73,12 @@ enum AstNodeTypeExtended {
     return id;
 }
 
+/*static*/ const IdString &UhdmAst::node_subtype()
+{
+    static const IdString id("\\node_subtype");
+    return id;
+}
+
 static void sanitize_symbol_name(std::string &name)
 {
     if (!name.empty()) {
@@ -2729,36 +2735,52 @@ void UhdmAst::process_begin(bool is_named)
     AST::AstNode *hierarchy_node = nullptr;
     static int unnamed_block_idx = 0;
     visit_one_to_many({vpiVariables}, obj_h, [&](AST::AstNode *node) {
-        if (node) {
-            if (!is_named) {
-                if (!hierarchy_node) {
-                    // Create an implicit hierarchy scope
-                    // simplify checks if sv_mode is set to true when wire is declared inside unnamed block
-                    VERILOG_FRONTEND::sv_mode = true;
-                    hierarchy_node = make_ast_node(AST::AST_BLOCK);
-                    hierarchy_node->str = "$unnamed_block$" + std::to_string(unnamed_block_idx++);
-                }
-                hierarchy_node->children.push_back(node);
-            } else {
-                current_node->children.push_back(node);
+        if (!node)
+            return;
+
+        if (!is_named) {
+            if (!hierarchy_node) {
+                // Create an implicit hierarchy scope
+                // simplify checks if sv_mode is set to true when wire is declared inside unnamed block
+                VERILOG_FRONTEND::sv_mode = true;
+                hierarchy_node = make_ast_node(AST::AST_BLOCK);
+                hierarchy_node->str = "$unnamed_block$" + std::to_string(unnamed_block_idx++);
             }
+            hierarchy_node->children.push_back(node);
+        } else {
+            current_node->children.push_back(node);
         }
     });
     visit_one_to_many({vpiStmt}, obj_h, [&](AST::AstNode *node) {
-        if (node) {
-            if ((node->type == AST::AST_ASSIGN_EQ || node->type == AST::AST_ASSIGN_LE) && node->children.size() == 1) {
-                auto func_node = find_ancestor({AST::AST_FUNCTION, AST::AST_TASK});
-                if (!func_node)
-                    return;
-                auto wire_node = new AST::AstNode(AST::AST_WIRE);
-                wire_node->type = AST::AST_WIRE;
-                wire_node->str = node->children[0]->str;
-                func_node->children.push_back(wire_node);
+        if (!node)
+            return;
+
+        if ((node->type == AST::AST_ASSIGN_EQ || node->type == AST::AST_ASSIGN_LE) && node->children.size() == 1) {
+            auto func_node = find_ancestor({AST::AST_FUNCTION, AST::AST_TASK});
+            if (!func_node) {
+                delete node;
+                return;
+            }
+            auto wire_node = new AST::AstNode(AST::AST_WIRE);
+            wire_node->type = AST::AST_WIRE;
+            wire_node->str = node->children[0]->str;
+            func_node->children.push_back(wire_node);
+            delete node;
+        } else {
+            if (hierarchy_node) {
+                hierarchy_node->children.push_back(node);
             } else {
-                if (hierarchy_node)
-                    hierarchy_node->children.push_back(node);
-                else
+                auto pos = std::find_if(current_node->children.begin(), current_node->children.end(), [&](AST::AstNode *child) {
+                    if (child->attributes.count(UhdmAst::node_subtype()) &&
+                        child->attributes[UhdmAst::node_subtype()]->integer == UhdmAst::return_stmt_subtype)
+                        return true;
+                    return false;
+                });
+                if (pos == current_node->children.end()) {
                     current_node->children.push_back(node);
+                } else {
+                    delete node;
+                }
             }
         }
     });
@@ -3466,6 +3488,7 @@ void UhdmAst::process_range(const UHDM::BaseClass *object)
 void UhdmAst::process_return()
 {
     current_node = make_ast_node(AST::AST_ASSIGN_EQ);
+    current_node->attributes[UhdmAst::node_subtype()] = AST::AstNode::mkconst_int(UhdmAst::return_stmt_subtype, false);
     auto func_node = find_ancestor({AST::AST_FUNCTION, AST::AST_TASK});
     if (!func_node->children.empty()) {
         auto lhs = new AST::AstNode(AST::AST_IDENTIFIER);

@@ -175,6 +175,9 @@ class UhdmAst
     static const ::Yosys::IdString &force_convert();
     static const ::Yosys::IdString &is_imported();
     static const ::Yosys::IdString &is_simplified_wire();
+    static const ::Yosys::IdString &node_subtype();
+
+    static constexpr int return_stmt_subtype = 1;
 };
 
 } // namespace systemverilog_plugin
