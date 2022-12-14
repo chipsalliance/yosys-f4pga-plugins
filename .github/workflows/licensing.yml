@@ -44,3 +44,4 @@ jobs:
           ./third_party/libargparse/
           ./third_party/pugixml/
           ./third_party/vtr/
+          .third_party/mips32r1_core/
