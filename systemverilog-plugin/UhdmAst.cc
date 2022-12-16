@@ -14,9 +14,33 @@
 #include <uhdm/uhdm.h>
 #include <uhdm/vpi_user.h>
 
-#include "UhdmAstUpstream.h"
+#include "third_party/yosys/const2ast.h"
 
 YOSYS_NAMESPACE_BEGIN
+namespace VERILOG_FRONTEND
+{
+extern bool sv_mode;
+}
+YOSYS_NAMESPACE_END
+
+namespace systemverilog_plugin
+{
+
+using namespace ::Yosys;
+
+namespace AST
+{
+using namespace ::Yosys::AST;
+
+namespace Extended
+{
+enum AstNodeTypeExtended {
+    AST_DOT = ::Yosys::AST::AST_BIND + 1, // here we always want to point to the last element of yosys' AstNodeType
+    AST_BREAK,
+    AST_CONTINUE
+};
+}
+} // namespace AST
 
 /*static*/ const IdString &UhdmAst::partial()
 {
@@ -94,6 +118,13 @@ static std::string get_object_name(vpiHandle obj_h, const std::vector<int> &name
         }
     }
     return objectName;
+}
+
+static AST::AstNode *mkconst_real(double d)
+{
+    AST::AstNode *node = new AST::AstNode(AST::AST_REALVALUE);
+    node->realvalue = d;
+    return node;
 }
 
 static AST::AstNode *make_range(int left, int right, bool is_signed = false)
@@ -486,7 +517,7 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
     AST::AstNode *struct_range = nullptr;
 
     for (auto c : search_node->children) {
-        if (c->type == static_cast<int>(AST::AST_DOT)) {
+        if (c->type == static_cast<int>(AST::Extended::AST_DOT)) {
             // There should be only 1 AST_DOT node children
             log_assert(!sub_dot);
             sub_dot = expand_dot(current_struct_elem, c);
@@ -851,8 +882,8 @@ static void simplify_format_string(AST::AstNode *current_node)
 
 static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
 {
-    auto dot_it =
-      std::find_if(current_node->children.begin(), current_node->children.end(), [](auto c) { return c->type == static_cast<int>(AST::AST_DOT); });
+    auto dot_it = std::find_if(current_node->children.begin(), current_node->children.end(),
+                               [](auto c) { return c->type == static_cast<int>(AST::Extended::AST_DOT); });
     AST::AstNode *dot = (dot_it != current_node->children.end()) ? *dot_it : nullptr;
 
     AST::AstNode *expanded = nullptr;
@@ -875,8 +906,8 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
                     break;
                 } else {
                     current_node->str += "." + dot->str.substr(1);
-                    dot_it =
-                      std::find_if(dot->children.begin(), dot->children.end(), [](auto c) { return c->type == static_cast<int>(AST::AST_DOT); });
+                    dot_it = std::find_if(dot->children.begin(), dot->children.end(),
+                                          [](auto c) { return c->type == static_cast<int>(AST::Extended::AST_DOT); });
                     parent_node = dot;
                     dot = (dot_it != dot->children.end()) ? *dot_it : nullptr;
                 }
@@ -1155,7 +1186,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         }
         // handle vpiBinStrVal, vpiDecStrVal and vpiHexStrVal
         if (std::strchr(val.value.str, '\'')) {
-            return VERILOG_FRONTEND::const2ast(val.value.str, 0, false);
+            return ::systemverilog_plugin::const2ast(val.value.str, 0, false);
         } else {
             auto size = vpi_get(vpiSize, obj_h);
             if (size == 0) {
@@ -1163,7 +1194,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 c->is_unsized = true;
                 return c;
             } else {
-                return VERILOG_FRONTEND::const2ast(std::to_string(size) + strValType + val.value.str, 0, false);
+                return ::systemverilog_plugin::const2ast(std::to_string(size) + strValType + val.value.str, 0, false);
             }
         }
     }
@@ -1233,15 +1264,15 @@ void UhdmAst::transform_breaks_continues(AST::AstNode *loop, AST::AstNode *decl_
                 }
                 break;
             }
-            case AST::AST_BREAK:
-            case AST::AST_CONTINUE: {
+            case AST::Extended::AST_BREAK:
+            case AST::Extended::AST_CONTINUE: {
                 std::for_each(it, block->children.end(), [](auto *node) { delete node; });
                 block->children.erase(it, block->children.end());
                 if (!continue_wire)
                     continue_wire = make_cond_var("$continue");
                 auto *continue_id = make_identifier(continue_wire->str);
                 block->children.push_back(make_ast_node(AST::AST_ASSIGN_EQ, {continue_id, AST::AstNode::mkconst_int(1, false)}));
-                if (type == AST::AST_BREAK) {
+                if (type == AST::Extended::AST_BREAK) {
                     if (!break_wire)
                         break_wire = make_cond_var("$break");
                     auto *break_id = make_identifier(break_wire->str);
@@ -3486,7 +3517,7 @@ void UhdmAst::process_hier_path()
                     log_assert(!node->children.empty());
                     top_node->children.push_back(node->children[0]);
                 } else {
-                    node->type = static_cast<AST::AstNodeType>(AST::AST_DOT);
+                    node->type = static_cast<AST::AstNodeType>(AST::Extended::AST_DOT);
                     top_node->children.push_back(node);
                     top_node = node;
                 }
@@ -3549,7 +3580,7 @@ void UhdmAst::process_tagged_pattern()
     if (vpi_get(vpiType, typespec_h) == vpiStringTypespec) {
         std::string field_name = vpi_get_str(vpiName, typespec_h);
         if (field_name != "default") { // TODO: better support of the default keyword
-            auto field = new AST::AstNode(static_cast<AST::AstNodeType>(AST::AST_DOT));
+            auto field = new AST::AstNode(static_cast<AST::AstNodeType>(AST::Extended::AST_DOT));
             field->str = field_name;
             current_node->children[0]->children.push_back(field);
         }
@@ -4339,11 +4370,11 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiBreak:
         // Will be resolved later by loop processor
-        current_node = make_ast_node(static_cast<AST::AstNodeType>(AST::AST_BREAK));
+        current_node = make_ast_node(static_cast<AST::AstNodeType>(AST::Extended::AST_BREAK));
         break;
     case vpiContinue:
         // Will be resolved later by loop processor
-        current_node = make_ast_node(static_cast<AST::AstNodeType>(AST::AST_CONTINUE));
+        current_node = make_ast_node(static_cast<AST::AstNodeType>(AST::Extended::AST_CONTINUE));
         break;
     case vpiGenScopeArray:
         process_gen_scope_array();
@@ -4496,4 +4527,4 @@ void UhdmAst::report_error(const char *format, ...) const
     }
 }
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin

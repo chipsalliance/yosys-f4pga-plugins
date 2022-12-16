@@ -1,0 +1,17 @@
+Files in this directory were copied from Yosys sources and slightly adapted.
+Original sources and their license available at https://github.com/YosysHQ/yosys.
+
+Copied files, their sources, changes & notes:
+
+- const2ast.cc: yosys/frontends/verilog/const2ast.cc (rev. 72787f5)
+  - The file is a part of Yosys Verilog frontend, which is not publicly exposed
+    by Yosys. Copy has been made to avoid relying on internal details.
+  - Changes:
+    - C++ includes adapted to not rely on `verilog_frontend.h` file.
+    - Removed Yosys namespace; `const2ast()` has been placed inside
+      `systemverilog_plugin` namespace to avoid conflicts with the symbol from
+      Yosys when statically linking.
+
+Non-copied files placed here for interfacing purposes:
+
+- const2ast.h
