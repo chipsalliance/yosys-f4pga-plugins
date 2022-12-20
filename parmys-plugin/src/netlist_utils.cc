@@ -125,15 +125,13 @@ nnode_t *free_nnode(nnode_t *to_free)
  *-----------------------------------------------------------------------*/
 void allocate_more_input_pins(nnode_t *node, int width)
 {
-    int i;
-
     if (width <= 0) {
         error_message(NETLIST, node->loc, "tried adding input pins for width %d <= 0 %s\n", width, node->name);
         return;
     }
 
     node->input_pins = (npin_t **)vtr::realloc(node->input_pins, sizeof(npin_t *) * (node->num_input_pins + width));
-    for (i = 0; i < width; i++) {
+    for (int i = 0; i < width; i++) {
         node->input_pins[node->num_input_pins + i] = NULL;
     }
     node->num_input_pins += width;
@@ -145,15 +143,13 @@ void allocate_more_input_pins(nnode_t *node, int width)
  *-----------------------------------------------------------------------*/
 void allocate_more_output_pins(nnode_t *node, int width)
 {
-    int i;
-
     if (width <= 0) {
         error_message(NETLIST, node->loc, "tried adding output pins for width %d <= 0 %s\n", width, node->name);
         return;
     }
 
     node->output_pins = (npin_t **)vtr::realloc(node->output_pins, sizeof(npin_t *) * (node->num_output_pins + width));
-    for (i = 0; i < width; i++) {
+    for (int i = 0; i < width; i++) {
         node->output_pins[node->num_output_pins + i] = NULL;
     }
     node->num_output_pins += width;
@@ -676,10 +672,9 @@ signal_list_t *init_signal_list()
  *-------------------------------------------------------------------------------------------*/
 bool is_constant_signal(signal_list_t *signal, netlist_t *netlist)
 {
-    int i;
     bool is_constant = true;
 
-    for (i = 0; i < signal->count; i++) {
+    for (int i = 0; i < signal->count; i++) {
         nnet_t *net = signal->pins[i]->net;
         /* neither connected to GND nor VCC */
         if (strcmp(net->name, netlist->zero_net->name) && strcmp(net->name, netlist->one_net->name)) {
@@ -708,8 +703,7 @@ long constant_signal_value(signal_list_t *signal, netlist_t *netlist)
 
     long return_value = 0;
 
-    int i;
-    for (i = 0; i < signal->count; i++) {
+    for (int i = 0; i < signal->count; i++) {
         nnet_t *net = signal->pins[i]->net;
         /* if the pin is connected to VCC */
         if (!strcmp(net->name, netlist->one_net->name)) {
@@ -734,7 +728,6 @@ signal_list_t *create_constant_signal(const long long value, const int desired_w
 {
     signal_list_t *list = init_signal_list();
 
-    long i;
     std::string binary_value_str = string_of_radix_to_bitstring(std::to_string(value), 10);
     long width = binary_value_str.length();
 
@@ -752,7 +745,7 @@ signal_list_t *create_constant_signal(const long long value, const int desired_w
     bool extension = false;
 
     /* create vcc/gnd signal pins */
-    for (i = start; i > end; i--) {
+    for (long i = start; i > end; i--) {
         if (binary_value_str[i - 1] == '1') {
             add_pin_to_signal_list(list, get_one_pin(netlist));
         } else {
@@ -788,16 +781,15 @@ signal_list_t *prune_signal(signal_list_t *signalsvar, long signal_width, long p
     if (prune_size >= signal_width)
         return (signalsvar);
 
-    int i, j;
     /* new signal list */
     signal_list_t *new_signals = NULL;
     signal_list_t **splitted_signals = split_signal_list(signalsvar, signal_width);
 
     /* iterating over signals to prune them */
-    for (i = 0; i < num_of_signals; i++) {
+    for (int i = 0; i < num_of_signals; i++) {
         /* init pruned signal list */
         signal_list_t *new_signal = init_signal_list();
-        for (j = 0; j < signal_width; j++) {
+        for (int j = 0; j < signal_width; j++) {
             npin_t *pin = splitted_signals[i]->pins[j];
             /* adding pin to new signal list */
             if (j < prune_size) {
@@ -842,14 +834,11 @@ void add_pin_to_signal_list(signal_list_t *list, npin_t *pin)
  *-------------------------------------------------------------------------------------------*/
 signal_list_t *combine_lists(signal_list_t **signal_lists, int num_signal_lists)
 {
-    int i;
-    for (i = 1; i < num_signal_lists; i++) {
+    for (int i = 1; i < num_signal_lists; i++) {
         if (signal_lists[i]) {
-            int j;
-            for (j = 0; j < signal_lists[i]->count; j++) {
-                int k;
+            for (int j = 0; j < signal_lists[i]->count; j++) {
                 bool pin_already_added = false;
-                for (k = 0; k < signal_lists[0]->count; k++) {
+                for (int k = 0; k < signal_lists[0]->count; k++) {
                     if (!strcmp(signal_lists[0]->pins[k]->name, signal_lists[i]->pins[j]->name))
                         pin_already_added = true;
                 }
@@ -890,15 +879,14 @@ signal_list_t **split_signal_list(signal_list_t *signalsvar, const int width)
     oassert(width != 0);
     oassert(signalsvar->count % width == 0);
 
-    int i, j;
     int offset = 0;
     int num_chunk = signalsvar->count / width;
 
     /* initialize splitted signals */
     splitted_signals = (signal_list_t **)vtr::calloc(num_chunk, sizeof(signal_list_t *));
-    for (i = 0; i < num_chunk; i++) {
+    for (int i = 0; i < num_chunk; i++) {
         splitted_signals[i] = init_signal_list();
-        for (j = 0; j < width; j++) {
+        for (int j = 0; j < width; j++) {
             npin_t *pin = signalsvar->pins[j + offset];
             /* add to splitted signals list */
             add_pin_to_signal_list(splitted_signals[i], pin);
@@ -922,8 +910,7 @@ bool sigcmp(signal_list_t *sig, signal_list_t *be_checked)
     /* validate signal sizes */
     oassert(sig->count == be_checked->count);
 
-    int i;
-    for (i = 0; i < sig->count; i++) {
+    for (int i = 0; i < sig->count; i++) {
         /* checking their net */
         if (sig->pins[i]->net != be_checked->pins[i]->net) {
             return (false);
@@ -935,8 +922,7 @@ bool sigcmp(signal_list_t *sig, signal_list_t *be_checked)
 signal_list_t *copy_input_signals(signal_list_t *signalsvar)
 {
     signal_list_t *duplicate_signals = init_signal_list();
-    int i;
-    for (i = 0; i < signalsvar->count; i++) {
+    for (int i = 0; i < signalsvar->count; i++) {
         npin_t *pin = signalsvar->pins[i];
         pin = copy_input_npin(pin);
         add_pin_to_signal_list(duplicate_signals, pin);
@@ -952,11 +938,10 @@ signal_list_t *copy_input_signals(signal_list_t *signalsvar)
 signal_list_t *make_output_pins_for_existing_node(nnode_t *node, int width)
 {
     signal_list_t *return_list = init_signal_list();
-    int i;
 
     oassert(node->num_output_pins == width);
 
-    for (i = 0; i < width; i++) {
+    for (int i = 0; i < width; i++) {
         npin_t *new_pin1;
         npin_t *new_pin2;
         nnet_t *new_net;
@@ -1017,7 +1002,6 @@ void depth_traverse_count(nnode_t *node, int *count, uintptr_t traverse_mark_num
  *-------------------------------------------------------------------------------------------*/
 void depth_traverse_count(nnode_t *node, int *count, uintptr_t traverse_mark_number)
 {
-    int i, j;
     nnode_t *next_node;
     nnet_t *next_net;
 
@@ -1029,12 +1013,12 @@ void depth_traverse_count(nnode_t *node, int *count, uintptr_t traverse_mark_num
 
         node->traverse_visited = traverse_mark_number;
 
-        for (i = 0; i < node->num_output_pins; i++) {
+        for (int i = 0; i < node->num_output_pins; i++) {
             if (node->output_pins[i]->net == NULL)
                 continue;
 
             next_net = node->output_pins[i]->net;
-            for (j = 0; j < next_net->num_fanout_pins; j++) {
+            for (int j = 0; j < next_net->num_fanout_pins; j++) {
                 if (next_net->fanout_pins[j] == NULL)
                     continue;
                 next_node = next_net->fanout_pins[j]->node;
@@ -1113,8 +1097,7 @@ void free_netlist(netlist_t *to_free)
  */
 int get_output_pin_index_from_mapping(nnode_t *node, const char *name)
 {
-    int i;
-    for (i = 0; i < node->num_output_pins; i++) {
+    for (int i = 0; i < node->num_output_pins; i++) {
         npin_t *pin = node->output_pins[i];
         if (!strcmp(pin->mapping, name))
             return i;
@@ -1129,11 +1112,9 @@ int get_output_pin_index_from_mapping(nnode_t *node, const char *name)
  */
 int get_output_port_index_from_mapping(nnode_t *node, const char *name)
 {
-    int i;
     int pin_number = 0;
-    for (i = 0; i < node->num_output_port_sizes; i++) {
-        int j;
-        for (j = 0; j < node->output_port_sizes[i]; j++, pin_number++) {
+    for (int i = 0; i < node->num_output_port_sizes; i++) {
+        for (int j = 0; j < node->output_port_sizes[i]; j++, pin_number++) {
             npin_t *pin = node->output_pins[pin_number];
             if (!strcmp(pin->mapping, name))
                 return i;
@@ -1147,8 +1128,7 @@ int get_output_port_index_from_mapping(nnode_t *node, const char *name)
  */
 int get_input_pin_index_from_mapping(nnode_t *node, const char *name)
 {
-    int i;
-    for (i = 0; i < node->num_input_pins; i++) {
+    for (int i = 0; i < node->num_input_pins; i++) {
         npin_t *pin = node->input_pins[i];
         if (!strcmp(pin->mapping, name))
             return i;
@@ -1163,11 +1143,9 @@ int get_input_pin_index_from_mapping(nnode_t *node, const char *name)
  */
 int get_input_port_index_from_mapping(nnode_t *node, const char *name)
 {
-    int i;
     int pin_number = 0;
-    for (i = 0; i < node->num_input_port_sizes; i++) {
-        int j;
-        for (j = 0; j < node->input_port_sizes[i]; j++, pin_number++) {
+    for (int i = 0; i < node->num_input_port_sizes; i++) {
+        for (int j = 0; j < node->input_port_sizes[i]; j++, pin_number++) {
             npin_t *pin = node->input_pins[pin_number];
             if (!strcmp(pin->mapping, name))
                 return i;
@@ -1239,16 +1217,15 @@ void reduce_input_ports(nnode_t *&node, netlist_t *netlist)
 {
     oassert(node->num_input_port_sizes == 1 || node->num_input_port_sizes == 2);
 
-    int i, j;
     int offset = 0;
     nnode_t *new_node;
 
     signal_list_t **input_ports = (signal_list_t **)vtr::calloc(node->num_input_port_sizes, sizeof(signal_list_t *));
     /* add pins to signals lists */
-    for (i = 0; i < node->num_input_port_sizes; i++) {
+    for (int i = 0; i < node->num_input_port_sizes; i++) {
         /* initialize signal list */
         input_ports[i] = init_signal_list();
-        for (j = 0; j < node->input_port_sizes[i]; j++) {
+        for (int j = 0; j < node->input_port_sizes[i]; j++) {
             add_pin_to_signal_list(input_ports[i], node->input_pins[j + offset]);
         }
         offset += node->input_port_sizes[i];
@@ -1278,7 +1255,7 @@ void reduce_input_ports(nnode_t *&node, netlist_t *netlist)
     copy_signedness(new_node->attributes, node->attributes);
 
     /* hook the input pins */
-    for (i = 0; i < input_ports[0]->count; i++) {
+    for (int i = 0; i < input_ports[0]->count; i++) {
         npin_t *pin = input_ports[0]->pins[i];
         if (pin->node) {
             /* remap pins to new node */
@@ -1291,7 +1268,7 @@ void reduce_input_ports(nnode_t *&node, netlist_t *netlist)
     offset = input_ports[0]->count;
 
     if (node->num_input_port_sizes == 2) {
-        for (i = 0; i < input_ports[1]->count; i++) {
+        for (int i = 0; i < input_ports[1]->count; i++) {
             npin_t *pin = input_ports[1]->pins[i];
             if (pin->node) {
                 /* remap pins to new node */
@@ -1304,12 +1281,12 @@ void reduce_input_ports(nnode_t *&node, netlist_t *netlist)
     }
 
     /* hook the output pins */
-    for (i = 0; i < node->num_output_pins; i++) {
+    for (int i = 0; i < node->num_output_pins; i++) {
         remap_pin_to_new_node(node->output_pins[i], new_node, i);
     }
 
     // CLEAN UP
-    for (i = 0; i < node->num_input_port_sizes; i++) {
+    for (int i = 0; i < node->num_input_port_sizes; i++) {
         free_signal_list(input_ports[i]);
     }
     vtr::free(input_ports);
@@ -1334,12 +1311,11 @@ signal_list_t *reduce_signal_list(signal_list_t *signalvar, operation_list signe
     /* validate signedness */
     oassert(signedness == operation_list::SIGNED || signedness == operation_list::UNSIGNED);
 
-    int i;
     signal_list_t *return_value = init_signal_list();
     /* specify the extension net */
     nnet_t *extended_net = (signedness == operation_list::SIGNED) ? netlist->one_net : netlist->zero_net;
 
-    for (i = signalvar->count - 1; i > -1; i--) {
+    for (int i = signalvar->count - 1; i > -1; i--) {
         npin_t *pin = signalvar->pins[i];
         if (pin->net == extended_net) {
             delete_npin(pin);
@@ -1351,7 +1327,7 @@ signal_list_t *reduce_signal_list(signal_list_t *signalvar, operation_list signe
     }
 
     /* adding valuable pins to new signals list */
-    for (i = 0; i < signalvar->count; i++) {
+    for (int i = 0; i < signalvar->count; i++) {
         if (signalvar->pins[i]) {
             add_pin_to_signal_list(return_value, signalvar->pins[i]);
         }
@@ -1425,14 +1401,13 @@ void equalize_ports_size(nnode_t *&node, uintptr_t traverse_mark_number, netlist
     /* copy signedness attributes */
     copy_signedness(new_node->attributes, node->attributes);
 
-    int i;
-    for (i = 0; i < node->num_input_pins; i++) {
+    for (int i = 0; i < node->num_input_pins; i++) {
         /* remapping the a pins */
         remap_pin_to_new_node(node->input_pins[i], new_node, i);
     }
 
     /* Connecting output pins */
-    for (i = 0; i < new_out_size; i++) {
+    for (int i = 0; i < new_out_size; i++) {
         if (i < port_y_size) {
             remap_pin_to_new_node(node->output_pins[i], new_node, i);
         } else {
@@ -1451,7 +1426,7 @@ void equalize_ports_size(nnode_t *&node, uintptr_t traverse_mark_number, netlist
     }
 
     if (new_out_size < port_y_size) {
-        for (i = new_out_size; i < port_y_size; i++) {
+        for (int i = new_out_size; i < port_y_size; i++) {
             /* need to drive extra output pins with PAD */
             nnode_t *buf_node = make_1port_gate(BUF_NODE, 1, 1, node, traverse_mark_number);
             /* hook a pin from PAD node into the buf node */

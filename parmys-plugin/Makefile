@@ -30,7 +30,6 @@ SOURCES = parmys.cc \
 		  src/odin_util.cc \
 		  src/netlist_statistic.cc \
 		  src/netlist_utils.cc \
-		  src/netlist_check.cc \
 		  src/netlist_cleanup.cc \
 		  src/node_utils.cc \
 		  src/multiplier.cc \

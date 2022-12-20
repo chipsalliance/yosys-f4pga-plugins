@@ -104,7 +104,7 @@ struct global_args_t {
 
     //    bool fflegalize;     // makes flip-flops rising edge sensitive
     bool coarsen; // tells Odin-II that the input blif is coarse-grain
-                                      //    bool show_yosys_log; // Show Yosys output logs into the standard output stream
+                  //    bool show_yosys_log; // Show Yosys output logs into the standard output stream
 
     std::string adder_def; // DEPRECATED
 

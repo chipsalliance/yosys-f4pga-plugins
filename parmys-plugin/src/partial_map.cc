@@ -82,17 +82,15 @@ void depth_first_traversal_to_partial_map(short marker_value, netlist_t *netlist
  *-------------------------------------------------------------------------------------------*/
 void depth_first_traverse_partial_map(nnode_t *node, uintptr_t traverse_mark_number, netlist_t *netlist)
 {
-    int i, j;
-
     if (node->traverse_visited != traverse_mark_number) {
 
         node->traverse_visited = traverse_mark_number;
 
-        for (i = 0; i < node->num_output_pins; i++) {
+        for (int i = 0; i < node->num_output_pins; i++) {
             if (node->output_pins[i]->net) {
                 nnet_t *next_net = node->output_pins[i]->net;
                 if (next_net->fanout_pins) {
-                    for (j = 0; j < next_net->num_fanout_pins; j++) {
+                    for (int j = 0; j < next_net->num_fanout_pins; j++) {
                         if (next_net->fanout_pins[j]) {
                             if (next_net->fanout_pins[j]->node) {
                                 depth_first_traverse_partial_map(next_net->fanout_pins[j]->node, traverse_mark_number, netlist);
@@ -276,7 +274,6 @@ void instantiate_soft_logic_ram(nnode_t *node, short mark, netlist_t *netlist)
  *-------------------------------------------------------------------------------------------*/
 void instantiate_multi_port_mux(nnode_t *node, short mark, netlist_t * /*netlist*/)
 {
-    int i, j;
     int width_of_one_hot_logic;
     int num_ports;
     int port_offset;
@@ -288,12 +285,12 @@ void instantiate_multi_port_mux(nnode_t *node, short mark, netlist_t * /*netlist
     port_offset = node->input_port_sizes[1];
 
     muxes = (nnode_t **)vtr::malloc(sizeof(nnode_t *) * (num_ports - 1));
-    for (i = 0; i < num_ports - 1; i++) {
+    for (int i = 0; i < num_ports - 1; i++) {
         muxes[i] = make_2port_gate(MUX_2, width_of_one_hot_logic, width_of_one_hot_logic, 1, node, mark);
     }
 
-    for (j = 0; j < num_ports - 1; j++) {
-        for (i = 0; i < width_of_one_hot_logic; i++) {
+    for (int j = 0; j < num_ports - 1; j++) {
+        for (int i = 0; i < width_of_one_hot_logic; i++) {
             /* map the inputs to the muxt */
             remap_pin_to_new_node(node->input_pins[i + (j + 1) * port_offset], muxes[j], width_of_one_hot_logic + i);
 
@@ -325,9 +322,8 @@ nnode_t **transform_to_single_bit_mux_nodes(nnode_t *node, uintptr_t traverse_ma
 {
     oassert(node->traverse_visited == traverse_mark_number);
 
-    int i, j;
     /* to check all mux inputs have the same width(except [0] which is selector) */
-    for (i = 2; i < node->num_input_port_sizes; i++) {
+    for (int i = 2; i < node->num_input_port_sizes; i++) {
         oassert(node->input_port_sizes[i] == node->input_port_sizes[1]);
     }
 
@@ -342,7 +338,7 @@ nnode_t **transform_to_single_bit_mux_nodes(nnode_t *node, uintptr_t traverse_ma
      * input_pin[SEL_WIDTH..n] -> MUX inputs
      * output_pin[0..n-1] -> MUX outputs
      */
-    for (i = 0; i < num_mux_nodes; i++) {
+    for (int i = 0; i < num_mux_nodes; i++) {
         mux_node[i] = allocate_nnode(node->loc);
 
         mux_node[i]->type = node->type;
@@ -362,13 +358,13 @@ nnode_t **transform_to_single_bit_mux_nodes(nnode_t *node, uintptr_t traverse_ma
              * remap the SEL pins from the mux node
              * to the last splitted mux node
              */
-            for (j = 0; j < selector_width; j++) {
+            for (int j = 0; j < selector_width; j++) {
                 remap_pin_to_new_node(node->input_pins[j], mux_node[i], j);
             }
 
         } else {
             /* add a copy of SEL pins from the mux node to the splitted mux nodes */
-            for (j = 0; j < selector_width; j++) {
+            for (int j = 0; j < selector_width; j++) {
                 add_input_pin_to_node(mux_node[i], copy_input_npin(node->input_pins[j]), j);
             }
         }
@@ -378,7 +374,7 @@ nnode_t **transform_to_single_bit_mux_nodes(nnode_t *node, uintptr_t traverse_ma
          * last splitted ff node since we do not need it in dff node anymore
          **/
         int acc_port_sizes = selector_width;
-        for (j = 1; j < num_input_ports; j++) {
+        for (int j = 1; j < num_input_ports; j++) {
             add_input_port_information(mux_node[i], 1);
             allocate_more_input_pins(mux_node[i], 1);
 
@@ -413,16 +409,13 @@ nnode_t **transform_to_single_bit_mux_nodes(nnode_t *node, uintptr_t traverse_ma
  */
 void instantiate_multi_port_n_bits_mux(nnode_t *node, short mark, netlist_t *netlist)
 {
-    int i, j;
-
     char *name = vtr::strdup(node->name);
     int num_single_muxes = node->num_output_pins;
     /* This split the multiport n bit mux node into multiport 1 bit muxes*/
     nnode_t **single_bit_muxes = transform_to_single_bit_mux_nodes(node, mark, netlist);
 
-    int cnt;
     /* iterating over single bit muxes that has multiple (>2) port to turn them into 2-mux */
-    for (cnt = 0; cnt < num_single_muxes; cnt++) {
+    for (int cnt = 0; cnt < num_single_muxes; cnt++) {
         nnode_t *single_bit_mux = single_bit_muxes[cnt];
 
         /* keeping the information of each single bit mux */
@@ -442,7 +435,7 @@ void instantiate_multi_port_n_bits_mux(nnode_t *node, short mark, netlist_t *net
             /* to keep the internal output signals for future usage */
             signal_list_t **output_signals = (signal_list_t **)vtr::calloc(selector_width, sizeof(signal_list_t *));
             /* creating multiple stages to decode single bit mux into 2-mux */
-            for (i = 0; i < selector_width; i++) {
+            for (int i = 0; i < selector_width; i++) {
                 /* num of muxes in each stage */
                 int num_of_muxes = shift_left_value_with_overflow_check(0x1, selector_width - (i + 1), single_bit_mux->loc);
                 muxes[i] = (nnode_t **)vtr::calloc(num_of_muxes, sizeof(nnode_t *));
@@ -452,7 +445,7 @@ void instantiate_multi_port_n_bits_mux(nnode_t *node, short mark, netlist_t *net
                 npin_t *selector_pin = single_bit_mux->input_pins[selector_width - i - 1];
 
                 /* iterating over each single bit 2-mux to connect inputs */
-                for (j = 0; j < num_of_muxes; j++) {
+                for (int j = 0; j < num_of_muxes; j++) {
 
                     muxes[i][j] = make_2port_gate(SMUX_2, 1, 2, 1, single_bit_mux, mark);
 
@@ -497,12 +490,12 @@ void instantiate_multi_port_n_bits_mux(nnode_t *node, short mark, netlist_t *net
             }
 
             // CLEAN UP per single mux
-            for (i = 0; i < selector_width; i++) {
+            for (int i = 0; i < selector_width; i++) {
                 vtr::free(muxes[i]);
             }
             vtr::free(muxes);
 
-            for (i = 0; i < selector_width; i++) {
+            for (int i = 0; i < selector_width; i++) {
                 free_signal_list(output_signals[i]);
             }
             vtr::free(output_signals);
@@ -524,16 +517,15 @@ void instantiate_not_logic(nnode_t *node, short mark, netlist_t * /*netlist*/)
 {
     int width = node->num_input_pins;
     nnode_t **new_not_cells;
-    int i;
 
     new_not_cells = (nnode_t **)vtr::malloc(sizeof(nnode_t *) * width);
 
-    for (i = 0; i < width; i++) {
+    for (int i = 0; i < width; i++) {
         new_not_cells[i] = make_not_gate(node, mark);
     }
 
     /* connect inputs and outputs */
-    for (i = 0; i < width; i++) {
+    for (int i = 0; i < width; i++) {
         /* Joining the inputs to the new soft NOT GATES */
         remap_pin_to_new_node(node->input_pins[i], new_not_cells[i], 0);
         remap_pin_to_new_node(node->output_pins[i], new_not_cells[i], 0);
@@ -584,7 +576,6 @@ bool eliminate_buffer(nnode_t *node, short, netlist_t *)
  *-------------------------------------------------------------------------------------------*/
 void instantiate_logical_logic(nnode_t *node, operation_list op, short mark)
 {
-    int i;
     int port_B_offset;
     int width_a;
     int width_b;
@@ -606,11 +597,11 @@ void instantiate_logical_logic(nnode_t *node, operation_list op, short mark)
     reduction2 = make_1port_logic_gate(BITWISE_OR, width_b, node, mark);
 
     /* connect inputs.  In the case that a signal is smaller than the other then zero pad */
-    for (i = 0; i < width_a; i++) {
+    for (int i = 0; i < width_a; i++) {
         /* Joining the inputs to the input 1 of that gate */
         remap_pin_to_new_node(node->input_pins[i], reduction1, i);
     }
-    for (i = 0; i < width_b; i++) {
+    for (int i = 0; i < width_b; i++) {
         /* Joining the inputs to the input 1 of that gate */
         remap_pin_to_new_node(node->input_pins[i + port_B_offset], reduction2, i);
     }
@@ -630,7 +621,6 @@ void instantiate_logical_logic(nnode_t *node, operation_list op, short mark)
  *-------------------------------------------------------------------------------------------*/
 void instantiate_bitwise_reduction(nnode_t *node, operation_list op, short mark)
 {
-    int i;
     int width_a;
     nnode_t *new_logic_cell;
     operation_list cell_op;
@@ -675,7 +665,7 @@ void instantiate_bitwise_reduction(nnode_t *node, operation_list op, short mark)
     new_logic_cell = make_1port_logic_gate(cell_op, width_a, node, mark);
 
     /* connect inputs.  In the case that a signal is smaller than the other then zero pad */
-    for (i = 0; i < width_a; i++) {
+    for (int i = 0; i < width_a; i++) {
         /* Joining the inputs to the input 1 of that gate */
         remap_pin_to_new_node(node->input_pins[i], new_logic_cell, i);
     }
@@ -690,8 +680,6 @@ void instantiate_bitwise_reduction(nnode_t *node, operation_list op, short mark)
  *-------------------------------------------------------------------------------------------*/
 void instantiate_bitwise_logic(nnode_t *node, operation_list op, short mark, netlist_t *netlist)
 {
-    int i, j;
-
     operation_list cell_op;
     if (!node)
         return;
@@ -724,11 +712,11 @@ void instantiate_bitwise_logic(nnode_t *node, operation_list op, short mark, net
     }
 
     /* connect inputs.  In the case that a signal is smaller than the other then zero pad */
-    for (i = 0; i < node->output_port_sizes[0]; i++) {
+    for (int i = 0; i < node->output_port_sizes[0]; i++) {
         nnode_t *new_logic_cells = make_nport_gate(cell_op, node->num_input_port_sizes, 1, 1, node, mark);
         int current_port_offset = 0;
         /* Joining the inputs to the input 1 of that gate */
-        for (j = 0; j < node->num_input_port_sizes; j++) {
+        for (int j = 0; j < node->num_input_port_sizes; j++) {
             /* IF - this current input will also have a corresponding other input ports then join it to the gate */
             if (i < node->input_port_sizes[j])
                 remap_pin_to_new_node(node->input_pins[i + current_port_offset], new_logic_cells, j);
@@ -842,7 +830,6 @@ void instantiate_EQUAL(nnode_t *node, operation_list type, short mark, netlist_t
     int width_a;
     int width_b;
     int width_max;
-    int i;
     int port_B_offset;
     nnode_t *compare;
     nnode_t *combine;
@@ -866,7 +853,7 @@ void instantiate_EQUAL(nnode_t *node, operation_list type, short mark, netlist_t
     /* build an and bitwise AND */
 
     /* connect inputs.  In the case that a signal is smaller than the other then zero pad */
-    for (i = 0; i < width_max; i++) {
+    for (int i = 0; i < width_max; i++) {
         /* Joining the inputs to the input 1 of that gate */
         if (i < width_a) {
             if (i < width_b) {
@@ -917,7 +904,6 @@ void instantiate_GT(nnode_t *node, operation_list type, short mark, netlist_t *n
     int width_a;
     int width_b;
     int width_max;
-    int i;
     int port_A_offset;
     int port_B_offset;
     int port_A_index;
@@ -967,7 +953,7 @@ void instantiate_GT(nnode_t *node, operation_list type, short mark, netlist_t *n
     /* each cell checks if A > B and sends out a 1 if history has no 1s (3rd input) */
     gt_cells = (nnode_t **)vtr::malloc(sizeof(nnode_t *) * width_max);
 
-    for (i = 0; i < width_max; i++) {
+    for (int i = 0; i < width_max; i++) {
         gt_cells[i] = make_3port_gate(GT, 1, 1, 1, 1, node, mark);
         if (i < width_max - 1) {
             or_cells[i] = make_2port_gate(LOGICAL_OR, 1, 1, 1, node, mark);
@@ -975,7 +961,7 @@ void instantiate_GT(nnode_t *node, operation_list type, short mark, netlist_t *n
     }
 
     /* connect inputs.  In the case that a signal is smaller than the other then zero pad */
-    for (i = 0; i < width_max; i++) {
+    for (int i = 0; i < width_max; i++) {
         /* Joining the inputs to the input 1 of that gate */
         if (i < width_a) {
             /* IF - this current input will also have a corresponding b_port input then join it to the gate */
@@ -1053,7 +1039,6 @@ void instantiate_GE(nnode_t *node, operation_list type, short mark, netlist_t *n
     int width_a;
     int width_b;
     int width_max;
-    int i;
     int port_B_offset;
     int port_A_offset;
     nnode_t *equal;
@@ -1083,7 +1068,7 @@ void instantiate_GE(nnode_t *node, operation_list type, short mark, netlist_t *n
     logical_or_final_gate = make_1port_logic_gate(LOGICAL_OR, 2, node, mark);
 
     /* connect inputs.  In the case that a signal is smaller than the other then zero pad */
-    for (i = 0; i < width_max; i++) {
+    for (int i = 0; i < width_max; i++) {
         /* Joining the inputs to the input 1 of that gate */
         if (i < width_a) {
             /* IF - this current input will also have a corresponding b_port input then join it to the gate */
@@ -1143,12 +1128,11 @@ void instantiate_shift(nnode_t *node, short mark, netlist_t *netlist)
     oassert(node->num_input_port_sizes == 2);
     oassert(node->input_port_sizes[0] == node->input_port_sizes[1]);
 
-    int i;
     int operand_width = node->input_port_sizes[0];
     int shift_width = node->input_port_sizes[1];
     /* shift signal */
     signal_list_t *shift_signal = init_signal_list();
-    for (i = 0; i < shift_width; i++) {
+    for (int i = 0; i < shift_width; i++) {
         add_pin_to_signal_list(shift_signal, node->input_pins[operand_width + i]);
     }
 
@@ -1184,19 +1168,18 @@ static void instantiate_constant_shift(nnode_t *node, operation_list type, short
     oassert(node->num_input_port_sizes == 2);
     oassert(node->input_port_sizes[0] == node->input_port_sizes[1]);
 
-    int i;
     int operand_width = node->input_port_sizes[0];
     int shift_width = node->input_port_sizes[1];
     int output_width = node->output_port_sizes[0];
 
     /* operand signal */
     signal_list_t *operand_signal = init_signal_list();
-    for (i = 0; i < operand_width; i++) {
+    for (int i = 0; i < operand_width; i++) {
         add_pin_to_signal_list(operand_signal, node->input_pins[i]);
     }
     /* shift signal */
     signal_list_t *shift_signal = init_signal_list();
-    for (i = 0; i < shift_width; i++) {
+    for (int i = 0; i < shift_width; i++) {
         add_pin_to_signal_list(shift_signal, node->input_pins[operand_width + i]);
     }
 
@@ -1214,7 +1197,7 @@ static void instantiate_constant_shift(nnode_t *node, operation_list type, short
     case SL:
     case ASL: {
         /* connect ZERO to outputs that don't have inputs connected */
-        for (i = 0; i < shift_size; i++) {
+        for (int i = 0; i < shift_size; i++) {
             if (i < output_width) {
                 // connect 0 to lower outputs
                 add_pin_to_signal_list(result, get_zero_pin(netlist));
@@ -1222,7 +1205,7 @@ static void instantiate_constant_shift(nnode_t *node, operation_list type, short
         }
 
         /* connect inputs to outputs */
-        for (i = 0; i < output_width - shift_size; i++) {
+        for (int i = 0; i < output_width - shift_size; i++) {
             if (i < operand_width) {
                 npin_t *pin = operand_signal->pins[i];
                 // connect higher output pin to lower input pin
@@ -1239,7 +1222,7 @@ static void instantiate_constant_shift(nnode_t *node, operation_list type, short
     }
     case SR: // fallthrough
     case ASR: {
-        for (i = shift_size; i < operand_width; i++) {
+        for (int i = shift_size; i < operand_width; i++) {
             npin_t *pin = operand_signal->pins[i];
             // connect higher output pin to lower input pin
             if (i - shift_size < output_width) {
@@ -1249,7 +1232,7 @@ static void instantiate_constant_shift(nnode_t *node, operation_list type, short
         }
 
         /* Extend pad_bit to outputs that don't have inputs connected */
-        for (i = output_width - 1; i >= operand_width - shift_size; i--) {
+        for (int i = output_width - 1; i >= operand_width - shift_size; i--) {
             npin_t *extension_pin = NULL;
             if (node->related_ast_node && node->attributes->port_a_signed == SIGNED && node->type == ASR) {
                 /* for signed values padding will be with last pin */
@@ -1268,7 +1251,7 @@ static void instantiate_constant_shift(nnode_t *node, operation_list type, short
         break;
     }
 
-    for (i = 0; i < output_width; i++) {
+    for (int i = 0; i < output_width; i++) {
         /* create a buf node to drive output pins */
         nnode_t *buf_node = make_1port_gate(BUF_NODE, 1, 1, node, mark);
         /* add result as inout pins */
@@ -1279,13 +1262,13 @@ static void instantiate_constant_shift(nnode_t *node, operation_list type, short
     }
 
     // CLEAN UP
-    for (i = 0; i < operand_signal->count; i++) {
+    for (int i = 0; i < operand_signal->count; i++) {
         /* delete unused operand pins */
         if (operand_signal->pins[i]->node == node)
             delete_npin(operand_signal->pins[i]);
     }
     free_signal_list(operand_signal);
-    for (i = 0; i < shift_signal->count; i++) {
+    for (int i = 0; i < shift_signal->count; i++) {
         /* delete shift pins */
         delete_npin(shift_signal->pins[i]);
     }

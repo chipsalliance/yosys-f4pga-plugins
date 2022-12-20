@@ -240,7 +240,6 @@ nnode_t *make_2port_gate(operation_list type, int width_port1, int width_port2, 
  *-------------------------------------------------------------------------------------------*/
 nnode_t *make_nport_gate(operation_list type, int port_sizes, int width, int width_output, nnode_t *node, short mark)
 {
-    int i;
     nnode_t *logic_node = allocate_nnode(node->loc);
     logic_node->traverse_visited = mark;
     logic_node->type = type;
@@ -248,7 +247,7 @@ nnode_t *make_nport_gate(operation_list type, int port_sizes, int width, int wid
     logic_node->related_ast_node = node->related_ast_node;
 
     /* add the input ports as needed */
-    for (i = 0; i < port_sizes; i++) {
+    for (int i = 0; i < port_sizes; i++) {
         allocate_more_input_pins(logic_node, width);
         add_input_port_information(logic_node, width);
     }
@@ -324,7 +323,6 @@ nnode_t *make_multiport_smux(signal_list_t **inputs, signal_list_t *selector, in
     int valid_num_mux_inputs = shift_left_value_with_overflow_check(0X1, selector->count, node->loc);
     oassert(valid_num_mux_inputs >= num_muxed_inputs);
 
-    int i, j;
     int offset = 0;
 
     nnode_t *mux = allocate_nnode(node->loc);
@@ -335,7 +333,7 @@ nnode_t *make_multiport_smux(signal_list_t **inputs, signal_list_t *selector, in
     /* add selector signal */
     add_input_port_information(mux, selector->count);
     allocate_more_input_pins(mux, selector->count);
-    for (i = 0; i < selector->count; i++) {
+    for (int i = 0; i < selector->count; i++) {
         npin_t *sel = selector->pins[i];
         /* hook selector into mux node as first port */
         if (sel->node)
@@ -346,18 +344,18 @@ nnode_t *make_multiport_smux(signal_list_t **inputs, signal_list_t *selector, in
     offset += selector->count;
 
     int max_width = 0;
-    for (i = 0; i < num_muxed_inputs; i++) {
+    for (int i = 0; i < num_muxed_inputs; i++) {
         /* keep the size of max input to allocate equal output */
         if (inputs[i]->count > max_width)
             max_width = inputs[i]->count;
     }
 
-    for (i = 0; i < num_muxed_inputs; i++) {
+    for (int i = 0; i < num_muxed_inputs; i++) {
         /* add input port data */
         add_input_port_information(mux, max_width);
         allocate_more_input_pins(mux, max_width);
 
-        for (j = 0; j < inputs[i]->count; j++) {
+        for (int j = 0; j < inputs[i]->count; j++) {
             npin_t *pin = inputs[i]->pins[j];
             /* hook inputs into mux node */
             if (j < max_width) {
@@ -380,7 +378,7 @@ nnode_t *make_multiport_smux(signal_list_t **inputs, signal_list_t *selector, in
 
     // specify output pin
     if (outs != NULL) {
-        for (i = 0; i < outs->count; i++) {
+        for (int i = 0; i < outs->count; i++) {
             npin_t *output_pin;
             if (i < max_width) {
                 output_pin = outs->pins[i];

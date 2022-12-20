@@ -110,7 +110,7 @@ void declare_hard_adder_for_sub(nnode_t *node)
 void instantiate_hard_adder_subtraction(nnode_t *node, short mark, netlist_t * /*netlist*/)
 {
     char *new_name = NULL;
-    int len, sanity, i;
+    int len, sanity;
 
     declare_hard_adder_for_sub(node);
 
@@ -133,7 +133,7 @@ void instantiate_hard_adder_subtraction(nnode_t *node, short mark, netlist_t * /
         oassert(false);
 
     /* Give names to the output pins */
-    for (i = 0; i < node->num_output_pins; i++) {
+    for (int i = 0; i < node->num_output_pins; i++) {
         if (node->output_pins[i]->name == NULL) {
             len = strlen(node->name) + 20; /* 6 chars for pin idx */
             new_name = (char *)vtr::malloc(len);
@@ -153,7 +153,6 @@ void instantiate_hard_adder_subtraction(nnode_t *node, short mark, netlist_t * /
  *---------------------------------------------------------------------*/
 void init_split_adder_for_sub(nnode_t *node, nnode_t *ptr, int a, int sizea, int b, int sizeb, int cin, int cout, int index, int flag)
 {
-    int i;
     int flaga = 0;
     int current_sizea, current_sizeb;
     int aa = 0;
@@ -218,30 +217,30 @@ void init_split_adder_for_sub(nnode_t *node, nnode_t *ptr, int a, int sizea, int
     // the normal sub: if flaga or flagb = 1, the input pins should be empty.
     // the unary sub: all input pins for a should be null, input pins for b should be connected to node
     if (node->num_input_port_sizes == 1) {
-        for (i = 0; i < current_sizea; i++)
+        for (int i = 0; i < current_sizea; i++)
             ptr->input_pins[i] = NULL;
     } else if ((flaga == 1) && (node->num_input_port_sizes == 2)) {
-        for (i = 0; i < current_sizea; i++)
+        for (int i = 0; i < current_sizea; i++)
             ptr->input_pins[i] = NULL;
     } else if ((flaga == 2) && (node->num_input_port_sizes == 2)) {
         if (index == 0) {
             ptr->input_pins[0] = NULL;
             if (sizea > 1) {
-                for (i = 1; i < aa; i++) {
+                for (int i = 1; i < aa; i++) {
                     ptr->input_pins[i] = node->input_pins[i + index * sizea - 1];
                     ptr->input_pins[i]->node = ptr;
                     ptr->input_pins[i]->pin_node_idx = i;
                 }
-                for (i = 0; i < (sizea - aa); i++)
+                for (int i = 0; i < (sizea - aa); i++)
                     ptr->input_pins[i + aa] = NULL;
             }
         } else {
-            for (i = 0; i < aa; i++) {
+            for (int i = 0; i < aa; i++) {
                 ptr->input_pins[i] = node->input_pins[i + index * sizea - 1];
                 ptr->input_pins[i]->node = ptr;
                 ptr->input_pins[i]->pin_node_idx = i;
             }
-            for (i = 0; i < (sizea - aa); i++)
+            for (int i = 0; i < (sizea - aa); i++)
                 ptr->input_pins[i + aa] = NULL;
         }
     } else {
@@ -249,14 +248,14 @@ void init_split_adder_for_sub(nnode_t *node, nnode_t *ptr, int a, int sizea, int
             if (flag == 0) {
                 ptr->input_pins[0] = NULL;
                 if (sizea > 1) {
-                    for (i = 1; i < sizea; i++) {
+                    for (int i = 1; i < sizea; i++) {
                         ptr->input_pins[i] = node->input_pins[i + index * sizea - 1];
                         ptr->input_pins[i]->node = ptr;
                         ptr->input_pins[i]->pin_node_idx = i;
                     }
                 }
             } else {
-                for (i = 0; i < current_sizea; i++) {
+                for (int i = 0; i < current_sizea; i++) {
                     ptr->input_pins[i] = node->input_pins[i];
                     ptr->input_pins[i]->node = ptr;
                     ptr->input_pins[i]->pin_node_idx = i;
@@ -264,14 +263,14 @@ void init_split_adder_for_sub(nnode_t *node, nnode_t *ptr, int a, int sizea, int
             }
         } else {
             if (flag == 0) {
-                for (i = 0; i < sizea; i++) {
+                for (int i = 0; i < sizea; i++) {
                     ptr->input_pins[i] = node->input_pins[i + index * sizea - offset];
                     ptr->input_pins[i]->node = ptr;
                     ptr->input_pins[i]->pin_node_idx = i;
                 }
             } else {
                 num = node->input_port_sizes[0];
-                for (i = 0; i < current_sizea; i++) {
+                for (int i = 0; i < current_sizea; i++) {
                     ptr->input_pins[i] = node->input_pins[i + num - current_sizea];
                     ptr->input_pins[i]->node = ptr;
                     ptr->input_pins[i]->pin_node_idx = i;
@@ -280,11 +279,11 @@ void init_split_adder_for_sub(nnode_t *node, nnode_t *ptr, int a, int sizea, int
         }
     }
 
-    for (i = 0; i < current_sizeb; i++)
+    for (int i = 0; i < current_sizeb; i++)
         ptr->input_pins[i + current_sizeb] = NULL;
 
     /* Carry_in should be NULL*/
-    for (i = 0; i < cin; i++) {
+    for (int i = 0; i < cin; i++) {
         ptr->input_pins[i + current_sizea + current_sizeb] = NULL;
     }
 
@@ -297,7 +296,7 @@ void init_split_adder_for_sub(nnode_t *node, nnode_t *ptr, int a, int sizea, int
 
     ptr->num_output_pins = output;
     ptr->output_pins = (npin_t **)vtr::malloc(sizeof(void *) * output);
-    for (i = 0; i < output; i++)
+    for (int i = 0; i < output; i++)
         ptr->output_pins[i] = NULL;
 
     return;
@@ -322,7 +321,6 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
 {
     nnode_t **node;
     nnode_t **not_node;
-    int i, j;
     int num;
     int max_num = 0;
     int flag = 0, lefta = 0, leftb = 0;
@@ -344,7 +342,7 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
     node = (nnode_t **)vtr::malloc(sizeof(nnode_t *) * (count));
     not_node = (nnode_t **)vtr::malloc(sizeof(nnode_t *) * (b));
 
-    for (i = 0; i < b; i++) {
+    for (int i = 0; i < b; i++) {
         not_node[i] = allocate_nnode(nodeo->loc);
         nnode_t *temp = not_node[i];
         if (nodeo->num_input_port_sizes == 2)
@@ -354,7 +352,7 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
         free_nnode(temp);
     }
 
-    for (i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         node[i] = allocate_nnode(nodeo->loc);
         node[i]->name = (char *)vtr::malloc(strlen(nodeo->name) + 20);
         odin_sprintf(node[i]->name, "%s-%d", nodeo->name, i);
@@ -398,7 +396,7 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
     sub_chain_list = insert_in_vptr_list(sub_chain_list, adder_chain);
 
     if (flag == 1 && count == 1) {
-        for (i = 0; i < b; i++) {
+        for (int i = 0; i < b; i++) {
             /* If the input pin of not gate connects to gnd, replacing the input pin and the not gate with vcc;
              * if the input pin of not gate connects to vcc, replacing the input pin and the not gate with gnd.*/
             /* connecting untouched nets in the netlist creation to the pad node */
@@ -424,7 +422,7 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
                 num = b;
             else
                 num = sizeb - 1;
-            for (i = 0; i < num; i++) {
+            for (int i = 0; i < num; i++) {
                 /* If the input pin of not gate connects to gnd, replacing the input pin and the not gate with vcc;
                  * if the input pin of not gate connects to vcc, replacing the input pin and the not gate with gnd.*/
                 /* connecting untouched nets in the netlist creation to the pad node */
@@ -446,12 +444,12 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
             }
         }
 
-        for (i = offset; i < count; i++) {
+        for (int i = offset; i < count; i++) {
             num = (b + 1) - i * sizeb;
             if (num > sizeb)
                 num = sizeb;
 
-            for (j = 0; j < num; j++) {
+            for (int j = 0; j < num; j++) {
                 if (i == count - 1 && flag == 1) {
                     /* If the input pin of not gate connects to gnd, replacing the input pin and the not gate with vcc;
                      * if the input pin of not gate connects to vcc, replacing the input pin and the not gate with gnd.*/
@@ -516,9 +514,9 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
 
     // for normal subtraction: if any input pins beside intial cin is NULL, it should connect to unconn
     // for unary subtraction: the first number should has the number of a input pins connected to gnd. The others are as same as normal subtraction
-    for (i = 0; i < count; i++) {
+    for (int i = 0; i < count; i++) {
         num = node[i]->num_input_pins;
-        for (j = 0; j < num - 1; j++) {
+        for (int j = 0; j < num - 1; j++) {
             if (node[i]->input_pins[j] == NULL) {
                 if (nodeo->num_input_port_sizes != 3 && i * sizea + j < a)
                     connect_nodes(netlist->gnd_node, 0, node[i], j);
@@ -529,11 +527,11 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
     }
 
     // connect cout to next node's cin
-    for (i = 1; i < count; i++)
+    for (int i = 1; i < count; i++)
         connect_nodes(node[i - 1], 0, node[i], (node[i]->num_input_pins - 1));
 
     if (flag == 1 && count == 1) {
-        for (j = 0; j < node[0]->num_output_pins - 1; j++) {
+        for (int j = 0; j < node[0]->num_output_pins - 1; j++) {
             if (j < nodeo->num_output_pins)
                 remap_pin_to_new_node(nodeo->output_pins[j], node[0], j + 1);
             else {
@@ -543,7 +541,7 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
             }
         }
     } else {
-        for (j = 0; j < node[0]->num_output_pins - 2; j++) {
+        for (int j = 0; j < node[0]->num_output_pins - 2; j++) {
             if (j < nodeo->num_output_pins)
                 remap_pin_to_new_node(nodeo->output_pins[j], node[0], j + 2);
             else {
@@ -556,8 +554,8 @@ void split_adder_for_sub(nnode_t *nodeo, int a, int b, int sizea, int sizeb, int
 
     if (count > 1 || configuration.adder_cin_global) {
         // remap the output pins of each adder to nodeo
-        for (i = offset; i < count; i++) {
-            for (j = 0; j < node[i]->num_output_pins - 1; j++) {
+        for (int i = offset; i < count; i++) {
+            for (int j = 0; j < node[i]->num_output_pins - 1; j++) {
                 if ((i * sizea + j - offset) < nodeo->num_output_pins)
                     remap_pin_to_new_node(nodeo->output_pins[i * sizea + j - offset], node[i], j + 1);
                 else {
@@ -844,9 +842,8 @@ void clean_adders_for_sub()
  *-----------------------------------------------------------------------*/
 static void cleanup_sub_old_node(nnode_t *nodeo, netlist_t *netlist)
 {
-    int i;
     /* Disconnecting input pins from the old node side */
-    for (i = 0; i < nodeo->num_input_pins; i++) {
+    for (int i = 0; i < nodeo->num_input_pins; i++) {
         npin_t *input_pin = nodeo->input_pins[i];
         if (input_pin->node == nodeo)
             delete_npin(input_pin);
@@ -855,7 +852,7 @@ static void cleanup_sub_old_node(nnode_t *nodeo, netlist_t *netlist)
     }
 
     /* connecting the extra output pins to the gnd node */
-    for (i = 0; i < nodeo->num_output_pins; i++) {
+    for (int i = 0; i < nodeo->num_output_pins; i++) {
         npin_t *output_pin = nodeo->output_pins[i];
 
         if (output_pin && output_pin->node) {

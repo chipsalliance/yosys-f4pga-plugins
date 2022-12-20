@@ -20,6 +20,6 @@
 
 #define DEFAULT_CLOCK_NAME "GLOBAL_SIM_BASE_CLK"
 
-void resolve_top(netlist_t* netlist);
+void resolve_top(netlist_t *netlist);
 
 #endif // _PARMYS_RESOLVE_HPP_

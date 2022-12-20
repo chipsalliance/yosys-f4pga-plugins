@@ -22,14 +22,16 @@
 
 #include "netlist_utils.h"
 
-#include "block_memory.h"
 #include "adder.h"
+#include "block_memory.h"
 #include "memory.h"
 #include "multiplier.h"
 #include "parmys_resolve.hpp"
 #include "subtractor.h"
 
 #include "vtr_util.h"
+
+USING_YOSYS_NAMESPACE
 
 void dfs_resolve(nnode_t *node, uintptr_t traverse_mark_number, netlist_t *netlist);
 
@@ -65,17 +67,15 @@ void resolve_top(netlist_t *netlist)
 
 void dfs_resolve(nnode_t *node, uintptr_t traverse_mark_number, netlist_t *netlist)
 {
-    int i, j;
-
     if (node->traverse_visited != traverse_mark_number) {
 
         node->traverse_visited = traverse_mark_number;
 
-        for (i = 0; i < node->num_output_pins; i++) {
+        for (int i = 0; i < node->num_output_pins; i++) {
             if (node->output_pins[i]->net) {
                 nnet_t *next_net = node->output_pins[i]->net;
                 if (next_net->fanout_pins) {
-                    for (j = 0; j < next_net->num_fanout_pins; j++) {
+                    for (int j = 0; j < next_net->num_fanout_pins; j++) {
                         if (next_net->fanout_pins[j]) {
                             if (next_net->fanout_pins[j]->node) {
                                 dfs_resolve(next_net->fanout_pins[j]->node, traverse_mark_number, netlist);
@@ -207,14 +207,13 @@ static void resolve_memory_nodes(nnode_t *node, uintptr_t traverse_mark_number, 
 
 static void look_for_clocks(netlist_t *netlist)
 {
-    int i;
-    for (i = 0; i < netlist->num_top_input_nodes; i++) {
+    for (int i = 0; i < netlist->num_top_input_nodes; i++) {
         nnode_t *input_node = netlist->top_input_nodes[i];
         if (!strcmp(input_node->name, DEFAULT_CLOCK_NAME))
             input_node->type = CLOCK_NODE;
     }
 
-    for (i = 0; i < netlist->num_ff_nodes; i++) {
+    for (int i = 0; i < netlist->num_ff_nodes; i++) {
         oassert(netlist->ff_nodes[i]->input_pins[1]->net->num_driver_pins == 1);
         nnode_t *node = netlist->ff_nodes[i]->input_pins[1]->net->driver_pins[0]->node;
 

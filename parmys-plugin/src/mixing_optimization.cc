@@ -20,11 +20,11 @@
 #include <stdint.h> // INT_MAX
 #include <vector>
 
+#include "adder.h"                 // hard_adders
 #include "hard_soft_logic_mixer.h" // HardSoftLogicMixer
-#include "adder.h"               // hard_adders
-#include "multiplier.h"          // instantiate_simple_soft_multiplier
-#include "netlist_statistic.h"    // mixing_optimization_stats
-#include "odin_error.h"           // error_message
+#include "multiplier.h"            // instantiate_simple_soft_multiplier
+#include "netlist_statistic.h"     // mixing_optimization_stats
+#include "odin_error.h"            // error_message
 
 void MixingOpt::scale_counts()
 {

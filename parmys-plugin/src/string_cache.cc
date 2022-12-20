@@ -26,19 +26,18 @@ void generate_sc_hash(STRING_CACHE *sc);
 
 unsigned long string_hash(STRING_CACHE *sc, const char *string)
 {
-    long a, i, mod, mul;
+    long a, mod, mul;
 
     a = 0;
     mod = sc->mod;
     mul = sc->mul;
-    for (i = 0; string[i]; i++)
+    for (int i = 0; string[i]; i++)
         a = (a * mul + (unsigned char)string[i]) % mod;
     return a;
 }
 
 void generate_sc_hash(STRING_CACHE *sc)
 {
-    long i;
     long hash;
 
     if (sc->string_hash != NULL)
@@ -50,7 +49,7 @@ void generate_sc_hash(STRING_CACHE *sc)
     sc->next_string = (long *)sc_do_alloc(sc->size, sizeof(long));
     memset(sc->string_hash, 0xff, sc->string_hash_size * sizeof(long));
     memset(sc->next_string, 0xff, sc->size * sizeof(long));
-    for (i = 0; i < sc->free; i++) {
+    for (long i = 0; i < sc->free; i++) {
         hash = string_hash(sc, sc->string[i]) % sc->string_hash_size;
         sc->next_string[i] = sc->string_hash[hash];
         sc->string_hash[hash] = i;

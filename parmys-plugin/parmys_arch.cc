@@ -35,17 +35,18 @@ struct ParmysArchPass : public Pass {
         module = new Module;
         module->name = RTLIL::escape_id(hb->name);
 
-        if (design->module(module->name))
-            Yosys::log_error("Duplicate definition of module %s!\n", log_id(module->name));
+        if (design->module(module->name)) {
+            log_error("Duplicate definition of module %s!\n", log_id(module->name));
+        }
         design->add(module);
 
         t_model_ports *input_port = hb->inputs;
         while (input_port) {
             for (int i = 0; i < input_port->size; i++) {
                 std::string w_name = stringf("%s[%d]", input_port->name, i);
-                Yosys::RTLIL::Wire *wire = to_wire(w_name, module);
+                RTLIL::Wire *wire = to_wire(w_name, module);
                 wire->port_input = true;
-                std::pair<Yosys::RTLIL::IdString, int> wp = wideports_split(w_name);
+                std::pair<RTLIL::IdString, int> wp = wideports_split(w_name);
                 if (!wp.first.empty() && wp.second >= 0) {
                     wideports_cache[wp.first].first = std::max(wideports_cache[wp.first].first, wp.second + 1);
                     wideports_cache[wp.first].second = true;
@@ -59,9 +60,9 @@ struct ParmysArchPass : public Pass {
         while (output_port) {
             for (int i = 0; i < output_port->size; i++) {
                 std::string w_name = stringf("%s[%d]", output_port->name, i);
-                Yosys::RTLIL::Wire *wire = to_wire(w_name, module);
+                RTLIL::Wire *wire = to_wire(w_name, module);
                 wire->port_output = true;
-                std::pair<Yosys::RTLIL::IdString, int> wp = wideports_split(w_name);
+                std::pair<RTLIL::IdString, int> wp = wideports_split(w_name);
                 if (!wp.first.empty() && wp.second >= 0) {
                     wideports_cache[wp.first].first = std::max(wideports_cache[wp.first].first, wp.second + 1);
                     wideports_cache[wp.first].second = false;

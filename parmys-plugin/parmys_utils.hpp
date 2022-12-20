@@ -20,12 +20,14 @@
 
 #include "odin_types.h"
 
-Yosys::Wire *to_wire(std::string wire_name, Yosys::Module *module);
-std::pair<Yosys::RTLIL::IdString, int> wideports_split(std::string name);
-const std::string str(Yosys::RTLIL::SigBit sig);
-const std::string str(Yosys::RTLIL::IdString id);
-void handle_cell_wideports_cache(Yosys::hashlib::dict<Yosys::RTLIL::IdString, Yosys::hashlib::dict<int, Yosys::SigBit>> *cell_wideports_cache,
-                                 Yosys::Design *design, Yosys::Module *module, Yosys::Cell *cell);
-void handle_wideports_cache(Yosys::hashlib::dict<Yosys::RTLIL::IdString, std::pair<int, bool>> *wideports_cache, Yosys::Module *module);
+USING_YOSYS_NAMESPACE
+
+Wire *to_wire(std::string wire_name, Module *module);
+std::pair<RTLIL::IdString, int> wideports_split(std::string name);
+const std::string str(RTLIL::SigBit sig);
+const std::string str(RTLIL::IdString id);
+void handle_cell_wideports_cache(hashlib::dict<RTLIL::IdString, hashlib::dict<int, SigBit>> *cell_wideports_cache, Design *design, Module *module,
+                                 Cell *cell);
+void handle_wideports_cache(hashlib::dict<RTLIL::IdString, std::pair<int, bool>> *wideports_cache, Module *module);
 
 #endif //_PARMYS_UTILS_HPP_

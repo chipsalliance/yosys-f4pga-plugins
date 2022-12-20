@@ -286,11 +286,11 @@ void output_hard_blocks_yosys(Yosys::Design *design)
 
 void instantiate_hard_block(nnode_t *node, short mark, netlist_t * /*netlist*/)
 {
-    int i, port, index;
+    int port, index;
 
     port = index = 0;
     /* Give names to the output pins */
-    for (i = 0; i < node->num_output_pins; i++) {
+    for (int i = 0; i < node->num_output_pins; i++) {
         if (node->output_pins[i]->name == NULL)
             node->output_pins[i]->name = make_full_ref_name(node->name, NULL, NULL, node->output_pins[i]->mapping, i);
         // node->output_pins[i]->name = make_full_ref_name(node->name, NULL, NULL, node->output_pins[i]->mapping,

@@ -74,8 +74,7 @@ void traverse_backward(nnode_t *node)
     if (node->node_data == VISITED_BACKWARD)
         return;                         // Already visited
     node->node_data = VISITED_BACKWARD; // Mark as visited
-    int i;
-    for (i = 0; i < node->num_input_pins; i++) {
+    for (int i = 0; i < node->num_input_pins; i++) {
         // ensure this net has a driver (i.e. skip undriven outputs)
         for (int j = 0; j < node->input_pins[i]->net->num_driver_pins; j++) {
             if (node->input_pins[i]->net->driver_pins[j]->node)
@@ -129,10 +128,9 @@ void traverse_forward(nnode_t *node, int toplevel, int remove_me)
     }
 
     /* Iterate through every fanout node */
-    int i, j;
-    for (i = 0; i < node->num_output_pins; i++) {
+    for (int i = 0; i < node->num_output_pins; i++) {
         if (node->output_pins[i] && node->output_pins[i]->net) {
-            for (j = 0; j < node->output_pins[i]->net->num_fanout_pins; j++) {
+            for (int j = 0; j < node->output_pins[i]->net->num_fanout_pins; j++) {
                 if (node->output_pins[i]->net->fanout_pins[j]) {
                     nnode_t *child = node->output_pins[i]->net->fanout_pins[j]->node;
                     if (child) {
@@ -151,8 +149,7 @@ void traverse_forward(nnode_t *node, int toplevel, int remove_me)
  * to determine which nodes have an effect on the outputs */
 void mark_output_dependencies(netlist_t *netlist)
 {
-    int i;
-    for (i = 0; i < netlist->num_top_output_nodes; i++) {
+    for (int i = 0; i < netlist->num_top_output_nodes; i++) {
         traverse_backward(netlist->top_output_nodes[i]);
     }
 }
@@ -170,8 +167,7 @@ void identify_unused_nodes(netlist_t *netlist)
     traverse_forward(netlist->gnd_node, true, false);
     traverse_forward(netlist->vcc_node, true, false);
     traverse_forward(netlist->pad_node, true, false);
-    int i;
-    for (i = 0; i < netlist->num_top_input_nodes; i++) {
+    for (int i = 0; i < netlist->num_top_input_nodes; i++) {
         traverse_forward(netlist->top_input_nodes[i], true, false);
     }
 }
@@ -181,8 +177,7 @@ void identify_unused_nodes(netlist_t *netlist)
 void remove_unused_nodes(node_list_t *remove)
 {
     while (remove != NULL && remove->node != NULL) {
-        int i;
-        for (i = 0; i < remove->node->num_input_pins; i++) {
+        for (int i = 0; i < remove->node->num_input_pins; i++) {
             npin_t *input_pin = remove->node->input_pins[i];
             /* Remove the fanout pin from the net */
             if (input_pin)

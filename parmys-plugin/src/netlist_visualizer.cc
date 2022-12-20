@@ -60,10 +60,8 @@ void graphVizOutputNetlist(std::string path, const char *name, uintptr_t marker_
  *-------------------------------------------------------------------------------------------*/
 void depth_first_traversal_graph_display(FILE *out, uintptr_t marker_value, netlist_t *netlist)
 {
-    int i;
-
     /* start with the primary input list */
-    for (i = 0; i < netlist->num_top_input_nodes; i++) {
+    for (int i = 0; i < netlist->num_top_input_nodes; i++) {
         if (netlist->top_input_nodes[i] != NULL) {
             depth_first_traverse_visualize(netlist->top_input_nodes[i], out, marker_value);
         }
@@ -80,7 +78,6 @@ void depth_first_traversal_graph_display(FILE *out, uintptr_t marker_value, netl
  *-------------------------------------------------------------------------------------------*/
 void depth_first_traverse_visualize(nnode_t *node, FILE *fp, uintptr_t traverse_mark_number)
 {
-    int i, j;
     nnode_t *next_node;
     nnet_t *next_net;
 
@@ -107,12 +104,12 @@ void depth_first_traverse_visualize(nnode_t *node, FILE *fp, uintptr_t traverse_
         }
         vtr::free(temp_string);
 
-        for (i = 0; i < node->num_output_pins; i++) {
+        for (int i = 0; i < node->num_output_pins; i++) {
             if (node->output_pins[i]->net == NULL)
                 continue;
 
             next_net = node->output_pins[i]->net;
-            for (j = 0; j < next_net->num_fanout_pins; j++) {
+            for (int j = 0; j < next_net->num_fanout_pins; j++) {
                 npin_t *pin = next_net->fanout_pins[j];
                 if (pin) {
                     next_node = pin->node;
@@ -186,7 +183,6 @@ void graphVizOutputCombinationalNet(std::string path, const char *name, uintptr_
  *-------------------------------------------------------------------------------------------*/
 void forward_traversal_net_graph_display(FILE *fp, uintptr_t marker_value, nnode_t *node)
 {
-    int j, k;
     nnode_t **stack_of_nodes;
     int index_in_stack = 0;
     int num_stack_of_nodes = 1;
@@ -220,11 +216,11 @@ void forward_traversal_net_graph_display(FILE *fp, uintptr_t marker_value, nnode
         vtr::free(temp_string);
 
         /* at each node visit all the outputs */
-        for (j = 0; j < current_node->num_output_pins; j++) {
+        for (int j = 0; j < current_node->num_output_pins; j++) {
             if (current_node->output_pins[j] == NULL)
                 continue;
 
-            for (k = 0; k < current_node->output_pins[j]->net->num_fanout_pins; k++) {
+            for (int k = 0; k < current_node->output_pins[j]->net->num_fanout_pins; k++) {
                 if ((current_node->output_pins[j] == NULL) || (current_node->output_pins[j]->net == NULL) ||
                     (current_node->output_pins[j]->net->fanout_pins[k] == NULL))
                     continue;
@@ -277,7 +273,6 @@ void forward_traversal_net_graph_display(FILE *fp, uintptr_t marker_value, nnode
  *-------------------------------------------------------------------------------------------*/
 void backward_traversal_net_graph_display(FILE *fp, uintptr_t marker_value, nnode_t *node)
 {
-    int j;
     char *temp_string;
     char *temp_string2;
     nnode_t **stack_of_nodes;
@@ -311,7 +306,7 @@ void backward_traversal_net_graph_display(FILE *fp, uintptr_t marker_value, nnod
         vtr::free(temp_string);
 
         /* at each node visit all the outputs */
-        for (j = 0; j < current_node->num_input_pins; j++) {
+        for (int j = 0; j < current_node->num_input_pins; j++) {
             if (current_node->input_pins[j] == NULL)
                 continue;
 

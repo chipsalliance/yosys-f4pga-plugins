@@ -21,7 +21,7 @@
 #include <vector>
 
 #include "multiplier.h" // instantiate_simple_soft_multiplier
-#include "odin_error.h"  // error_message
+#include "odin_error.h" // error_message
 
 HardSoftLogicMixer::HardSoftLogicMixer()
 {
