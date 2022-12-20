@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Daniel Khadivi
+ * Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#ifndef __YOSYS_UTILS_H__
-#define __YOSYS_UTILS_H__
+#ifndef _PARMYS_UTILS_HPP_
+#define _PARMYS_UTILS_HPP_
 
 #include "odin_types.h"
 
@@ -28,4 +28,4 @@ void handle_cell_wideports_cache(Yosys::hashlib::dict<Yosys::RTLIL::IdString, Yo
                                  Yosys::Design *design, Yosys::Module *module, Yosys::Cell *cell);
 void handle_wideports_cache(Yosys::hashlib::dict<Yosys::RTLIL::IdString, std::pair<int, bool>> *wideports_cache, Yosys::Module *module);
 
-#endif //__YOSYS_UTILS_H__
+#endif //_PARMYS_UTILS_HPP_

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Daniel Khadivi
+ * Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 #include <string.h>
 
 #include "odin_globals.h"
@@ -24,11 +23,11 @@
 #include "vtr_memory.h"
 #include "vtr_util.h"
 
-#include "node_creation_library.h"
+#include "node_utils.h"
 
-#include "adders.h"
-#include "hard_blocks.h"
-#include "multipliers.h"
+#include "adder.h"
+#include "hard_block.h"
+#include "multiplier.h"
 
 #include "kernel/rtlil.h"
 #include "parmys_update.hpp"

@@ -1,30 +1,23 @@
-#ifndef ODIN_TYPES_H
-#define ODIN_TYPES_H
 /*
+ * Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
  *
- * Permission is hereby granted, free of charge, to any person
- * obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without
- * restriction, including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following
- * conditions:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * The above copyright notice and this permission notice shall be
- * included in all copies or substantial portions of the Software.
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
+#ifndef _ODIN_TYPES_H_
+#define _ODIN_TYPES_H_
 
-#include "argparse_value.hpp"
 #include "odin_error.h"
 #include "read_xml_arch_file.h"
 #include "string_cache.h"
@@ -90,75 +83,38 @@ struct global_args_t {
     // Current path Odin-II is running
     std::string current_path;
 
-    argparse::ArgValue<std::string> config_file;
-    argparse::ArgValue<std::vector<std::string>> verilog_files;
-    argparse::ArgValue<std::string> blif_file;
-    argparse::ArgValue<std::string> output_file;
-    argparse::ArgValue<std::string> arch_file;   // Name of the FPGA architecture file
-    argparse::ArgValue<std::string> tcl_file;    // TCL file to be run by yosys elaborator
-    argparse::ArgValue<std::string> elaborator;  // Name of the external elaborator tool, currently Yosys is supported, default is Odin
-    argparse::ArgValue<bool> permissive;         // turn possible_errors into warnings
-    argparse::ArgValue<bool> print_parse_tokens; // print the tokens as they are parsed byt the parser
+    std::string config_file;
+    std::vector<std::string> verilog_files;
+    std::string blif_file;
+    std::string output_file;
+    std::string arch_file;   // Name of the FPGA architecture file
+    std::string tcl_file;    // TCL file to be run by yosys elaborator
+    std::string elaborator;  // Name of the external elaborator tool, currently Yosys is supported, default is Odin
+    bool permissive;         // turn possible_errors into warnings
+    bool print_parse_tokens; // print the tokens as they are parsed byt the parser
 
-    argparse::ArgValue<std::string> high_level_block; // Legacy option, no longer used
+    std::string high_level_block; // Legacy option, no longer used
 
-    argparse::ArgValue<std::string> top_level_module_name; // force the name of the top level module desired
+    std::string top_level_module_name; // force the name of the top level module desired
 
-    argparse::ArgValue<bool> write_netlist_as_dot;
-    argparse::ArgValue<bool> write_ast_as_dot;
-    argparse::ArgValue<bool> all_warnings;
-    argparse::ArgValue<bool> show_help;
+    bool write_netlist_as_dot;
+    bool write_ast_as_dot;
+    bool all_warnings;
+    bool show_help;
 
-    //    argparse::ArgValue<bool> fflegalize;     // makes flip-flops rising edge sensitive
-    argparse::ArgValue<bool> coarsen; // tells Odin-II that the input blif is coarse-grain
-                                      //    argparse::ArgValue<bool> show_yosys_log; // Show Yosys output logs into the standard output stream
+    //    bool fflegalize;     // makes flip-flops rising edge sensitive
+    bool coarsen; // tells Odin-II that the input blif is coarse-grain
+                                      //    bool show_yosys_log; // Show Yosys output logs into the standard output stream
 
-    argparse::ArgValue<std::string> adder_def; // DEPRECATED
+    std::string adder_def; // DEPRECATED
 
     // defines if the first cin of an adder/subtractor is connected to a global gnd/vdd
     // or generated using a dummy adder with both inputs set to gnd/vdd
-    argparse::ArgValue<bool> adder_cin_global;
-
-    /////////////////////
-    // For simulation.
-    /////////////////////
-    // Generate this number of random vectors.
-    argparse::ArgValue<int> sim_num_test_vectors;
-    // Input vectors to simulate instead of generating vectors.
-    argparse::ArgValue<std::string> sim_vector_input_file;
-    // Existing output vectors to verify against.
-    argparse::ArgValue<std::string> sim_vector_output_file;
-    // Simulation output Directory
-    argparse::ArgValue<std::string> sim_directory;
-    // Tells the simulator whether or not to generate random vectors which include the unknown logic value.
-    argparse::ArgValue<bool> sim_generate_three_valued_logic;
-    // Output both falling and rising edges in the output_vectors file. (DEFAULT)
-    argparse::ArgValue<bool> sim_output_both_edges;
-    // Request to read mif file input
-    argparse::ArgValue<bool> read_mif_input;
-    // Additional pins, nets, and nodes to output.
-    argparse::ArgValue<std::vector<std::string>> sim_additional_pins;
-    // Comma-separated list of primary input pins to hold high for all cycles but the first.
-    argparse::ArgValue<std::vector<std::string>> sim_hold_high;
-    // Comma-separated list of primary input pins to hold low for all cycles but the first.
-    argparse::ArgValue<std::vector<std::string>> sim_hold_low;
-    // target coverage
-    argparse::ArgValue<double> sim_min_coverage;
-    // simulate until best coverage is achieved
-    argparse::ArgValue<bool> sim_achieve_best;
-
-    argparse::ArgValue<int> parralelized_simulation;
-    argparse::ArgValue<bool> parralelized_simulation_in_batch;
-    // deprecated since this should be defined when compiled
-    argparse::ArgValue<int> sim_initial_value;
-    // The seed for creating random simulation vector
-    argparse::ArgValue<int> sim_random_seed;
-
-    argparse::ArgValue<bool> interactive_simulation;
+    bool adder_cin_global;
 
     // Arguments for mixing hard and soft logic
-    argparse::ArgValue<int> exact_mults;
-    argparse::ArgValue<float> mults_ratio;
+    int exact_mults;
+    float mults_ratio;
 };
 
 extern const char *ZERO_GND_ZERO;
@@ -668,4 +624,4 @@ struct netlist_t {
     Yosys::Design *design;
 };
 
-#endif
+#endif // _ODIN_TYPES_H_

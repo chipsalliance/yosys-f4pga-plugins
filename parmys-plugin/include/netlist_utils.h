@@ -1,5 +1,22 @@
-#ifndef NETLIST_UTILS_H_FUNCTIONS
-#define NETLIST_UTILS_H_FUNCTIONS
+/*
+ * Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+#ifndef _NETLIST_UTILS_H_
+#define _NETLIST_UTILS_H_
 
 #include "odin_types.h"
 
@@ -70,4 +87,4 @@ void remove_fanout_pins_from_net(nnet_t *net, npin_t *pin, int id);
 extern void equalize_ports_size(nnode_t *&node, uintptr_t traverse_mark_number, netlist_t *netlist);
 extern void delete_npin(npin_t *pin);
 
-#endif
+#endif // _NETLIST_UTILS_H_

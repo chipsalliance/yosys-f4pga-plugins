@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Daniel Khadivi
+ * Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,17 +37,17 @@
 
 #include "parmys_resolve.hpp"
 
-#include "BlockMemories.hpp"
-#include "adders.h"
+#include "block_memory.h"
+#include "adder.h"
 #include "arch_util.h"
-#include "hard_blocks.h"
-#include "memories.h"
-#include "multipliers.h"
+#include "hard_block.h"
+#include "memory.h"
+#include "multiplier.h"
 #include "netlist_cleanup.h"
 #include "netlist_statistic.h"
 #include "netlist_visualizer.h"
 #include "read_xml_config_file.h"
-#include "subtractions.h"
+#include "subtractor.h"
 
 #include "ast_util.h"
 #include "parmys_update.hpp"
@@ -872,8 +872,8 @@ struct ParMYSPass : public Pass {
         std::string top_module_name;
         std::string DEFAULT_OUTPUT(".");
 
-        global_args.exact_mults.set(-1, argparse::Provenance::DEFAULT);
-        global_args.mults_ratio.set(-1.0, argparse::Provenance::DEFAULT);
+        global_args.exact_mults = -1;
+        global_args.mults_ratio = -1.0;
 
         log_header(design, "Starting parmys pass.\n");
 
@@ -906,11 +906,11 @@ struct ParMYSPass : public Pass {
                 continue;
             }
             if (args[argidx] == "-exact_mults" && argidx + 1 < args.size()) {
-                global_args.exact_mults.set(atoi(args[++argidx].c_str()), argparse::Provenance::SPECIFIED);
+                global_args.exact_mults = atoi(args[++argidx].c_str());
                 continue;
             }
             if (args[argidx] == "-mults_ratio" && argidx + 1 < args.size()) {
-                global_args.mults_ratio.set(atof(args[++argidx].c_str()), argparse::Provenance::SPECIFIED);
+                global_args.mults_ratio = atof(args[++argidx].c_str());
                 continue;
             }
         }

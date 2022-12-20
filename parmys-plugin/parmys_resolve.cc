@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Daniel Khadivi
+ * Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 #include "odin_globals.h"
 #include "odin_types.h"
 
@@ -23,12 +22,12 @@
 
 #include "netlist_utils.h"
 
-#include "BlockMemories.hpp"
-#include "adders.h"
-#include "memories.h"
-#include "multipliers.h"
+#include "block_memory.h"
+#include "adder.h"
+#include "memory.h"
+#include "multiplier.h"
 #include "parmys_resolve.hpp"
-#include "subtractions.h"
+#include "subtractor.h"
 
 #include "vtr_util.h"
 

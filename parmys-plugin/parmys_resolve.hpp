@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Daniel Khadivi
+ * Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
-#ifndef __RESOLVE_H
-#define __RESOLVE_H
+#ifndef _PARMYS_RESOLVE_HPP_
+#define _PARMYS_RESOLVE_HPP_
 
 #define DEFAULT_CLOCK_NAME "GLOBAL_SIM_BASE_CLK"
 
 void resolve_top(netlist_t* netlist);
 
-#endif
+#endif // _PARMYS_RESOLVE_HPP_

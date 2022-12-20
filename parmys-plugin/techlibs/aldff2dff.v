@@ -1,7 +1,7 @@
 // yosys -- Yosys Open SYnthesis Suite
 //
 // Copyright (C) 2012  Claire Xenia Wolf <claire@yosyshq.com>
-// Copyright (C) 2022  Daniel Khadivi
+// Copyright (C) 2022  CAS—Atlantic (University of New Brunswick, CASA)
 //
 // Permission to use, copy, modify, and/or distribute this software for any
 // purpose with or without fee is hereby granted, provided that the above
@@ -14,6 +14,8 @@
 // WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 // ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 // OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+//
+// Modified version of adff2dff for alddf
 //
 // SPDX-License-Identifier: ISC
 

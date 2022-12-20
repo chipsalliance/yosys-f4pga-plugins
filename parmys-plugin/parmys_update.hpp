@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Daniel Khadivi
+ * Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#ifndef __DESIGN_UPDATE_H__
-#define __DESIGN_UPDATE_H__
+#ifndef _PARMYS_UPDATE_HPP_
+#define _PARMYS_UPDATE_HPP_
 
 #include "odin_types.h"
 
@@ -28,4 +28,4 @@ void define_MUX_function_yosys(nnode_t *node, Yosys::Module *module);
 void define_SMUX_function_yosys(nnode_t *node, Yosys::Module *module);
 void define_FF_yosys(nnode_t *node, Yosys::Module *module);
 
-#endif //__DESIGN_UPDATE_H__
+#endif //_PARMYS_UPDATE_HPP_

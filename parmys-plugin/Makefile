@@ -1,4 +1,4 @@
-# Copyright 2022 Daniel Khadivi
+# Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,9 +22,9 @@ SOURCES = parmys.cc \
 		  parmys_update.cc \
 		  parmys_utils.cc \
 		  parmys_resolve.cc \
-		  src/adders.cc \
+		  src/adder.cc \
 		  src/enum_str.cc \
-		  src/MixingOptimization.cc \
+		  src/mixing_optimization.cc \
 		  src/read_xml_config_file.cc \
 		  src/odin_error.cc \
 		  src/odin_util.cc \
@@ -32,18 +32,18 @@ SOURCES = parmys.cc \
 		  src/netlist_utils.cc \
 		  src/netlist_check.cc \
 		  src/netlist_cleanup.cc \
-		  src/node_creation_library.cc \
-		  src/multipliers.cc \
-		  src/subtractions.cc \
-		  src/HardSoftLogicMixer.cc \
+		  src/node_utils.cc \
+		  src/multiplier.cc \
+		  src/subtractor.cc \
+		  src/hard_soft_logic_mixer.cc \
 		  src/odin_ii.cc \
 		  src/string_cache.cc \
 		  src/partial_map.cc \
-		  src/hard_blocks.cc \
-		  src/BlockMemories.cc \
-		  src/memories.cc \
+		  src/hard_block.cc \
+		  src/block_memory.cc \
+		  src/memory.cc \
 		  src/netlist_visualizer.cc \
-		  src/Hashtable.cc \
+		  src/hash_table.cc \
 		  src/ast_util.cc \
 		  ../third_party/vtr/libs/vtrutil/src/vtr_util.cc \
 		  ../third_party/vtr/libs/vtrutil/src/vtr_token.cc \
@@ -57,9 +57,6 @@ SOURCES = parmys.cc \
 		  ../third_party/vtr/libs/vtrutil/src/vtr_assert.cc \
 		  ../third_party/vtr/libs/log/src/log.cc \
 		  ../third_party/pugixml/src/pugixml.cpp \
-		  ../third_party/libargparse/src/argparse.cpp \
-		  ../third_party/libargparse/src/argparse_formatter.cpp \
-		  ../third_party/libargparse/src/argparse_util.cpp \
 		  ../third_party/vtr/libs/rtlnumber/src/rtl_int.cc \
 		  ../third_party/vtr/libs/rtlnumber/src/rtl_utils.cc \
 		  ../third_party/vtr/libs/pugiutil/src/pugixml_loc.cc \
@@ -78,7 +75,6 @@ include ../Makefile_plugin.common
 
 CXXFLAGS += -I./include
 CXXFLAGS += -I../third_party/pugixml/src
-CXXFLAGS += -I../third_party/libargparse/src
 CXXFLAGS += -I../third_party/vtr/libs/archfpga/src
 CXXFLAGS += -I../third_party/vtr/libs/log/src
 CXXFLAGS += -I../third_party/vtr/libs/pugiutil/src
