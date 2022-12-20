@@ -7,9 +7,6 @@
 [submodule "third_party/pugixml"]
 	path = third_party/pugixml
 	url = https://github.com/zeux/pugixml.git
-[submodule "third_party/libargparse"]
-	path = third_party/libargparse
-	url = https://github.com/kmurray/libargparse.git
 [submodule "third_party/mips32r1_core"]
 	path = third_party/mips32r1_core
 	url = https://github.com/grantae/mips32r1_core.git
