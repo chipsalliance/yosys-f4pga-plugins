@@ -1726,15 +1726,13 @@ void UhdmAst::process_module()
                     move_type_to_new_typedef(current_node, node);
                 }
             });
-            visit_one_to_many({vpiModule, vpiInterface, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiGenScopeArray,
-                               vpiProcess, vpiClockingBlock, vpiAssertion},
-                              obj_h, [&](AST::AstNode *node) {
-                                  if (node) {
-                                      if (node->type == AST::AST_ASSIGN && node->children.size() < 2)
-                                          return;
-                                      add_or_replace_child(current_node, node);
-                                  }
-                              });
+            visit_one_to_many({vpiModule, vpiParameter, vpiParamAssign, vpiNet, vpiArrayNet, vpiProcess}, obj_h, [&](AST::AstNode *node) {
+                if (node) {
+                    if (node->type == AST::AST_ASSIGN && node->children.size() < 2)
+                        return;
+                    add_or_replace_child(current_node, node);
+                }
+            });
         }
     } else {
         // Not a top module, create instance
