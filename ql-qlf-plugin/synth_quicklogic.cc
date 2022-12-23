@@ -532,11 +532,7 @@ struct SynthQuickLogicPass : public ScriptPass {
 
         if (check_label("blif")) {
             if (!blif_file.empty()) {
-                if (inferAdder) {
-                    run(stringf("write_blif -param %s", help_mode ? "<file-name>" : blif_file.c_str()));
-                } else {
-                    run(stringf("write_blif %s", help_mode ? "<file-name>" : blif_file.c_str()));
-                }
+                run(stringf("write_blif -param %s", help_mode ? "<file-name>" : blif_file.c_str()));
             }
         }
 
