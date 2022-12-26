@@ -647,7 +647,7 @@ struct ParMYSPass : public Pass {
                 SigBit lhs_bit = conn.first[i];
                 SigBit rhs_bit = conn.second[i];
 
-                if (cstr_bits_seen.count(lhs_bit) == 0) // @TODO to be double checked later
+                if (cstr_bits_seen.count(lhs_bit) == 0)
                     continue;
 
                 nnode_t *buf_node = allocate_nnode(my_location);
@@ -1091,6 +1091,8 @@ struct ParMYSPass : public Pass {
 
         log("\nTotal Synthesis Time: ");
         log_time(synthesis_time);
+        log("\n--------------------------------------------------------------------\n");
+        report(transformed);
         log("\n--------------------------------------------------------------------\n");
 
         log("Updating the Design\n");

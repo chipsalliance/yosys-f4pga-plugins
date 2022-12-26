@@ -18,6 +18,7 @@
 #include "kernel/yosys.h"
 
 #include "arch_util.h"
+#include "echo_arch.h"
 #include "odin_types.h"
 #include "parmys_utils.hpp"
 #include "read_xml_arch_file.h"
@@ -110,6 +111,9 @@ struct ParmysArchPass : public Pass {
             log_error("Odin Failed to load architecture file: %s with exit code %s at line: %ld\n", vtr_error.what(), "ERROR_PARSE_ARCH",
                       vtr_error.line());
         }
+
+        const char *arch_info_file = "arch.info";
+        EchoArch(arch_info_file, physical_tile_types, logical_block_types, &arch);
 
         t_model *hb = arch.models;
         while (hb) {

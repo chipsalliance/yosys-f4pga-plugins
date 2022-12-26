@@ -27,6 +27,8 @@
 #include "vtr_memory.h"
 #include "vtr_util.h"
 
+USING_YOSYS_NAMESPACE
+
 bool coarsen_cleanup;
 
 /* Used in the nnode_t.node_data field to mark if the node was already visited
@@ -313,7 +315,7 @@ void report_removed_nodes(long long *node_list)
     for (int i = 0; i < operation_list_END; i++) {
         if (node_list[i] > UNUSED_NODE_TYPE) {
             std::string msg = std::string("Number of removed <") + operation_list_STR[i][ODIN_LONG_STRING] + "> node(s): ";
-            printf("%-42s%lld\n", msg.c_str(), node_list[i]);
+            log("%-42s%lld\n", msg.c_str(), node_list[i]);
         }
     }
 }

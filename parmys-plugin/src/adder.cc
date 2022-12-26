@@ -32,6 +32,8 @@
 
 using vtr::t_linked_vptr;
 
+USING_YOSYS_NAMESPACE
+
 t_model *hard_adders = NULL;
 t_linked_vptr *add_list = NULL;
 t_linked_vptr *processed_adder_list = NULL;
@@ -69,24 +71,24 @@ void report_add_distribution()
     if (hard_adders == NULL)
         return;
 
-    printf("\nHard adder Distribution\n");
-    printf("============================\n");
-    printf("\n");
-    printf("\nTotal # of chains = %ld\n", adder_chain_count);
+    log("\nHard adder Distribution\n");
+    log("============================\n");
+    log("\n");
+    log("\nTotal # of chains = %ld\n", adder_chain_count);
 
-    printf("\nHard adder chain Details\n");
-    printf("============================\n");
+    log("\nHard adder chain Details\n");
+    log("============================\n");
 
-    printf("\n");
-    printf("\nThe Number of Hard Block adders in the Longest Chain: %ld\n", longest_adder_chain);
+    log("\n");
+    log("\nThe Number of Hard Block adders in the Longest Chain: %ld\n", longest_adder_chain);
 
-    printf("\n");
-    printf("\nThe Total Number of Hard Block adders: %ld\n", total_adders);
+    log("\n");
+    log("\nThe Total Number of Hard Block adders: %ld\n", total_adders);
 
-    printf("\n");
-    printf("\nGeometric mean adder/subtractor chain length: %.2f\n", geomean_addsub_length);
+    log("\n");
+    log("\nGeometric mean adder/subtractor chain length: %.2f\n", geomean_addsub_length);
 
-    vtr::free(adder);
+    // vtr::free(adder);
 }
 
 /*---------------------------------------------------------------------------

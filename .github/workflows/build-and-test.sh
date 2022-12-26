@@ -24,7 +24,7 @@ source .github/workflows/common.sh
 start_section Building
 
 export CXXFLAGS=-Werror
-make UHDM_INSTALL_DIR=`pwd`/env/conda/envs/yosys-plugins/ plugins -j`nproc`
+make UHDM_INSTALL_DIR=`pwd`/env/conda/envs/yosys-plugins/ VTR_INSTALL_DIR=`pwd`/env/conda/envs/yosys-plugins plugins -j`nproc`
 unset CXXFLAGS
 
 end_section

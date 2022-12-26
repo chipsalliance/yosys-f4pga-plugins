@@ -16,76 +16,61 @@
 
 PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
+ODIN_II_DIR=src
+
 NAME = parmys
 SOURCES = parmys.cc \
 		  parmys_arch.cc \
 		  parmys_update.cc \
 		  parmys_utils.cc \
 		  parmys_resolve.cc \
-		  src/adder.cc \
-		  src/enum_str.cc \
-		  src/mixing_optimization.cc \
-		  src/read_xml_config_file.cc \
-		  src/odin_error.cc \
-		  src/odin_util.cc \
-		  src/netlist_statistic.cc \
-		  src/netlist_utils.cc \
-		  src/netlist_cleanup.cc \
-		  src/node_utils.cc \
-		  src/multiplier.cc \
-		  src/subtractor.cc \
-		  src/hard_soft_logic_mixer.cc \
-		  src/odin_ii.cc \
-		  src/string_cache.cc \
-		  src/partial_map.cc \
-		  src/hard_block.cc \
-		  src/block_memory.cc \
-		  src/memory.cc \
-		  src/netlist_visualizer.cc \
-		  src/hash_table.cc \
-		  src/ast_util.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_util.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_token.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_memory.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_list.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_log.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_expr_eval.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_digest.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_math.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_path.cc \
-		  ../third_party/vtr/libs/vtrutil/src/vtr_assert.cc \
-		  ../third_party/vtr/libs/log/src/log.cc \
-		  ../third_party/pugixml/src/pugixml.cpp \
-		  ../third_party/vtr/libs/rtlnumber/src/rtl_int.cc \
-		  ../third_party/vtr/libs/rtlnumber/src/rtl_utils.cc \
-		  ../third_party/vtr/libs/pugiutil/src/pugixml_loc.cc \
-		  ../third_party/vtr/libs/pugiutil/src/pugixml_util.cc \
-		  ../third_party/vtr/libs/archfpga/src/physical_types.cc \
-		  ../third_party/vtr/libs/archfpga/src/read_xml_util.cc \
-		  ../third_party/vtr/libs/archfpga/src/arch_error.cc \
-		  ../third_party/vtr/libs/archfpga/src/physical_types_util.cc \
-		  ../third_party/vtr/libs/archfpga/src/arch_check.cc \
-		  ../third_party/vtr/libs/archfpga/src/arch_util.cc \
-		  ../third_party/vtr/libs/archfpga/src/read_xml_arch_file.cc \
-		  ../third_party/vtr/libs/archfpga/src/parse_switchblocks.cc \
-		  ../third_party/vtr/libs/archfpga/src/echo_arch.cc
+		  ${ODIN_II_DIR}/adder.cc \
+		  ${ODIN_II_DIR}/enum_str.cc \
+		  ${ODIN_II_DIR}/mixing_optimization.cc \
+		  ${ODIN_II_DIR}/read_xml_config_file.cc \
+		  ${ODIN_II_DIR}/odin_error.cc \
+		  ${ODIN_II_DIR}/odin_util.cc \
+		  ${ODIN_II_DIR}/netlist_statistic.cc \
+		  ${ODIN_II_DIR}/netlist_utils.cc \
+		  ${ODIN_II_DIR}/netlist_cleanup.cc \
+		  ${ODIN_II_DIR}/node_utils.cc \
+		  ${ODIN_II_DIR}/multiplier.cc \
+		  ${ODIN_II_DIR}/subtractor.cc \
+		  ${ODIN_II_DIR}/hard_soft_logic_mixer.cc \
+		  ${ODIN_II_DIR}/odin_ii.cc \
+		  ${ODIN_II_DIR}/string_cache.cc \
+		  ${ODIN_II_DIR}/partial_map.cc \
+		  ${ODIN_II_DIR}/hard_block.cc \
+		  ${ODIN_II_DIR}/block_memory.cc \
+		  ${ODIN_II_DIR}/memory.cc \
+		  ${ODIN_II_DIR}/netlist_visualizer.cc \
+		  ${ODIN_II_DIR}/hash_table.cc \
+		  ${ODIN_II_DIR}/ast_util.cc
+
+VTR_INSTALL_DIR ?= /usr/local
 
 include ../Makefile_plugin.common
 
-CXXFLAGS += -I./include
-CXXFLAGS += -I../third_party/pugixml/src
-CXXFLAGS += -I../third_party/vtr/libs/archfpga/src
-CXXFLAGS += -I../third_party/vtr/libs/log/src
-CXXFLAGS += -I../third_party/vtr/libs/pugiutil/src
-CXXFLAGS += -I../third_party/vtr/libs/rtlnumber/src/include
-CXXFLAGS += -I../third_party/vtr/libs/rtlnumber/src
-CXXFLAGS += -I../third_party/vtr/libs/vtrutil/src
-CXXFLAGS += -I../third_party/vtr/libs/vpr/src/draw
+CXXFLAGS += -std=c++14 -Wall -W -Wextra \
+            -Wno-deprecated-declarations \
+            -Wno-unused-parameter \
+			-I${ODIN_II_DIR}/include \
+			-I${VTR_INSTALL_DIR}/include/libarchfpga \
+			-I${VTR_INSTALL_DIR}/include/liblog \
+			-I${VTR_INSTALL_DIR}/include/libpugiutil \
+			-I${VTR_INSTALL_DIR}/include/libpugixml \
+			-I${VTR_INSTALL_DIR}/include/librtlnumber \
+			-I${VTR_INSTALL_DIR}/include/libvtrutil
 
-CXXSTD := c++14
-CXXFLAGS += -std=$(CXXSTD) -Os
+LDFLAGS += -L${VTR_INSTALL_DIR}/lib \
+		   -L${VTR_INSTALL_DIR}/bin
 
-LDLIBS += -lpthread
+LDLIBS += -larchfpga \
+		  -lvtrutil \
+		  -llog \
+		  -lpugixml \
+		  -lpugiutil \
+		  -lpthread
 
 TECHLIBS_DIR = techlibs
 VERILOG_MODULES = adff2dff.v \
@@ -94,8 +79,6 @@ VERILOG_MODULES = adff2dff.v \
 				  aldffe2dff.v \
 				  vtr_primitives.v
 
-# install_modules: $(VERILOG_MODULES)
-# install -D $< $(YOSYS_PLUGINS_DIR)/parmys/$<
 install_modules:
 	$(foreach f, $(wildcard $(TECHLIBS_DIR)/*), install -D $(f) $(YOSYS_DATA_DIR)/parmys/$(notdir $(f));)
 

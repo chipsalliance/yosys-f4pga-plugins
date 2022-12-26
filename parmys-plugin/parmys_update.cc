@@ -437,7 +437,7 @@ void define_logical_function_yosys(nnode_t *node, Module *module)
 
     for (int i = 0; i < node->num_input_pins; i++) {
         nnet_t *input_net = node->input_pins[i]->net;
-        Wire *driver_wire = wire_net_driver(module, node, input_net, 0); // 0 TODO?
+        Wire *driver_wire = wire_net_driver(module, node, input_net, 0);
 
         input_sig.append(driver_wire);
     }

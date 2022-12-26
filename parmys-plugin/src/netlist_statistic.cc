@@ -25,6 +25,8 @@
 #include "odin_types.h"
 #include "vtr_memory.h"
 
+USING_YOSYS_NAMESPACE
+
 static void init(metric_t *m);
 static void print_stats(metric_t *m);
 static void copy(metric_t *dest, metric_t *src);
@@ -81,8 +83,8 @@ void mixing_optimization_stats(nnode_t *node, netlist_t *netlist)
 
 static void print_stats(metric_t *m)
 {
-    printf("\n\t%s:%0.4lf\n\t%s: %0.4lf\n\t%s: %0.4lf\n\t%s: %0.4lf\n", "shortest path", m->min_depth, "critical path", m->max_depth, "average path",
-           m->avg_depth, "overall fan-out", m->avg_width);
+    log("\n\t%s:%0.4lf\n\t%s: %0.4lf\n\t%s: %0.4lf\n\t%s: %0.4lf\n", "shortest path", m->min_depth, "critical path", m->max_depth, "average path",
+        m->avg_depth, "overall fan-out", m->avg_width);
 }
 _static_unused(print_stats) // quiet warning
 
@@ -370,19 +372,19 @@ void compute_statistics(netlist_t *netlist, bool display)
         get_upward_stat(&netlist->output_node_stat, netlist->top_output_nodes, netlist->num_top_output_nodes, netlist, travelsal_id + 1);
 
         if (display) {
-            printf("\n\t==== Stats ====\n");
+            log("\n\t==== Stats ====\n");
             for (long long op = 0; op < operation_list_END; op += 1) {
                 if (netlist->num_of_type[op] > UNUSED_NODE_TYPE) {
                     std::string hdr = std::string("Number of <") + operation_list_STR[op][ODIN_LONG_STRING] + "> node: ";
 
-                    printf("%-42s%lld\n", hdr.c_str(), netlist->num_of_type[op]);
+                    log("%-42s%lld\n", hdr.c_str(), netlist->num_of_type[op]);
                 }
             }
-            printf("%-42s%lld\n", "Total estimated number of lut: ", netlist->num_logic_element);
-            printf("%-42s%lld\n", "Total number of node: ", netlist->num_of_node);
-            printf("%-42s%0.0f\n", "Longest path: ", netlist->output_node_stat.max_depth);
-            printf("%-42s%0.0f\n", "Average path: ", netlist->output_node_stat.avg_depth);
-            printf("\n");
+            log("%-42s%lld\n", "Total estimated number of lut: ", netlist->num_logic_element);
+            log("%-42s%lld\n", "Total number of node: ", netlist->num_of_node);
+            log("%-42s%0.0f\n", "Longest path: ", netlist->output_node_stat.max_depth);
+            log("%-42s%0.0f\n", "Average path: ", netlist->output_node_stat.avg_depth);
+            log("\n");
         }
     }
 }

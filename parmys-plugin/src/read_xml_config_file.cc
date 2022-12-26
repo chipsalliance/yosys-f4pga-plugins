@@ -28,6 +28,8 @@
 
 using namespace pugiutil;
 
+USING_YOSYS_NAMESPACE
+
 config_t configuration;
 
 void read_inputs(pugi::xml_node a_node, config_t *config, const pugiutil::loc_data &loc_data);
@@ -79,7 +81,7 @@ void read_config_file(const char *file_name)
         read_debug_switches(next, &configuration, loc_data);
 
     } catch (XmlError &e) {
-        printf("error: could not parse xml configuration file '%s': %s\n", file_name, e.what());
+        log("error: could not parse xml configuration file '%s': %s\n", file_name, e.what());
         return;
     }
 

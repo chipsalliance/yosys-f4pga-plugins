@@ -524,19 +524,19 @@ void report_mult_distribution()
     if (hard_multipliers == NULL)
         return;
 
-    printf("\nHard Multiplier Distribution\n");
-    printf("============================\n");
+    log("\nHard Multiplier Distribution\n");
+    log("============================\n");
     for (long i = 0; i <= hard_multipliers->inputs->size; i++) {
         for (long j = 1; j <= hard_multipliers->inputs->next->size; j++) {
             if (mults[i * hard_multipliers->inputs->size + j] != 0) {
                 num_total += mults[i * hard_multipliers->inputs->size + j];
-                printf("%ld X %ld => %d\n", i, j, mults[i * hard_multipliers->inputs->size + j]);
+                log("%ld X %ld => %d\n", i, j, mults[i * hard_multipliers->inputs->size + j]);
             }
         }
     }
-    printf("\n");
-    printf("\nTotal # of multipliers = %ld\n", num_total);
-    vtr::free(mults);
+    log("\n");
+    log("\nTotal # of multipliers = %ld\n", num_total);
+    // vtr::free(mults);
 }
 
 /*---------------------------------------------------------------------------

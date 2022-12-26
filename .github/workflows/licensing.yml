@@ -33,15 +33,12 @@ jobs:
           ./design_introspection-plugin/tests/selection_to_tcl_list/selection_to_tcl_list.v
           ./third_party/minilitex_ddr_arty/minilitex_ddr_arty.v
           ./third_party/VexRiscv_Lite/VexRiscv_Lite.v
-          ./third_party/vtr/verilog/eltwise_layer.v
-          ./third_party/vtr/verilog/raygentop.v
-          ./third_party/vtr/verilog/hard_block_include.v
-          ./third_party/vtr/arch/k6FracN10LB_mem20K_complexDSP_customSB_22nm.xml
-          ./third_party/vtr/arch/k6_frac_N10_frac_chain_mem32K_40nm.xml
-          ./third_party/vtr/primitives.v
+          ./third_party/vtr_flow/verilog/eltwise_layer.v
+          ./third_party/vtr_flow/verilog/raygentop.v
+          ./third_party/vtr_flow/verilog/hard_block_include.v
+          ./third_party/vtr_flow/arch/k6FracN10LB_mem20K_complexDSP_customSB_22nm.xml
+          ./third_party/vtr_flow/arch/k6_frac_N10_frac_chain_mem32K_40nm.xml
+          ./third_party/vtr_flow/primitives.v
         third_party: |
           ./third_party/googletest/
-          ./third_party/libargparse/
-          ./third_party/pugixml/
-          ./third_party/vtr/
           .third_party/mips32r1_core/

@@ -17,7 +17,7 @@
 TESTS = raygentop \
         eltwise_layer \
 		VexRiscv_Lite \
-		mips32r1_core \
+		mips32r1_core
         
 include $(shell pwd)/../../Makefile_test.common
 
@@ -27,6 +27,6 @@ VexRiscv_Lite_verify = true
 mips32r1_core_verify = true
 
 clean_modules:
-	@find . -name "*.net.dot" -or -name "*.yosys.blif" | xargs rm -rf
+	@find . -name "*.net.dot" -or -name "*.yosys.blif" -or -name "*.info" | xargs rm -rf
 
 clean: clean_modules

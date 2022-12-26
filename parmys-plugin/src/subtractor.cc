@@ -29,6 +29,8 @@
 
 using vtr::t_linked_vptr;
 
+USING_YOSYS_NAMESPACE
+
 t_linked_vptr *sub_list = NULL;
 t_linked_vptr *sub_chain_list = NULL;
 int subchaintotal = 0;
@@ -51,19 +53,19 @@ void report_sub_distribution()
     if (hard_adders == NULL)
         return;
 
-    printf("\nHard MINUS Distribution\n");
-    printf("============================\n");
-    printf("\n");
-    printf("\nTotal # of chains = %ld\n", subtractor_chain_count);
+    log("\nHard MINUS Distribution\n");
+    log("============================\n");
+    log("\n");
+    log("\nTotal # of chains = %ld\n", subtractor_chain_count);
 
-    printf("\nHard sub chain Details\n");
-    printf("============================\n");
+    log("\nHard sub chain Details\n");
+    log("============================\n");
 
-    printf("\n");
-    printf("\nThe Number of Hard Block subs in the Longest Chain: %ld\n", longest_subtractor_chain);
+    log("\n");
+    log("\nThe Number of Hard Block subs in the Longest Chain: %ld\n", longest_subtractor_chain);
 
-    printf("\n");
-    printf("\nThe Total Number of Hard Block subs: %ld\n", total_subtractors);
+    log("\n");
+    log("\nThe Total Number of Hard Block subs: %ld\n", total_subtractors);
 
     return;
 }

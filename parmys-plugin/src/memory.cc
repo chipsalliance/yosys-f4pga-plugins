@@ -32,6 +32,8 @@
 
 using vtr::t_linked_vptr;
 
+USING_YOSYS_NAMESPACE
+
 t_model *single_port_rams = NULL;
 t_model *dual_port_rams = NULL;
 
@@ -231,8 +233,8 @@ void check_memories_and_report_distribution()
     if ((sp_memory_list == NULL) && (dp_memory_list == NULL))
         return;
 
-    printf("\nHard Logical Memory Distribution\n");
-    printf("============================\n");
+    log("\nHard Logical Memory Distribution\n");
+    log("============================\n");
 
     long total_memory_bits = 0;
     int total_memory_block_counter = 0;
@@ -249,7 +251,7 @@ void check_memories_and_report_distribution()
         if (depth > shift_left_value_with_overflow_check(0x1, HARD_RAM_ADDR_LIMIT, node->loc))
             error_message(NETLIST, node->loc, "Memory %s of depth %zu exceeds ODIN depth bound of 2^%d.", node->name, depth, HARD_RAM_ADDR_LIMIT);
 
-        printf("SPRAM: %zu width %zu depth\n", width, depth);
+        log("SPRAM: %zu width %zu depth\n", width, depth);
 
         total_memory_bits += width * depth;
 
@@ -274,7 +276,7 @@ void check_memories_and_report_distribution()
         if (depth > shift_left_value_with_overflow_check(0x1, HARD_RAM_ADDR_LIMIT, node->loc))
             error_message(NETLIST, node->loc, "Memory %s of depth %zu exceeds ODIN depth bound of 2^%d.", node->name, depth, HARD_RAM_ADDR_LIMIT);
 
-        printf("DPRAM: %zu width %zu depth\n", width, depth);
+        log("DPRAM: %zu width %zu depth\n", width, depth);
         total_memory_bits += width * depth;
 
         total_memory_block_counter++;
@@ -288,11 +290,11 @@ void check_memories_and_report_distribution()
         temp = temp->next;
     }
 
-    printf("\nTotal Logical Memory Blocks = %d \n", total_memory_block_counter);
-    printf("Total Logical Memory bits = %ld \n", total_memory_bits);
-    printf("Max Memory Width = %ld \n", memory_max_width);
-    printf("Max Memory Depth = %ld \n", memory_max_depth);
-    printf("\n");
+    log("\nTotal Logical Memory Blocks = %d \n", total_memory_block_counter);
+    log("Total Logical Memory bits = %ld \n", total_memory_bits);
+    log("Max Memory Width = %ld \n", memory_max_width);
+    log("Max Memory Depth = %ld \n", memory_max_depth);
+    log("\n");
 
     return;
 }
