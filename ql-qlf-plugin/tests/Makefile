@@ -37,26 +37,39 @@ TESTS = \
 #	qlf_k6n10_bram \
 
 SIM_TESTS = \
-    qlf_k6n10f/sim_dsp_mult_cfg_ports \
-    qlf_k6n10f/sim_dsp_mult_cfg_params \
-    qlf_k6n10f/sim_dsp_mult_r_cfg_ports \
-    qlf_k6n10f/sim_dsp_mult_r_cfg_params \
-    qlf_k6n10f/sim_dsp_fir_cfg_ports \
-    qlf_k6n10f/sim_dsp_fir_cfg_params \
-    qlf_k6n10f/sim_dsp_simd_cfg_ports \
-    qlf_k6n10f/sim_dsp_simd_cfg_params \
-    qlf_k6n10f/sim_tc36fifo
+     qlf_k6n10f/sim_dsp_mult_cfg_ports \
+     qlf_k6n10f/sim_dsp_mult_cfg_ports \
+     qlf_k6n10f/sim_dsp_mult_cfg_params \
+     qlf_k6n10f/sim_dsp_mult_r_cfg_ports \
+     qlf_k6n10f/sim_dsp_mult_r_cfg_params \
+     qlf_k6n10f/sim_dsp_fir_cfg_ports \
+     qlf_k6n10f/sim_dsp_fir_cfg_params \
+     qlf_k6n10f/sim_dsp_simd_cfg_ports \
+     qlf_k6n10f/sim_dsp_simd_cfg_params \
+     qlf_k6n10f/sim_tc36fifo
 
 # Those tests perform synthesis and simulation of synthesis results
 POST_SYNTH_SIM_TESTS = \
-    qlf_k6n10f/bram_tdp \
-    qlf_k6n10f/bram_sdp \
-    qlf_k6n10f/bram_tdp_split \
-    qlf_k6n10f/bram_sdp_split \
-    qlf_k6n10f/dsp_mult_post_synth_sim \
-    qlf_k6n10f/dsp_simd_post_synth_sim \
-    qlf_k6n10f/bram_asymmetric_wider_write \
-    qlf_k6n10f/bram_asymmetric_wider_read
+     qlf_k6n10f/asymmetric_bram36k_sfifo \
+     qlf_k6n10f/asymmetric_bram36k_afifo \
+     qlf_k6n10f/bram36k_sfifo \
+     qlf_k6n10f/bram36k_afifo \
+     qlf_k6n10f/bram18k_afifo \
+     qlf_k6n10f/bram18k_sfifo \
+     qlf_k6n10f/bram18k_tdp \
+     qlf_k6n10f/bram36k_tdp \
+     qlf_k6n10f/bram18k_sdp \
+     qlf_k6n10f/bram36k_sdp \
+     qlf_k6n10f/asymmetric_bram36k_sdp \
+     qlf_k6n10f/asymmetric_bram18k_sdp \
+     qlf_k6n10f/bram_tdp \
+     qlf_k6n10f/bram_sdp \
+     qlf_k6n10f/bram_tdp_split \
+     qlf_k6n10f/bram_sdp_split \
+     qlf_k6n10f/dsp_mult_post_synth_sim \
+     qlf_k6n10f/dsp_simd_post_synth_sim \
+     qlf_k6n10f/bram_asymmetric_wider_write \
+     qlf_k6n10f/bram_asymmetric_wider_read
 
 include $(shell pwd)/../../Makefile_test.common
 
