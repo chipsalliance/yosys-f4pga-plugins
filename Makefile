@@ -72,9 +72,9 @@ clean:: plugins_clean
 CLANG_FORMAT ?= clang-format-8
 .PHONY: format
 format:
-	find . \( -name "*.h" -o -name "*.cc" \) -and -not -path './third_party/*' -print0 | xargs -0 -P $$(nproc) ${CLANG_FORMAT} -style=file -i
+	find . \( -name "*.h" -o -name "*.cc" \) -and -not -path '*/third_party/*' -print0 | xargs -0 -P $$(nproc) ${CLANG_FORMAT} -style=file -i
 
 VERIBLE_FORMAT ?= verible-verilog-format
 .PHONY: format-verilog
 format-verilog:
-	find */tests \( -name "*.v" -o -name "*.sv" \) -and -not -path './third_party/*' -print0 | xargs -0 $(VERIBLE_FORMAT) --inplace
+	find */tests \( -name "*.v" -o -name "*.sv" \) -and -not -path '*/third_party/*' -print0 | xargs -0 $(VERIBLE_FORMAT) --inplace

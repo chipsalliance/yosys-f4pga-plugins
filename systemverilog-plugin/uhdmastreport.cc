@@ -5,7 +5,10 @@
 #include <uhdm/BaseClass.h>
 #include <unordered_set>
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
+
+using namespace ::Yosys;
 
 void UhdmAstReport::mark_handled(const UHDM::BaseClass *object)
 {
@@ -84,4 +87,4 @@ void UhdmAstReport::write(const std::string &directory)
     index_file << "</body>\n</html>" << std::endl;
 }
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin

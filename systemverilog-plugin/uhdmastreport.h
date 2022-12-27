@@ -8,7 +8,8 @@
 #undef cover
 #include <uhdm/uhdm.h>
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
 
 class UhdmAstReport
 {
@@ -30,6 +31,6 @@ class UhdmAstReport
     void write(const std::string &directory);
 };
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin
 
 #endif

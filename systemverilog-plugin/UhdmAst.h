@@ -8,7 +8,8 @@
 #include "uhdmastshared.h"
 #include <uhdm/uhdm.h>
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
 
 class UhdmAst
 {
@@ -16,43 +17,44 @@ class UhdmAst
     // Walks through one-to-many relationships from given parent
     // node through the VPI interface, visiting child nodes belonging to
     // ChildrenNodeTypes that are present in the given object.
-    void visit_one_to_many(const std::vector<int> child_node_types, vpiHandle parent_handle, const std::function<void(AST::AstNode *)> &f);
+    void visit_one_to_many(const std::vector<int> child_node_types, vpiHandle parent_handle, const std::function<void(::Yosys::AST::AstNode *)> &f);
 
     // Walks through one-to-one relationships from given parent
     // node through the VPI interface, visiting child nodes belonging to
     // ChildrenNodeTypes that are present in the given object.
-    void visit_one_to_one(const std::vector<int> child_node_types, vpiHandle parent_handle, const std::function<void(AST::AstNode *)> &f);
+    void visit_one_to_one(const std::vector<int> child_node_types, vpiHandle parent_handle, const std::function<void(::Yosys::AST::AstNode *)> &f);
 
     // Visit children of type vpiRange that belong to the given parent node.
-    void visit_range(vpiHandle obj_h, const std::function<void(AST::AstNode *)> &f);
+    void visit_range(vpiHandle obj_h, const std::function<void(::Yosys::AST::AstNode *)> &f);
 
     // Visit the default expression assigned to a variable.
     void visit_default_expr(vpiHandle obj_h);
 
     // Create an AstNode of the specified type with metadata extracted from
     // the given vpiHandle.
-    AST::AstNode *make_ast_node(AST::AstNodeType type, std::vector<AST::AstNode *> children = {}, bool prefer_full_name = false);
+    ::Yosys::AST::AstNode *make_ast_node(::Yosys::AST::AstNodeType type, std::vector<::Yosys::AST::AstNode *> children = {},
+                                         bool prefer_full_name = false);
 
     // Create an identifier AstNode
-    AST::AstNode *make_identifier(const std::string &name);
+    ::Yosys::AST::AstNode *make_identifier(const std::string &name);
 
     // Makes the passed node a cell node of the specified type
-    void make_cell(vpiHandle obj_h, AST::AstNode *node, AST::AstNode *type);
+    void make_cell(vpiHandle obj_h, ::Yosys::AST::AstNode *node, ::Yosys::AST::AstNode *type);
 
     // Moves a type node to the specified node
-    void move_type_to_new_typedef(AST::AstNode *current_node, AST::AstNode *type_node);
+    void move_type_to_new_typedef(::Yosys::AST::AstNode *current_node, ::Yosys::AST::AstNode *type_node);
 
     // Go up the UhdmAst to find a parent node of the specified type
-    AST::AstNode *find_ancestor(const std::unordered_set<AST::AstNodeType> &types);
+    ::Yosys::AST::AstNode *find_ancestor(const std::unordered_set<::Yosys::AST::AstNodeType> &types);
 
     // Reports that something went wrong with reading the UHDM file
     void report_error(const char *format, ...) const;
 
     // Processes the value connected to the specified node
-    AST::AstNode *process_value(vpiHandle obj_h);
+    ::Yosys::AST::AstNode *process_value(vpiHandle obj_h);
 
     // Transforms break and continue nodes into structures accepted by the AST frontend
-    void transform_breaks_continues(AST::AstNode *loop, AST::AstNode *decl_block);
+    void transform_breaks_continues(::Yosys::AST::AstNode *loop, ::Yosys::AST::AstNode *decl_block);
 
     // The parent UhdmAst
     UhdmAst *parent;
@@ -64,7 +66,7 @@ class UhdmAst
     vpiHandle obj_h = 0;
 
     // The current Yosys AST node
-    AST::AstNode *current_node = nullptr;
+    ::Yosys::AST::AstNode *current_node = nullptr;
 
     // Indentation used for debug printing
     std::string indent;
@@ -128,7 +130,7 @@ class UhdmAst
     void process_logic_var();
     void process_sys_func_call();
     // use for task calls and function calls
-    void process_tf_call(AST::AstNodeType type);
+    void process_tf_call(::Yosys::AST::AstNodeType type);
     void process_immediate_assert();
     void process_hier_path();
     void process_logic_typespec();
@@ -148,7 +150,7 @@ class UhdmAst
     void process_while();
     void process_gate();
     void process_primterm();
-    void simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_node = nullptr);
+    void simplify_parameter(::Yosys::AST::AstNode *parameter, ::Yosys::AST::AstNode *module_node = nullptr);
     void process_unsupported_stmt(const UHDM::BaseClass *object);
 
     UhdmAst(UhdmAst *p, UhdmAstShared &s, const std::string &i) : parent(p), shared(s), indent(i)
@@ -161,23 +163,19 @@ class UhdmAst
     UhdmAst(UhdmAstShared &s, const std::string &i = "") : UhdmAst(nullptr, s, i) {}
 
     // Visits single VPI object and creates proper AST node
-    AST::AstNode *process_object(vpiHandle obj_h);
+    ::Yosys::AST::AstNode *process_object(vpiHandle obj_h);
 
     // Visits all VPI design objects and returns created ASTs
-    AST::AstNode *visit_designs(const std::vector<vpiHandle> &designs);
+    ::Yosys::AST::AstNode *visit_designs(const std::vector<vpiHandle> &designs);
 
-    static const IdString &partial();
-    static const IdString &packed_ranges();
-    static const IdString &unpacked_ranges();
+    static const ::Yosys::IdString &partial();
+    static const ::Yosys::IdString &packed_ranges();
+    static const ::Yosys::IdString &unpacked_ranges();
     // set this attribute to force conversion of multirange wire to single range. It is useful to force-convert some memories.
-    static const IdString &force_convert();
-    static const IdString &is_imported();
+    static const ::Yosys::IdString &force_convert();
+    static const ::Yosys::IdString &is_imported();
 };
 
-namespace VERILOG_FRONTEND
-{
-extern bool sv_mode;
-}
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin
 
 #endif
