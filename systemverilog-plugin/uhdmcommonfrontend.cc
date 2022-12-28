@@ -19,7 +19,10 @@
 
 #include "uhdmcommonfrontend.h"
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
+
+using namespace ::Yosys;
 
 /* Stub for AST::process */
 static void set_line_num(int) {}
@@ -147,4 +150,4 @@ void UhdmCommonFrontend::execute(std::istream *&f, std::string filename, std::ve
     }
 }
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin

@@ -5,7 +5,8 @@
 #include <string>
 #include <unordered_map>
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
 
 class UhdmAstShared
 {
@@ -51,19 +52,19 @@ class UhdmAstShared
     bool link = false;
 
     // Top nodes of the design (modules, interfaces)
-    std::unordered_map<std::string, AST::AstNode *> top_nodes;
+    std::unordered_map<std::string, ::Yosys::AST::AstNode *> top_nodes;
 
     // UHDM node coverage report
     UhdmAstReport report;
 
     // Map from AST param nodes to their types (used for params with struct types)
-    std::unordered_map<std::string, AST::AstNode *> param_types;
+    std::unordered_map<std::string, ::Yosys::AST::AstNode *> param_types;
 
-    AST::AstNode *current_top_node = nullptr;
+    ::Yosys::AST::AstNode *current_top_node = nullptr;
     // Set of non-synthesizable objects to skip in current design;
     std::set<const UHDM::BaseClass *> nonSynthesizableObjects;
 };
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin
 
 #endif

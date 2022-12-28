@@ -14,9 +14,33 @@
 #include <uhdm/uhdm.h>
 #include <uhdm/vpi_user.h>
 
-#include "UhdmAstUpstream.h"
+#include "third_party/yosys/const2ast.h"
 
 YOSYS_NAMESPACE_BEGIN
+namespace VERILOG_FRONTEND
+{
+extern bool sv_mode;
+}
+YOSYS_NAMESPACE_END
+
+namespace systemverilog_plugin
+{
+
+using namespace ::Yosys;
+
+namespace AST
+{
+using namespace ::Yosys::AST;
+
+namespace Extended
+{
+enum AstNodeTypeExtended {
+    AST_DOT = ::Yosys::AST::AST_BIND + 1, // here we always want to point to the last element of yosys' AstNodeType
+    AST_BREAK,
+    AST_CONTINUE
+};
+}
+} // namespace AST
 
 /*static*/ const IdString &UhdmAst::partial()
 {
@@ -94,6 +118,13 @@ static std::string get_object_name(vpiHandle obj_h, const std::vector<int> &name
         }
     }
     return objectName;
+}
+
+static AST::AstNode *mkconst_real(double d)
+{
+    AST::AstNode *node = new AST::AstNode(AST::AST_REALVALUE);
+    node->realvalue = d;
+    return node;
 }
 
 static AST::AstNode *make_range(int left, int right, bool is_signed = false)
@@ -486,7 +517,7 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
     AST::AstNode *struct_range = nullptr;
 
     for (auto c : search_node->children) {
-        if (c->type == static_cast<int>(AST::AST_DOT)) {
+        if (c->type == static_cast<int>(AST::Extended::AST_DOT)) {
             // There should be only 1 AST_DOT node children
             log_assert(!sub_dot);
             sub_dot = expand_dot(current_struct_elem, c);
@@ -851,8 +882,8 @@ static void simplify_format_string(AST::AstNode *current_node)
 
 static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
 {
-    auto dot_it =
-      std::find_if(current_node->children.begin(), current_node->children.end(), [](auto c) { return c->type == static_cast<int>(AST::AST_DOT); });
+    auto dot_it = std::find_if(current_node->children.begin(), current_node->children.end(),
+                               [](auto c) { return c->type == static_cast<int>(AST::Extended::AST_DOT); });
     AST::AstNode *dot = (dot_it != current_node->children.end()) ? *dot_it : nullptr;
 
     AST::AstNode *expanded = nullptr;
@@ -875,8 +906,8 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
                     break;
                 } else {
                     current_node->str += "." + dot->str.substr(1);
-                    dot_it =
-                      std::find_if(dot->children.begin(), dot->children.end(), [](auto c) { return c->type == static_cast<int>(AST::AST_DOT); });
+                    dot_it = std::find_if(dot->children.begin(), dot->children.end(),
+                                          [](auto c) { return c->type == static_cast<int>(AST::Extended::AST_DOT); });
                     parent_node = dot;
                     dot = (dot_it != dot->children.end()) ? *dot_it : nullptr;
                 }
@@ -1155,7 +1186,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         }
         // handle vpiBinStrVal, vpiDecStrVal and vpiHexStrVal
         if (std::strchr(val.value.str, '\'')) {
-            return VERILOG_FRONTEND::const2ast(val.value.str, 0, false);
+            return ::systemverilog_plugin::const2ast(val.value.str, 0, false);
         } else {
             auto size = vpi_get(vpiSize, obj_h);
             if (size == 0) {
@@ -1163,7 +1194,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 c->is_unsized = true;
                 return c;
             } else {
-                return VERILOG_FRONTEND::const2ast(std::to_string(size) + strValType + val.value.str, 0, false);
+                return ::systemverilog_plugin::const2ast(std::to_string(size) + strValType + val.value.str, 0, false);
             }
         }
     }
@@ -1233,15 +1264,15 @@ void UhdmAst::transform_breaks_continues(AST::AstNode *loop, AST::AstNode *decl_
                 }
                 break;
             }
-            case AST::AST_BREAK:
-            case AST::AST_CONTINUE: {
+            case AST::Extended::AST_BREAK:
+            case AST::Extended::AST_CONTINUE: {
                 std::for_each(it, block->children.end(), [](auto *node) { delete node; });
                 block->children.erase(it, block->children.end());
                 if (!continue_wire)
                     continue_wire = make_cond_var("$continue");
                 auto *continue_id = make_identifier(continue_wire->str);
                 block->children.push_back(make_ast_node(AST::AST_ASSIGN_EQ, {continue_id, AST::AstNode::mkconst_int(1, false)}));
-                if (type == AST::AST_BREAK) {
+                if (type == AST::Extended::AST_BREAK) {
                     if (!break_wire)
                         break_wire = make_cond_var("$break");
                     auto *break_id = make_identifier(break_wire->str);
@@ -1998,42 +2029,67 @@ void UhdmAst::process_typespec_member()
 
 void UhdmAst::process_enum_typespec()
 {
+    // BaseTypespec specifies underlying type of the enum.
+    // The BaseTypespec has at most one explicit packed dimension (range).
+    // When base type is not specified in SystemVerilog code, it is assumed to be an int.
+    // Type of enum items (constants) is the same as the enum type.
     current_node = make_ast_node(AST::AST_ENUM);
+    bool has_base_type = false;
+    visit_one_to_one({vpiBaseTypespec}, obj_h, [&](AST::AstNode *node) {
+        has_base_type = true;
+        current_node->children = std::move(node->children);
+        current_node->attributes = std::move(node->attributes);
+        current_node->is_signed = node->is_signed;
+        current_node->is_logic = node->is_logic;
+        delete node;
+    });
+    if (!has_base_type) {
+        // Base typespec is `int` by default
+        // TODO (mglb): This is almost the same code as in `process_int_typespec()`. Put common code in dedicated function.
+        std::vector<AST::AstNode *> packed_ranges;
+        packed_ranges.push_back(make_range(31, 0));
+        add_multirange_wire(current_node, std::move(packed_ranges), {});
+        current_node->is_signed = true;
+    }
+    // We have to restore node's range_* properties if there's no range.
+    const auto range_left = current_node->range_left;
+    const auto range_right = current_node->range_right;
+    const auto range_valid = current_node->range_valid;
+    // Create a range from the typespec just for the purpose of copying it to consts.
+    convert_packed_unpacked_range(current_node);
+    const auto range_it = std::find_if(current_node->children.cbegin(), current_node->children.cend(),
+                                       [](const AST::AstNode *n) { return n->type == AST::AST_RANGE || n->type == AST::AST_MULTIRANGE; });
+    const auto *const range = range_it != current_node->children.cend() ? *range_it : nullptr;
+    if (range) {
+        current_node->children.erase(range_it);
+    } else {
+        current_node->range_left = range_left;
+        current_node->range_right = range_right;
+        current_node->range_valid = range_valid;
+    }
+
     visit_one_to_one({vpiTypedefAlias}, obj_h, [&](AST::AstNode *node) {
         if (node) {
-            current_node->attributes["\\enum_base_type"] = node->clone();
+            current_node->attributes["\\enum_base_type"] = node;
         }
     });
-    visit_one_to_many({vpiEnumConst}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
-    vpiHandle typespec_h = vpi_handle(vpiBaseTypespec, obj_h);
-    if (typespec_h) {
-        int typespec_type = vpi_get(vpiType, typespec_h);
-        switch (typespec_type) {
-        case vpiLogicTypespec: {
-            current_node->is_logic = true;
-            shared.report.mark_handled(typespec_h);
-            break;
+    visit_one_to_many({vpiEnumConst}, obj_h, [&](AST::AstNode *node) {
+        // Enum const must have the same type and ranges as the enum.
+        node->is_logic = current_node->is_logic;
+        node->is_signed = current_node->is_signed;
+        if (range) {
+            node->children.push_back(range->clone());
+            node->range_valid = true;
+        } else {
+            node->range_left = range_left;
+            node->range_right = range_right;
+            node->range_valid = range_valid;
         }
-        case vpiByteTypespec:
-        case vpiIntTypespec:
-        case vpiIntegerTypespec: {
-            current_node->is_signed = vpi_get(vpiSigned, typespec_h);
-            shared.report.mark_handled(typespec_h);
-            break;
-        }
-        case vpiBitTypespec: {
-            shared.report.mark_handled(typespec_h);
-            break;
-        }
-        default: {
-            const uhdm_handle *const handle = (const uhdm_handle *)typespec_h;
-            const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-            report_error("%s:%d: Encountered unhandled typespec in process_enum_typespec: '%s' of type '%s'\n", object->VpiFile().c_str(),
-                         object->VpiLineNo(), object->VpiName().c_str(), UHDM::VpiTypeName(typespec_h).c_str());
-            break;
-        }
-        }
-        vpi_release_handle(typespec_h);
+        // IMPORTANT: invalidates `range_it`!
+        current_node->children.push_back(node);
+    });
+    if (range) {
+        delete range;
     }
 }
 
@@ -2045,7 +2101,6 @@ void UhdmAst::process_enum_const()
         constant_node->filename = current_node->filename;
         constant_node->location = current_node->location;
         current_node->children.push_back(constant_node);
-        current_node->children.push_back(make_range(constant_node->range_left, constant_node->range_right, true));
     }
 }
 
@@ -3462,7 +3517,7 @@ void UhdmAst::process_hier_path()
                     log_assert(!node->children.empty());
                     top_node->children.push_back(node->children[0]);
                 } else {
-                    node->type = static_cast<AST::AstNodeType>(AST::AST_DOT);
+                    node->type = static_cast<AST::AstNodeType>(AST::Extended::AST_DOT);
                     top_node->children.push_back(node);
                     top_node = node;
                 }
@@ -3525,7 +3580,7 @@ void UhdmAst::process_tagged_pattern()
     if (vpi_get(vpiType, typespec_h) == vpiStringTypespec) {
         std::string field_name = vpi_get_str(vpiName, typespec_h);
         if (field_name != "default") { // TODO: better support of the default keyword
-            auto field = new AST::AstNode(static_cast<AST::AstNodeType>(AST::AST_DOT));
+            auto field = new AST::AstNode(static_cast<AST::AstNodeType>(AST::Extended::AST_DOT));
             field->str = field_name;
             current_node->children[0]->children.push_back(field);
         }
@@ -4315,11 +4370,11 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiBreak:
         // Will be resolved later by loop processor
-        current_node = make_ast_node(static_cast<AST::AstNodeType>(AST::AST_BREAK));
+        current_node = make_ast_node(static_cast<AST::AstNodeType>(AST::Extended::AST_BREAK));
         break;
     case vpiContinue:
         // Will be resolved later by loop processor
-        current_node = make_ast_node(static_cast<AST::AstNodeType>(AST::AST_CONTINUE));
+        current_node = make_ast_node(static_cast<AST::AstNodeType>(AST::Extended::AST_CONTINUE));
         break;
     case vpiGenScopeArray:
         process_gen_scope_array();
@@ -4472,4 +4527,4 @@ void UhdmAst::report_error(const char *format, ...) const
     }
 }
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin

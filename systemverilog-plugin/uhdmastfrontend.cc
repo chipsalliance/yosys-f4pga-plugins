@@ -25,7 +25,10 @@ extern void visit_object(vpiHandle obj_h, int indent, const char *relation, std:
                          bool shallowVisit = false);
 }
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
+
+using namespace ::Yosys;
 
 struct UhdmAstFrontend : public UhdmCommonFrontend {
     UhdmAstFrontend() : UhdmCommonFrontend("uhdm", "read UHDM file") {}
@@ -50,8 +53,8 @@ struct UhdmAstFrontend : public UhdmCommonFrontend {
         delete synthSubset;
         if (this->shared.debug_flag || !this->report_directory.empty()) {
             for (auto design : restoredDesigns) {
-                std::stringstream strstr;
-                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : strstr);
+                std::ofstream null_stream;
+                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : null_stream);
             }
         }
         UhdmAst uhdm_ast(this->shared);
@@ -68,4 +71,4 @@ struct UhdmAstFrontend : public UhdmCommonFrontend {
     void call_log_header(RTLIL::Design *design) override { log_header(design, "Executing UHDM frontend.\n"); }
 } UhdmAstFrontend;
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin
