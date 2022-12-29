@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//		 http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,29 +24,29 @@ module TB;
 
 	reg clk_a;
 	reg rce_a_0;
-  reg rce_a_1;
+	reg rce_a_1;
 	reg [`ADDR_WIDTH0-1:0] ra_a_0;
-  reg [`ADDR_WIDTH1-1:0] ra_a_1;
+	reg [`ADDR_WIDTH1-1:0] ra_a_1;
 	wire [`DATA_WIDTH0-1:0] rq_a_0;
 	wire [`DATA_WIDTH1-1:0] rq_a_1;
 	reg wce_a_0;
-  reg wce_a_1;
+	reg wce_a_1;
 	reg [`ADDR_WIDTH0-1:0] wa_a_0;
-  reg [`ADDR_WIDTH1-1:0] wa_a_1;
+	reg [`ADDR_WIDTH1-1:0] wa_a_1;
 	reg [`DATA_WIDTH0-1:0] wd_a_0;
 	reg [`DATA_WIDTH1-1:0] wd_a_1;
 
 	reg clk_b;
 	reg rce_b_0;
-  reg rce_b_1;
+	reg rce_b_1;
 	reg [`ADDR_WIDTH0-1:0] ra_b_0;
-  reg [`ADDR_WIDTH1-1:0] ra_b_1;
+	reg [`ADDR_WIDTH1-1:0] ra_b_1;
 	wire [`DATA_WIDTH0-1:0] rq_b_0;
 	wire [`DATA_WIDTH1-1:0] rq_b_1;
 	reg wce_b_0;
-  reg wce_b_1;
+	reg wce_b_1;
 	reg [`ADDR_WIDTH0-1:0] wa_b_0;
-  reg [`ADDR_WIDTH1-1:0] wa_b_1;
+	reg [`ADDR_WIDTH1-1:0] wa_b_1;
 	reg [`DATA_WIDTH0-1:0] wd_b_0;
 	reg [`DATA_WIDTH1-1:0] wd_b_1;
 
@@ -54,22 +54,22 @@ module TB;
 	initial clk_a = 0;
 	initial clk_b = 0;
 	initial ra_a_0 = 0;
-  initial ra_a_1 = 0;
+	initial ra_a_1 = 0;
 	initial ra_b_0 = 0;
-  initial ra_b_1 = 0;
+	initial ra_b_1 = 0;
 	initial rce_a_0 = 0;
-  initial rce_a_1 = 0;
+	initial rce_a_1 = 0;
 	initial rce_b_0 = 0;
-  initial rce_b_1 = 0;
+	initial rce_b_1 = 0;
 	initial wce_a_0 = 0;
-  initial wce_a_1 = 0;
+	initial wce_a_1 = 0;
 	initial wce_b_0 = 0;
-  initial wce_b_1 = 0;
+	initial wce_b_1 = 0;
 	initial forever #(PERIOD / 2.0) clk_a = ~clk_a;
 	initial begin
 		#(PERIOD / 4.0);
 		forever #(PERIOD / 2.0) clk_b = ~clk_b;
-	end  
+	end	 
 	initial begin
 		$dumpfile(`STRINGIFY(`VCD));
 		$dumpvars;
@@ -96,12 +96,12 @@ module TB;
 	reg [`DATA_WIDTH1-1:0] expected_b_1;
 
 	always @(posedge clk_a) begin
-      expected_a_0 <= (a0 | (a0 << 20) | 20'h55000) & {`DATA_WIDTH0{1'b1}};
-      expected_a_1 <= ((a1+1) | ((a1+1) << 20) | 20'h55000) & {`DATA_WIDTH1{1'b1}};
+			expected_a_0 <= (a0 | (a0 << 20) | 20'h55000) & {`DATA_WIDTH0{1'b1}};
+			expected_a_1 <= ((a1+1) | ((a1+1) << 20) | 20'h55000) & {`DATA_WIDTH1{1'b1}};
 	end
 	always @(posedge clk_b) begin
-      expected_b_0 <= ((b0+2) | ((b0+2) << 20) | 20'h55000) & {`DATA_WIDTH0{1'b1}};
-      expected_b_1 <= ((b1+3) | ((b1+3) << 20) | 20'h55000) & {`DATA_WIDTH1{1'b1}};
+			expected_b_0 <= ((b0+2) | ((b0+2) << 20) | 20'h55000) & {`DATA_WIDTH0{1'b1}};
+			expected_b_1 <= ((b1+3) | ((b1+3) << 20) | 20'h55000) & {`DATA_WIDTH1{1'b1}};
 	end
 
 	wire error_a_0 = a0 != 0 ? (rq_a_0 !== expected_a_0) : 0;
@@ -158,10 +158,10 @@ module TB;
 			end
 		end
 		done_a0 = 1'b1;
-    a0 = 0;
-	  // PORTs B0
-    @(posedge clk_b)
-    #2;
+		a0 = 0;
+		// PORTs B0
+		@(posedge clk_b)
+		#2;
 		// Write data
 		for (b0 = (1<<`ADDR_WIDTH0) / 2; b0 < (1<<`ADDR_WIDTH0); b0 = b0 + ADDR_INCR) begin
 			@(negedge clk_b) begin
@@ -189,10 +189,10 @@ module TB;
 			end
 		end
 		done_b0 = 1'b1;
-	  b0 = (1<<`ADDR_WIDTH0) / 2;
-	  // PORTs A1
-    @(posedge clk_a)
-    #2;
+		b0 = (1<<`ADDR_WIDTH0) / 2;
+		// PORTs A1
+		@(posedge clk_a)
+		#2;
 		// Write data
 		for (a1 = 0; a1 < (1<<`ADDR_WIDTH1) / 2; a1 = a1 + ADDR_INCR) begin
 			@(negedge clk_a) begin
@@ -220,10 +220,10 @@ module TB;
 			end
 		end
 		done_a1 = 1'b1;
-    a1 = 0;
-	  // PORTs B1
-    @(posedge clk_b)
-    #2;
+		a1 = 0;
+		// PORTs B1
+		@(posedge clk_b)
+		#2;
 		// Write data
 		for (b1 = (1<<`ADDR_WIDTH1) / 2; b1 < (1<<`ADDR_WIDTH1); b1 = b1 + ADDR_INCR) begin
 			@(negedge clk_b) begin
@@ -251,7 +251,7 @@ module TB;
 			end
 		end
 		done_b1 = 1'b1;
-    b1 = (1<<`ADDR_WIDTH1) / 2;
+		b1 = (1<<`ADDR_WIDTH1) / 2;
 	end
 
 	// Scan for simulation finish
@@ -259,7 +259,7 @@ module TB;
 		if (done_sim)
 			$finish_and_return( (error_a_0_cnt == 0 & error_b_0_cnt == 0 & error_a_1_cnt == 0 & error_b_1_cnt == 0) ? 0 : -1 );
 	end
-  
+	
 	case (`STRINGIFY(`TOP))
 		"dpram_18x1024_9x2048": begin
 			dpram_18x1024_9x2048 #() bram (

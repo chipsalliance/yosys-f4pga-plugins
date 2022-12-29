@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//		 http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,32 +23,32 @@ module TB;
 	localparam ADDR_INCR = 1;
 
 	reg clk0;
-  reg clk1;
-  reg flush;
+	reg clk1;
+	reg flush;
 	reg pop;
 	wire [`DATA_WIDTH1-1:0] dout;
 	reg push;
 	reg [`DATA_WIDTH0-1:0] din;
-  wire almost_full,almost_empty;
-  wire full, empty;
-  wire full_watermark, empty_watermark;
-  wire overrun_error, underrun_error;
+	wire almost_full,almost_empty;
+	wire full, empty;
+	wire full_watermark, empty_watermark;
+	wire overrun_error, underrun_error;
 
-  initial 
-  begin
-    clk0 = 0;
-    clk1 = 0;
-    pop = 0;
-    push = 0;
-    flush = 1;
-    din = 0;
-    #40
-    flush = 0;
-  end
-  
+	initial 
+	begin
+		clk0 = 0;
+		clk1 = 0;
+		pop = 0;
+		push = 0;
+		flush = 1;
+		din = 0;
+		#40
+		flush = 0;
+	end
+	
 	initial forever #(PERIOD / 3.0) clk0 = ~clk0;
-  initial forever #(PERIOD / 2.0) clk1 = ~clk1;
-  
+	initial forever #(PERIOD / 2.0) clk1 = ~clk1;
+	
 	initial begin
 		$dumpfile(`STRINGIFY(`VCD));
 		$dumpvars;
@@ -58,12 +58,12 @@ module TB;
 
 	reg done;
 	initial done = 1'b0;
-  
-  reg read_test;
+	
+	reg read_test;
 	initial read_test = 0;
 
 	reg [`DATA_WIDTH1-1:0] expected;
-  initial expected = 0;
+	initial expected = 0;
 
 	always @(posedge clk1) begin
 		expected <= (a | (a << 20) | 20'h55000) & {`DATA_WIDTH1{1'b1}};
@@ -80,7 +80,7 @@ module TB;
 
 
 	initial #(50) begin
-    @(posedge clk0)
+		@(posedge clk0)
 		// Write data
 		for (a = 0; a < (1<<`ADDR_WIDTH0); a = a + ADDR_INCR) begin
 			@(negedge clk0) begin
@@ -118,59 +118,59 @@ module TB;
 	case (`STRINGIFY(`TOP))
 		"af1024x36_1024x36": begin
 			af1024x36_1024x36 #() afifo (
-        .DIN(din),
-        .PUSH(push),
-        .POP(pop),
-        .clock0(clk0),
-        .clock1(clk1),
-        .Async_Flush(flush),
-        .Almost_Full(almost_full),
-        .Almost_Empty(almost_empty),
-        .Full(full),
-        .Empty(empty),
-        .Full_Watermark(full_watermark),
-        .Empty_Watermark(empty_watermark),
-        .Overrun_Error(overrun_error),
-        .Underrun_Error(underrun_error),
-        .DOUT(dout)
+				.DIN(din),
+				.PUSH(push),
+				.POP(pop),
+				.clock0(clk0),
+				.clock1(clk1),
+				.Async_Flush(flush),
+				.Almost_Full(almost_full),
+				.Almost_Empty(almost_empty),
+				.Full(full),
+				.Empty(empty),
+				.Full_Watermark(full_watermark),
+				.Empty_Watermark(empty_watermark),
+				.Overrun_Error(overrun_error),
+				.Underrun_Error(underrun_error),
+				.DOUT(dout)
 			);
 		end
 		"af2048x18_2048x18": begin
 			af2048x18_2048x18 #() afifo (
-        .DIN(din),
-        .PUSH(push),
-        .POP(pop),
-        .clock0(clk0),
-        .clock1(clk1),
-        .Async_Flush(flush),
-        .Almost_Full(almost_full),
-        .Almost_Empty(almost_empty),
-        .Full(full),
-        .Empty(empty),
-        .Full_Watermark(full_watermark),
-        .Empty_Watermark(empty_watermark),
-        .Overrun_Error(overrun_error),
-        .Underrun_Error(underrun_error),
-        .DOUT(dout)
+				.DIN(din),
+				.PUSH(push),
+				.POP(pop),
+				.clock0(clk0),
+				.clock1(clk1),
+				.Async_Flush(flush),
+				.Almost_Full(almost_full),
+				.Almost_Empty(almost_empty),
+				.Full(full),
+				.Empty(empty),
+				.Full_Watermark(full_watermark),
+				.Empty_Watermark(empty_watermark),
+				.Overrun_Error(overrun_error),
+				.Underrun_Error(underrun_error),
+				.DOUT(dout)
 			);
 		end
 		"af4096x9_4096x9": begin
 			af4096x9_4096x9 #() afifo (
-        .DIN(din),
-        .PUSH(push),
-        .POP(pop),
-        .clock0(clk0),
-        .clock1(clk1),
-        .Async_Flush(flush),
-        .Almost_Full(almost_full),
-        .Almost_Empty(almost_empty),
-        .Full(full),
-        .Empty(empty),
-        .Full_Watermark(full_watermark),
-        .Empty_Watermark(empty_watermark),
-        .Overrun_Error(overrun_error),
-        .Underrun_Error(underrun_error),
-        .DOUT(dout)
+				.DIN(din),
+				.PUSH(push),
+				.POP(pop),
+				.clock0(clk0),
+				.clock1(clk1),
+				.Async_Flush(flush),
+				.Almost_Full(almost_full),
+				.Almost_Empty(almost_empty),
+				.Full(full),
+				.Empty(empty),
+				.Full_Watermark(full_watermark),
+				.Empty_Watermark(empty_watermark),
+				.Overrun_Error(overrun_error),
+				.Underrun_Error(underrun_error),
+				.DOUT(dout)
 			);
 		end		
 	endcase

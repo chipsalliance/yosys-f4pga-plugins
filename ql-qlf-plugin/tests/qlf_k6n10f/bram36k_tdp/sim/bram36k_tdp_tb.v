@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//		 http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -157,7 +157,7 @@ module TB;
 		if (done_sim)
 			$finish_and_return( (error_a_cnt == 0 & error_b_cnt == 0) ? 0 : -1 );
 	end
-  
+	
 	case (`STRINGIFY(`TOP))
 		"dpram_36x1024": begin
 			dpram_36x1024 #() bram (
@@ -168,7 +168,7 @@ module TB;
 				.WEN1_i(wce_a),
 				.WR1_ADDR_i(wa_a),
 				.WDATA1_i(wd_a),
-        
+				
 				.clock1(clk_b),
 				.REN2_i(rce_b),
 				.RD2_ADDR_i(ra_b),
@@ -187,7 +187,7 @@ module TB;
 				.WEN1_i(wce_a),
 				.WR1_ADDR_i(wa_a),
 				.WDATA1_i(wd_a),
-        
+				
 				.clock1(clk_b),
 				.REN2_i(rce_b),
 				.RD2_ADDR_i(ra_b),
@@ -206,7 +206,7 @@ module TB;
 				.WEN1_i(wce_a),
 				.WR1_ADDR_i(wa_a),
 				.WDATA1_i(wd_a),
-        
+				
 				.clock1(clk_b),
 				.REN2_i(rce_b),
 				.RD2_ADDR_i(ra_b),

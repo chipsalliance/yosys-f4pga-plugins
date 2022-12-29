@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//		 http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -126,7 +126,7 @@ module TB;
 			end
 		end
 		done_0 = 1'b1;
-    a = 0;
+		a = 0;
 	end
 
 	// PART 1
@@ -159,7 +159,7 @@ module TB;
 			end
 		end
 		done_1 = 1'b1;
-    b = (1<<`ADDR_WIDTH1) / 2;
+		b = (1<<`ADDR_WIDTH1) / 2;
 	end
 
 	// Scan for simulation finish

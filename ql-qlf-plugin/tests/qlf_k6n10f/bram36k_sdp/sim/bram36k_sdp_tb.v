@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//		 http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -103,7 +103,7 @@ module TB;
 		"spram_36x1024": begin
 			spram_36x1024 #() bram (
 				.clock0(clk),
-        .clock1(clk),        
+				.clock1(clk),				 
 				.REN_i(rce),
 				.RD_ADDR_i(ra),
 				.RDATA_o(rq),
@@ -115,7 +115,7 @@ module TB;
 		"spram_32x1024": begin
 			spram_32x1024 #() bram (
 				.clock0(clk),
-        .clock1(clk),        
+				.clock1(clk),				 
 				.REN_i(rce),
 				.RD_ADDR_i(ra),
 				.RDATA_o(rq),
@@ -127,7 +127,7 @@ module TB;
 		"spram_18x2048": begin
 			spram_18x2048 #() bram (
 				.clock0(clk),
-        .clock1(clk),        
+				.clock1(clk),				 
 				.REN_i(rce),
 				.RD_ADDR_i(ra),
 				.RDATA_o(rq),
@@ -139,7 +139,7 @@ module TB;
 		"spram_16x2048": begin
 			spram_16x2048 #() bram (
 				.clock0(clk),
-        .clock1(clk),        
+				.clock1(clk),				 
 				.REN_i(rce),
 				.RD_ADDR_i(ra),
 				.RDATA_o(rq),
@@ -151,7 +151,7 @@ module TB;
 		"spram_9x4096": begin
 			spram_9x4096 #() bram (
 				.clock0(clk),
-        .clock1(clk),        
+				.clock1(clk),				 
 				.REN_i(rce),
 				.RD_ADDR_i(ra),
 				.RDATA_o(rq),
@@ -163,7 +163,7 @@ module TB;
 		"spram_8x4096": begin
 			spram_8x4096 #() bram (
 				.clock0(clk),
-        .clock1(clk),        
+				.clock1(clk),				 
 				.REN_i(rce),
 				.RD_ADDR_i(ra),
 				.RDATA_o(rq),

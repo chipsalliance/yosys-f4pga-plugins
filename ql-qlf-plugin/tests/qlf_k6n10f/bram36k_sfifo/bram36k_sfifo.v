@@ -32,7 +32,7 @@ output Full_Watermark, Empty_Watermark;
 output Overrun_Error, Underrun_Error;
 
 SFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.UPAE_DBITS(UPAE_DBITS),.UPAF_DBITS(UPAF_DBITS)
-        				 ) 
+                  )
   FIFO_INST    (
                 .DIN(DIN),
                 .PUSH(PUSH),
@@ -51,8 +51,7 @@ SFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.U
                 .Empty(Empty),
 
                 .DOUT(DOUT)
-         				);
-
+                );
 endmodule
 
 module f2048x18_2048x18 (DIN,PUSH,POP,clock0,Async_Flush,Almost_Full,Almost_Empty,Full,Empty,Full_Watermark,Empty_Watermark,Overrun_Error,Underrun_Error,DOUT);
@@ -73,7 +72,7 @@ output Full_Watermark, Empty_Watermark;
 output Overrun_Error, Underrun_Error;
 
 SFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.UPAE_DBITS(UPAE_DBITS),.UPAF_DBITS(UPAF_DBITS)
-        				 ) 
+                  )
   FIFO_INST    (
                 .DIN(DIN),
                 .PUSH(PUSH),
@@ -92,8 +91,7 @@ SFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.U
                 .Empty(Empty),
 
                 .DOUT(DOUT)
-         				);
-
+                );
 endmodule
 
 module f4096x9_4096x9 (DIN,PUSH,POP,clock0,Async_Flush,Almost_Full,Almost_Empty,Full,Empty,Full_Watermark,Empty_Watermark,Overrun_Error,Underrun_Error,DOUT);
@@ -114,7 +112,7 @@ output Full_Watermark, Empty_Watermark;
 output Overrun_Error, Underrun_Error;
 
 SFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.UPAE_DBITS(UPAE_DBITS),.UPAF_DBITS(UPAF_DBITS)
-        				 ) 
+                  )
   FIFO_INST    (
                 .DIN(DIN),
                 .PUSH(PUSH),
@@ -133,6 +131,5 @@ SFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.U
                 .Empty(Empty),
 
                 .DOUT(DOUT)
-         				);
-
+                );
 endmodule

@@ -35,7 +35,6 @@ define clean_post_synth_sim
 	@rm -rf  $(word $(1),$(POST_SYNTH)).vcd $(word $(1),$(POST_SYNTH)).vvp $(word $(1),$(POST_SYNTH)).vvp.log $(word $(1),$(POST_SYNTH)).vcd.log
 endef
 
-# FIXME: $(call simulate_post_synth,5)
 sim:
 	$(call simulate_post_synth,1)
 	$(call clean_post_synth_sim,1)

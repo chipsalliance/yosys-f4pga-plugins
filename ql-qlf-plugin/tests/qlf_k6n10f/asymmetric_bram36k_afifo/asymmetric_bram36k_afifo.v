@@ -33,7 +33,7 @@ output Overrun_Error, Underrun_Error;
 
 
 AFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.UPAE_DBITS(UPAE_DBITS),.UPAF_DBITS(UPAF_DBITS)
-        				 ) 
+                 )
   FIFO_INST    (
                 .DIN(DIN),
                 .PUSH(PUSH),
@@ -53,8 +53,7 @@ AFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.U
                 .Empty(Empty),
 
                 .DOUT(DOUT)
-         				);
-
+                );
 endmodule
 
 module af2048x18_1024x36 (DIN,PUSH,POP,clock0,clock1,Async_Flush,Almost_Full,Almost_Empty,Full,Empty,Full_Watermark,Empty_Watermark,Overrun_Error,Underrun_Error,DOUT);
@@ -75,7 +74,7 @@ output Full_Watermark, Empty_Watermark;
 output Overrun_Error, Underrun_Error;
 
 AFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.UPAE_DBITS(UPAE_DBITS),.UPAF_DBITS(UPAF_DBITS)
-        				 ) 
+                  )
   FIFO_INST    (
                 .DIN(DIN),
                 .PUSH(PUSH),
@@ -95,8 +94,7 @@ AFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.U
                 .Empty(Empty),
 
                 .DOUT(DOUT)
-         				);
-
+                );
 endmodule
 
 module af2048x18_4098x9 (DIN,PUSH,POP,clock0,clock1,Async_Flush,Almost_Full,Almost_Empty,Full,Empty,Full_Watermark,Empty_Watermark,Overrun_Error,Underrun_Error,DOUT);
@@ -117,7 +115,7 @@ output Full_Watermark, Empty_Watermark;
 output Overrun_Error, Underrun_Error;
 
 AFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.UPAE_DBITS(UPAE_DBITS),.UPAF_DBITS(UPAF_DBITS)
-        				 ) 
+                  )
   FIFO_INST    (
                 .DIN(DIN),
                 .PUSH(PUSH),
@@ -137,8 +135,7 @@ AFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.U
                 .Empty(Empty),
 
                 .DOUT(DOUT)
-         				);
-
+                );
 endmodule
 
 module af1024x36_4098x9 (DIN,PUSH,POP,clock0,clock1,Async_Flush,Almost_Full,Almost_Empty,Full,Empty,Full_Watermark,Empty_Watermark,Overrun_Error,Underrun_Error,DOUT);
@@ -159,7 +156,7 @@ output Full_Watermark, Empty_Watermark;
 output Overrun_Error, Underrun_Error;
 
 AFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.UPAE_DBITS(UPAE_DBITS),.UPAF_DBITS(UPAF_DBITS)
-        				 ) 
+                  )
   FIFO_INST    (
                 .DIN(DIN),
                 .PUSH(PUSH),
@@ -179,6 +176,5 @@ AFIFO_36K_BLK  # (.WR_DATA_WIDTH(WR_DATA_WIDTH),.RD_DATA_WIDTH(RD_DATA_WIDTH),.U
                 .Empty(Empty),
 
                 .DOUT(DOUT)
-         				);
-
+                );
 endmodule
