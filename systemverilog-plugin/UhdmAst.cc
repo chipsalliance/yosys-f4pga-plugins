@@ -1708,7 +1708,7 @@ void UhdmAst::process_module()
                 }
             });
             visit_one_to_many({vpiModule, vpiInterface, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiGenScopeArray,
-                               vpiContAssign, vpiProcess, vpiClockingBlock, vpiAssertion},
+                               vpiProcess, vpiClockingBlock, vpiAssertion},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
                                       if (node->type == AST::AST_ASSIGN && node->children.size() < 2)
@@ -1833,7 +1833,7 @@ void UhdmAst::process_module()
                 add_or_replace_child(module_node, node);
             }
         });
-        visit_one_to_many({vpiInterface, vpiModule, vpiPort, vpiGenScopeArray}, obj_h, [&](AST::AstNode *node) {
+        visit_one_to_many({vpiInterface, vpiModule, vpiPort, vpiGenScopeArray, vpiContAssign}, obj_h, [&](AST::AstNode *node) {
             if (node) {
                 add_or_replace_child(module_node, node);
             }
