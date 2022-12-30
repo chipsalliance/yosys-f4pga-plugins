@@ -393,6 +393,18 @@ struct SynthQuickLogicPass : public ScriptPass {
                                   "%%i a:rd_data_width=%d %%i",
                                   ww.second, rw.second, ww.first, rw.first);
                         run(cmd);
+
+                        auto cmd1 = stringf("chtype -set TDP36K_FIFO_ASYNC_WR_X%d_RD_X%d_split t:TDP36K a:is_fifo=1 %%i a:sync_fifo=0 %%i "
+                                            "a:is_split=1 %%i a:wr_data_width=%d "
+                                            "%%i a:rd_data_width=%d %%i",
+                                            ww.second, rw.second, ww.first, rw.first);
+                        run(cmd1);
+
+                        auto cmd2 = stringf("chtype -set TDP36K_FIFO_SYNC_WR_X%d_RD_X%d_split t:TDP36K a:is_fifo=1 %%i a:sync_fifo=1 %%i "
+                                            "a:is_split=1 %%i a:wr_data_width=%d "
+                                            "%%i a:rd_data_width=%d %%i",
+                                            ww.second, rw.second, ww.first, rw.first);
+                        run(cmd2);
                     }
                 }
 
@@ -402,6 +414,16 @@ struct SynthQuickLogicPass : public ScriptPass {
                           "chtype -set TDP36K_BRAM_WR_X%d_RD_X%d_nonsplit t:TDP36K a:is_inferred=1 %%i a:wr_data_width=%d %%i a:rd_data_width=%d %%i",
                           ww.second, rw.second, ww.first, rw.first);
                         run(cmd);
+
+                        auto cmd1 = stringf("chtype -set TDP36K_FIFO_ASYNC_WR_X%d_RD_X%d_nonsplit t:TDP36K a:is_fifo=1 %%i a:sync_fifo=0 %%i "
+                                            "a:wr_data_width=%d %%i a:rd_data_width=%d %%i",
+                                            ww.second, rw.second, ww.first, rw.first);
+                        run(cmd1);
+
+                        auto cmd2 = stringf("chtype -set TDP36K_FIFO_SYNC_WR_X%d_RD_X%d_nonsplit t:TDP36K a:is_fifo=1 %%i a:sync_fifo=1 %%i "
+                                            "a:wr_data_width=%d %%i a:rd_data_width=%d %%i",
+                                            ww.second, rw.second, ww.first, rw.first);
+                        run(cmd2);
                     }
                 }
             }
