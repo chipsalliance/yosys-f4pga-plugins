@@ -1593,6 +1593,8 @@ void UhdmAst::process_design()
         if (node)
             move_type_to_new_typedef(current_node, node);
     });
+    // Add top level typedefs and params to scope
+    setup_current_scope(shared.top_nodes, current_node);
     for (auto pair : shared.top_nodes) {
         if (!pair.second)
             continue;
@@ -1603,6 +1605,7 @@ void UhdmAst::process_design()
             clear_current_scope();
         }
     }
+    setup_current_scope(shared.top_nodes, current_node);
     // Once we walked everything, unroll that as children of this node
     for (auto &pair : shared.top_nodes) {
         if (!pair.second)
