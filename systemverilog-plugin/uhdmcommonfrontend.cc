@@ -65,12 +65,18 @@ void UhdmCommonFrontend::print_read_options()
     log("        parameters of modules yield invalid or not synthesizable code.\n");
     log("        Needs to be followed by read_systemverilog -link after reading\n");
     log("        all files.\n");
+    log("\n");
     log("    -link\n");
     log("        performs linking and elaboration of the files read with -defer\n");
+    log("\n");
     log("    -parse-only\n");
     log("        this parameter only applies to read_systemverilog command,\n");
     log("        it runs only Surelog to parse design, but doesn't load generated\n");
     log("        tree into Yosys.\n");
+    log("\n");
+    log("    -formal\n");
+    log("        enable support for SystemVerilog assertions and some Yosys extensions\n");
+    log("        replace the implicit -D SYNTHESIS with -D FORMAL\n");
     log("\n");
 }
 
