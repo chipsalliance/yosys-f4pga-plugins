@@ -2545,7 +2545,7 @@ void UhdmAst::process_interface()
     if (shared.top_nodes.find(type) != shared.top_nodes.end()) {
         // Was created before, fill missing
         elaboratedInterface = shared.top_nodes[type];
-        visit_one_to_many({vpiPort}, obj_h, [&](AST::AstNode *node) {
+        visit_one_to_many({vpiPort, vpiVariables}, obj_h, [&](AST::AstNode *node) {
             if (node) {
                 add_or_replace_child(elaboratedInterface, node);
             }
