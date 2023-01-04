@@ -14,6 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+`timescale 1ps/1ps
+
 `default_nettype none
 
 (* abc9_flop, lib_whitebox *)
