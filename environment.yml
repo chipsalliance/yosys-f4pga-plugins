@@ -18,7 +18,6 @@ name: yosys-plugins
 channels:
   - defaults
   - litex-hub
-  - poname
 dependencies:
   - litex-hub::yosys
   - litex-hub::surelog=0.0_5519_g900fb2499=20221223_060448_py37
