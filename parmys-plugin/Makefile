@@ -70,6 +70,7 @@ LDLIBS += -larchfpga \
 		  -llog \
 		  -lpugixml \
 		  -lpugiutil \
+		  -lrtlnumber \
 		  -lpthread
 
 TECHLIBS_DIR = techlibs
