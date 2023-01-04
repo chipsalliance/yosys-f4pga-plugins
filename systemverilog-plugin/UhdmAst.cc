@@ -1593,6 +1593,8 @@ void UhdmAst::process_design()
         if (node)
             move_type_to_new_typedef(current_node, node);
     });
+    // Add top level typedefs and params to scope
+    setup_current_scope(shared.top_nodes, current_node);
     for (auto pair : shared.top_nodes) {
         if (!pair.second)
             continue;
@@ -1603,6 +1605,7 @@ void UhdmAst::process_design()
             clear_current_scope();
         }
     }
+    setup_current_scope(shared.top_nodes, current_node);
     // Once we walked everything, unroll that as children of this node
     for (auto &pair : shared.top_nodes) {
         if (!pair.second)
@@ -1708,7 +1711,7 @@ void UhdmAst::process_module()
                 }
             });
             visit_one_to_many({vpiModule, vpiInterface, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiGenScopeArray,
-                               vpiContAssign, vpiProcess, vpiClockingBlock, vpiAssertion},
+                               vpiProcess, vpiClockingBlock, vpiAssertion},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
                                       if (node->type == AST::AST_ASSIGN && node->children.size() < 2)
@@ -1833,7 +1836,7 @@ void UhdmAst::process_module()
                 add_or_replace_child(module_node, node);
             }
         });
-        visit_one_to_many({vpiInterface, vpiModule, vpiPort, vpiGenScopeArray}, obj_h, [&](AST::AstNode *node) {
+        visit_one_to_many({vpiInterface, vpiModule, vpiPort, vpiGenScopeArray, vpiContAssign}, obj_h, [&](AST::AstNode *node) {
             if (node) {
                 add_or_replace_child(module_node, node);
             }
@@ -2542,7 +2545,7 @@ void UhdmAst::process_interface()
     if (shared.top_nodes.find(type) != shared.top_nodes.end()) {
         // Was created before, fill missing
         elaboratedInterface = shared.top_nodes[type];
-        visit_one_to_many({vpiPort}, obj_h, [&](AST::AstNode *node) {
+        visit_one_to_many({vpiPort, vpiVariables}, obj_h, [&](AST::AstNode *node) {
             if (node) {
                 add_or_replace_child(elaboratedInterface, node);
             }
