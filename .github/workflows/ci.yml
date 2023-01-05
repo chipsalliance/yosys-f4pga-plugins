@@ -23,6 +23,22 @@ jobs:
   Run-tests:
     runs-on: ubuntu-20.04
 
+    strategy:
+      fail-fast: false
+      matrix:
+        plugin:
+          - fasm
+          - xdc
+          - params
+          - sdc
+          - ql-iob
+          - design_introspection
+          - integrateinv
+          - ql-qlf
+          - systemverilog
+          - uhdm
+          - dsp-ff
+
     steps:
 
     - uses: actions/checkout@v2
@@ -61,3 +77,4 @@ jobs:
         source .github/workflows/build-and-test.sh
       env:
         OS: ${{ runner.os }}
+        PLUGIN_NAME: ${{ matrix.plugin }}
