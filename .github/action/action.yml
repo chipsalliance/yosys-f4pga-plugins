@@ -41,11 +41,20 @@ runs:
       env:
         OS: ${{ runner.os }}
 
+    - uses: actions/download-artifact@v3
+      if: ${{ inputs.plugin == 'xdc' || inputs.plugin == 'sdc' }}
+      with:
+        name: design_introspection
+
     - name: Build and test plugins
       shell: bash
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
         source env/conda/bin/activate yosys-plugins
+        if [ "$PLUGIN_NAME" = "xdc" ] || [ "$PLUGIN_NAME" = "sdc" ]; then 
+          mkdir $CONDA_PREFIX/share/yosys/plugins/
+          cp design_introspection.so $CONDA_PREFIX/share/yosys/plugins/
+        fi
         source .github/workflows/build-and-test.sh
       env:
         OS: ${{ runner.os }}
