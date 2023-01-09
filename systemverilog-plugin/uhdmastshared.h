@@ -51,6 +51,11 @@ class UhdmAstShared
     // applies only to read_systemverilog command
     bool link = false;
 
+    // Flag equivalent to read_verilog -formal
+    // Defines FORMAL, undefines SYNTHESIS
+    // Allows verification constructs in Surelog
+    bool formal = false;
+
     // Top nodes of the design (modules, interfaces)
     std::unordered_map<std::string, ::Yosys::AST::AstNode *> top_nodes;
 

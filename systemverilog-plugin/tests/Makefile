@@ -20,7 +20,8 @@ TESTS = counter \
 		debug-flag \
 		report-flag \
 		defines \
-		defaults
+		defaults \
+		formal
 
 include $(shell pwd)/../../Makefile_test.common
 
@@ -31,3 +32,4 @@ debug-flag_verify = true
 report-flag_verify = true
 defaults_verify = true
 defines_verify = true
+formal_verify = true
