@@ -20,11 +20,10 @@ on: [push, pull_request]
 
 jobs:
   Run-tests-reusable:
-    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         yosys-version: [head, stable]
-    uses: antmicro/yosys-f4pga-plugins/.github/workflows/tests.yml@split-gh-actions
+    uses: ./.github/workflows/tests.yml
     with:
       yosys-version: ${{ matrix.yosys-version }}
