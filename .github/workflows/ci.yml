@@ -14,56 +14,17 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: CI tests
+name: Plugins builds and tests
 
 on: [push, pull_request]
 
 jobs:
-  Run-tests-design_introspection:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/action
-        with:
-          plugin: design_introspection
-      - uses: actions/upload-artifact@v3
-        with:
-          name: design_introspection
-          path: ./env/conda/envs/yosys-plugins/share/yosys/plugins/design_introspection.so
-  
-  Run-tests-sdc-xdc:
-    runs-on: ubuntu-20.04
-    needs: Run-tests-design_introspection
-    strategy:
-      fail-fast: false
-      matrix:
-        plugin:
-          - sdc
-          - xdc
-  
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/action
-        with:
-          plugin: ${{ matrix.plugin }}
-
-  Run-tests:
+  Run-tests-reusable:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
-        plugin:
-          - fasm
-          - params
-          - ql-iob
-          - integrateinv
-          - ql-qlf
-          - systemverilog
-          - uhdm
-          - dsp-ff
-
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/action
-        with:
-          plugin: ${{ matrix.plugin }}
+        yosys-version: [head, stable]
+    uses: antmicro/yosys-f4pga-plugins/.github/workflows/tests.yml@split-gh-actions
+    with:
+      yosys-version: ${{ matrix.yosys-version }}
