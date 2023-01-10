@@ -21,13 +21,6 @@ on: [push, pull_request]
 jobs:
   Run-tests-design_introspection:
     runs-on: ubuntu-20.04
-    strategy:
-      fail-fast: false
-      matrix:
-        yosys:
-          - conda
-          - head
-          - stable
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/action
@@ -44,10 +37,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        yosys:
-          - conda
-          - head
-          - stable
         plugin:
           - sdc
           - xdc
@@ -63,10 +52,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        yosys:
-          - conda
-          - head
-          - stable
         plugin:
           - fasm
           - params
