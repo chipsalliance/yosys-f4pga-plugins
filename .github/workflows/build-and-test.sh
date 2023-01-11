@@ -21,7 +21,6 @@ source .github/workflows/common.sh
 
 if [ -z "${PLUGIN_NAME}" ]; then
 	echo "Missing \${PLUGIN_NAME} env value"
-	exit 1
 fi
 
 ##########################################################################

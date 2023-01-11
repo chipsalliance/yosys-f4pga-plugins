@@ -54,6 +54,11 @@ start_section Install-Yosys
     source env/conda/bin/activate yosys-plugins
     conda list
     
+    if [ -z "${YOSYS_VERSION}" ]; then
+        echo "Missing \${YOSYS_VERSION} env value"
+        echo "Defaulting to conda yosys"
+    fi
+    
     if [ "${YOSYS_VERSION}" != "conda" ]; then
         PREFIX="${HOME}/.local"
         git clone https://github.com/YosysHQ/yosys.git
