@@ -55,15 +55,16 @@ start_section Install-Yosys
     conda list
     
     if [ "${YOSYS_VERSION}" != "conda" ]; then
-        BASE_DIR=$PWD
+        PREFIX="${HOME}/.local"
         git clone https://github.com/YosysHQ/yosys.git
         cd yosys
         git checkout "${YOSYS_VERSION}"
         make config-gcc
-        echo -n "PREFIX := $BASE_DIR/env/conda/envs/yosys-plugins" >> Makefile.conf
+        echo -n "PREFIX := ${PREFIX}" >> Makefile.conf
         make -j`nproc`
         make install
         cd ..
+        export PATH=${PREFIX}:$PATH
     fi
 )
 end_section
