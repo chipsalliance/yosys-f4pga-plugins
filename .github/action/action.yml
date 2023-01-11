@@ -20,6 +20,9 @@ inputs:
   plugin:
     description: "Name of the plugin to run the tests for"
     required: true
+  yosys-version:
+    description: "Which yosys version to build against ('conda' or branch name)"
+    required: true
 
 runs:
   using: 'composite'
@@ -56,6 +59,7 @@ runs:
         source .github/workflows/setup.sh
       env:
         OS: ${{ runner.os }}
+        YOSYS_VERSION: ${{ inputs.yosys-version }}
 
     - uses: actions/download-artifact@v3
       if: ${{ inputs.plugin == 'xdc' || inputs.plugin == 'sdc' }}

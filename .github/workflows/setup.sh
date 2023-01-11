@@ -53,6 +53,18 @@ start_section Install-Yosys
     make env
     source env/conda/bin/activate yosys-plugins
     conda list
+    
+    if [ "${YOSYS_VERSION}" != "conda" ]; then
+        BASE_DIR=$PWD
+        git clone https://github.com/YosysHQ/yosys.git
+        cd yosys
+        git checkout "${YOSYS_VERSION}"
+        make config-gcc
+        echo -n "PREFIX := $BASE_DIR/env/conda/envs/yosys-plugins" >> Makefile.conf
+        make -j`nproc`
+        make install
+        cd ..
+    fi
 )
 end_section
 

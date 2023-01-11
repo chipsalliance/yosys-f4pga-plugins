@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        yosys-version: [head, stable]
+        yosys-version: [conda, HEAD, yosys-0.25]
     uses: ./.github/workflows/tests.yml
     with:
       yosys-version: ${{ matrix.yosys-version }}

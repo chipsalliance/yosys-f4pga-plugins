@@ -32,6 +32,7 @@ jobs:
       - uses: ./.github/action
         with:
           plugin: design_introspection
+          yosys-version: ${{ inputs.yosys-version }}
       - uses: actions/upload-artifact@v3
         with:
           name: design_introspection
@@ -52,6 +53,7 @@ jobs:
       - uses: ./.github/action
         with:
           plugin: ${{ matrix.plugin }}
+          yosys-version: ${{ inputs.yosys-version }}
 
   Run-tests:
     runs-on: ubuntu-20.04
@@ -73,3 +75,4 @@ jobs:
       - uses: ./.github/action
         with:
           plugin: ${{ matrix.plugin }}
+          yosys-version: ${{ inputs.yosys-version }}
