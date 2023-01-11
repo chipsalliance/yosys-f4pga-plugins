@@ -60,16 +60,14 @@ start_section Install-Yosys
     fi
     
     if [ "${YOSYS_VERSION}" != "conda" ]; then
-        PREFIX="${HOME}/.local"
         git clone https://github.com/YosysHQ/yosys.git
         cd yosys
         git checkout "${YOSYS_VERSION}"
         make config-gcc
-        echo -n "PREFIX := ${PREFIX}" >> Makefile.conf
+        echo -n "PREFIX := "${HOME}/.local"" >> Makefile.conf
         make -j`nproc`
         make install
         cd ..
-        export PATH=${PREFIX}:$PATH
     fi
 )
 end_section
@@ -79,6 +77,7 @@ end_section
 start_section Yosys-Version
 (
     source env/conda/bin/activate yosys-plugins
+    export PATH=${HOME}/.local:$PATH
     echo $(which yosys)
     echo $(which yosys-config)
     echo $(yosys --version)
