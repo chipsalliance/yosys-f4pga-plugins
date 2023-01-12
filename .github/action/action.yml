@@ -43,7 +43,8 @@ runs:
           pkg-config libboost-system-dev libboost-python-dev \
           libboost-filesystem-dev zlib1g-dev clang-format-8 cmake \
           gperf autoconf tclsh swig uuid-dev libgoogle-perftools-dev \
-          python3-orderedmultidict python3-psutil python3-dev default-jre lcov
+          default-jre lcov
+        pip3 install orderedmultidict psutil
 
     - name: Format
       shell: bash
