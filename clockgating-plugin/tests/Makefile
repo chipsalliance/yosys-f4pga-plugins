@@ -14,4 +14,5 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+TESTS = regfile
 include $(shell pwd)/../../Makefile_test.common
