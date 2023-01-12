@@ -67,6 +67,11 @@ enum AstNodeTypeExtended {
     static const IdString id("\\is_imported");
     return id;
 }
+/*static*/ const IdString &UhdmAst::is_simplified_wire()
+{
+    static const IdString id("\\is_simplified_wire");
+    return id;
+}
 
 static void sanitize_symbol_name(std::string &name)
 {
@@ -944,6 +949,8 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
         AST_INTERNAL::current_scope[current_node->str] = current_node;
         break;
     case AST::AST_WIRE:
+        current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
+        [[fallthrough]];
     case AST::AST_PARAMETER:
     case AST::AST_LOCALPARAM:
         AST_INTERNAL::current_scope[current_node->str] = current_node;
@@ -956,7 +963,11 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
                 break;
             }
             AST::AstNode *wire_node = AST_INTERNAL::current_scope[current_node->str];
-            simplify(wire_node, nullptr);
+
+            // if a wire is simplified multiple times, its ranges may be added multiple times and be redundant as a result
+            if (!wire_node->attributes.count(UhdmAst::is_simplified_wire())) {
+                simplify(wire_node, nullptr);
+            }
             const std::vector<AST::AstNode *> packed_ranges = wire_node->attributes.count(UhdmAst::packed_ranges())
                                                                 ? wire_node->attributes[UhdmAst::packed_ranges()]->children
                                                                 : std::vector<AST::AstNode *>();
@@ -1633,6 +1644,10 @@ void UhdmAst::process_design()
         visitEachDescendant(current_node, [&](AST::AstNode *node) {
             node->attributes.erase(UhdmAst::packed_ranges());
             node->attributes.erase(UhdmAst::unpacked_ranges());
+            if (node->attributes.count(UhdmAst::is_simplified_wire())) {
+                delete node->attributes[UhdmAst::is_simplified_wire()];
+                node->attributes.erase(UhdmAst::is_simplified_wire());
+            }
         });
     }
 }
