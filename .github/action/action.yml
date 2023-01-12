@@ -64,22 +64,11 @@ runs:
         OS: ${{ runner.os }}
         YOSYS_VERSION: ${{ inputs.yosys-version }}
 
-    - uses: actions/download-artifact@v3
-      if: ${{ inputs.plugin == 'xdc' || inputs.plugin == 'sdc' }}
-      with:
-        name: design_introspection
-
     - name: Build and test plugins
       shell: bash
       run: |
         export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
         [ "${YOSYS_VERSION}" == "conda" ] && source env/conda/bin/activate yosys-plugins
-        PLUGINS_PATH=$(dirname $(dirname $(which yosys)))/share/yosys/plugins
-        if [ "$PLUGIN_NAME" = "xdc" ] || [ "$PLUGIN_NAME" == "sdc" ]; then 
-          mkdir -p $PLUGINS_PATH
-          cp design_introspection.so $PLUGINS_PATH
-        fi
-
         source .github/workflows/build-and-test.sh
       env:
         OS: ${{ runner.os }}

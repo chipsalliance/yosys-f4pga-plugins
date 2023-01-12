@@ -25,42 +25,15 @@ on:
     
 
 jobs:
-  Run-tests-design_introspection:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/action
-        with:
-          plugin: design_introspection
-          yosys-version: ${{ inputs.yosys-version }}
-      - uses: actions/upload-artifact@v3
-        with:
-          name: design_introspection
-          path: ./env/conda/envs/yosys-plugins/share/yosys/plugins/design_introspection.so
-  
-  Run-tests-sdc-xdc:
-    runs-on: ubuntu-20.04
-    needs: Run-tests-design_introspection
-    strategy:
-      fail-fast: false
-      matrix:
-        plugin:
-          - sdc
-          - xdc
-  
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/action
-        with:
-          plugin: ${{ matrix.plugin }}
-          yosys-version: ${{ inputs.yosys-version }}
-
   Run-tests:
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
         plugin:
+          - design_introspection
+          - xdc
+          - sdc
           - fasm
           - params
           - ql-iob
