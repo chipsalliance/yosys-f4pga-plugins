@@ -174,6 +174,7 @@ class UhdmAst
     // set this attribute to force conversion of multirange wire to single range. It is useful to force-convert some memories.
     static const ::Yosys::IdString &force_convert();
     static const ::Yosys::IdString &is_imported();
+    static const ::Yosys::IdString &is_simplified_wire();
 };
 
 } // namespace systemverilog_plugin

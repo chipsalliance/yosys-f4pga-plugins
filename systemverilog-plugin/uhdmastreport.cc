@@ -16,7 +16,7 @@ void UhdmAstReport::mark_handled(const UHDM::BaseClass *object)
     auto it = unhandled.find(object);
     if (it != unhandled.end()) {
         unhandled.erase(it);
-        handled_count_per_file.at(object->VpiFile())++;
+        handled_count_per_file.at(std::string(object->VpiFile()))++;
     }
 }
 
@@ -43,7 +43,7 @@ void UhdmAstReport::write(const std::string &directory)
     for (auto object : unhandled) {
         if (!object->VpiFile().empty() && object->VpiFile() != AST::current_filename) {
             unhandled_per_file.insert(std::make_pair(object->VpiFile(), std::unordered_set<unsigned>()));
-            unhandled_per_file.at(object->VpiFile()).insert(object->VpiLineNo());
+            unhandled_per_file.at(std::string(object->VpiFile())).insert(object->VpiLineNo());
             handled_count_per_file.insert(std::make_pair(object->VpiFile(), 0));
         }
     }
