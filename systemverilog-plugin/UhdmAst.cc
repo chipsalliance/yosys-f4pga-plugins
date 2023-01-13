@@ -1192,7 +1192,8 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         default: {
             const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
             const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-            report_error("%s:%d: Encountered unhandled constant format %d\n", object->VpiFile().c_str(), object->VpiLineNo(), val.format);
+            report_error("%.*s:%d: Encountered unhandled constant format %d\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                         object->VpiLineNo(), val.format);
         }
         }
         // handle vpiBinStrVal, vpiDecStrVal and vpiHexStrVal
@@ -2028,16 +2029,18 @@ void UhdmAst::process_typespec_member()
         });
         break;
     case vpiVoidTypespec: {
-        report_error("%s:%d: Void typespecs are currently unsupported", object->VpiFile().c_str(), object->VpiLineNo());
+        report_error("%.*s:%d: Void typespecs are currently unsupported", (int)object->VpiFile().length(), object->VpiFile().data(),
+                     object->VpiLineNo());
         break;
     }
     case vpiClassTypespec: {
-        report_error("%s:%d: Class typespecs are unsupported", object->VpiFile().c_str(), object->VpiLineNo());
+        report_error("%.*s:%d: Class typespecs are unsupported", (int)object->VpiFile().length(), object->VpiFile().data(), object->VpiLineNo());
         break;
     }
     default: {
-        report_error("%s:%d: Encountered unhandled typespec in process_typespec_member: '%s' of type '%s'\n", object->VpiFile().c_str(),
-                     object->VpiLineNo(), object->VpiName().c_str(), UHDM::VpiTypeName(typespec_h).c_str());
+        report_error("%.*s:%d: Encountered unhandled typespec in process_typespec_member: '%.*s' of type '%s'\n", (int)object->VpiFile().length(),
+                     object->VpiFile().data(), object->VpiLineNo(), (int)object->VpiName().length(), object->VpiName().data(),
+                     UHDM::VpiTypeName(typespec_h).c_str());
         break;
     }
     }
@@ -2444,8 +2447,8 @@ void UhdmAst::process_assignment(const UHDM::BaseClass *object)
         default:
             delete current_node;
             current_node = nullptr;
-            report_error("%s:%d: Encountered unhandled compound assignment with operation type %d\n", object->VpiFile().c_str(), object->VpiLineNo(),
-                         op_type);
+            report_error("%.*s:%d: Encountered unhandled compound assignment with operation type %d\n", (int)object->VpiFile().length(),
+                         object->VpiFile().data(), object->VpiLineNo(), op_type);
             return;
         }
         log_assert(current_node->children.size() == 2);
@@ -2689,7 +2692,8 @@ void UhdmAst::process_event_control(const UHDM::BaseClass *object)
         if (node) {
             auto process_node = find_ancestor({AST::AST_ALWAYS});
             if (!process_node) {
-                log_error("%s:%d: Currently supports only event control stmts inside 'always'\n", object->VpiFile().c_str(), object->VpiLineNo());
+                log_error("%.*s:%d: Currently supports only event control stmts inside 'always'\n", (int)object->VpiFile().length(),
+                          object->VpiFile().data(), object->VpiLineNo());
             }
             process_node->children.push_back(node);
         }
@@ -2788,7 +2792,8 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
         break;
     case vpiWildEqOp:
     case vpiWildNeqOp: {
-        report_error("%s:%d: Wildcard operators are not supported yet\n", object->VpiFile().c_str(), object->VpiLineNo());
+        report_error("%.*s:%d: Wildcard operators are not supported yet\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                     object->VpiLineNo());
         break;
     }
     default: {
@@ -2946,7 +2951,8 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
             break;
         case vpiPostIncOp: {
             // TODO: Make this an actual post-increment op (currently it's a pre-increment)
-            log_warning("%s:%d: Post-incrementation operations are handled as pre-incrementation.\n", object->VpiFile().c_str(), object->VpiLineNo());
+            log_warning("%.*s:%d: Post-incrementation operations are handled as pre-incrementation.\n", (int)object->VpiFile().length(),
+                        object->VpiFile().data(), object->VpiLineNo());
             [[fallthrough]];
         }
         case vpiPreIncOp: {
@@ -2960,7 +2966,8 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
         }
         case vpiPostDecOp: {
             // TODO: Make this an actual post-decrement op (currently it's a pre-decrement)
-            log_warning("%s:%d: Post-decrementation operations are handled as pre-decrementation.\n", object->VpiFile().c_str(), object->VpiLineNo());
+            log_warning("%.*s:%d: Post-decrementation operations are handled as pre-decrementation.\n", (int)object->VpiFile().length(),
+                        object->VpiFile().data(), object->VpiLineNo());
             [[fallthrough]];
         }
         case vpiPreDecOp: {
@@ -3010,7 +3017,8 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
         default: {
             delete current_node;
             current_node = nullptr;
-            report_error("%s:%d: Encountered unhandled operation type %d\n", object->VpiFile().c_str(), object->VpiLineNo(), operation);
+            report_error("%.*s:%d: Encountered unhandled operation type %d\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                         object->VpiLineNo(), operation);
         }
         }
     }
@@ -3453,12 +3461,14 @@ void UhdmAst::process_range(const UHDM::BaseClass *object)
     visit_one_to_one({vpiLeftRange, vpiRightRange}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
     if (current_node->children.size() > 0) {
         if (current_node->children[0]->str == "unsized") {
-            log_error("%s:%d: Currently not supported object of type 'unsized range'\n", object->VpiFile().c_str(), object->VpiLineNo());
+            log_error("%.*s:%d: Currently not supported object of type 'unsized range'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                      object->VpiLineNo());
         }
     }
     if (current_node->children.size() > 1) {
         if (current_node->children[1]->str == "unsized") {
-            log_error("%s:%d: Currently not supported object of type 'unsized range'\n", object->VpiFile().c_str(), object->VpiLineNo());
+            log_error("%.*s:%d: Currently not supported object of type 'unsized range'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                      object->VpiLineNo());
         }
     }
 }
@@ -3960,8 +3970,8 @@ void UhdmAst::process_port()
         default: {
             const uhdm_handle *const handle = (const uhdm_handle *)actual_h;
             const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-            report_error("%s:%d: Encountered unhandled type in process_port: %s\n", object->VpiFile().c_str(), object->VpiLineNo(),
-                         UHDM::VpiTypeName(actual_h).c_str());
+            report_error("%.*s:%d: Encountered unhandled type in process_port: %s\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                         object->VpiLineNo(), UHDM::VpiTypeName(actual_h).c_str());
             break;
         }
         }
@@ -4117,8 +4127,9 @@ void UhdmAst::process_parameter()
         default: {
             const uhdm_handle *const handle = (const uhdm_handle *)typespec_h;
             const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-            report_error("%s:%d: Encountered unhandled typespec in process_parameter: '%s' of type '%s'\n", object->VpiFile().c_str(),
-                         object->VpiLineNo(), object->VpiName().c_str(), UHDM::VpiTypeName(typespec_h).c_str());
+            report_error("%.*s:%d: Encountered unhandled typespec in process_parameter: '%.*s' of type '%s'\n", (int)object->VpiFile().length(),
+                         object->VpiFile().data(), object->VpiLineNo(), (int)object->VpiName().length(), object->VpiName().data(),
+                         UHDM::VpiTypeName(typespec_h).c_str());
             break;
         }
         }
@@ -4231,8 +4242,8 @@ void UhdmAst::process_primterm()
 
 void UhdmAst::process_unsupported_stmt(const UHDM::BaseClass *object)
 {
-    log_error("%s:%d: Currently not supported object of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(),
-              UHDM::VpiTypeName(obj_h).c_str());
+    log_error("%.*s:%d: Currently not supported object of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+              object->VpiLineNo(), UHDM::VpiTypeName(obj_h).c_str());
 }
 
 AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
@@ -4243,8 +4254,8 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
     for (auto *obj : shared.nonSynthesizableObjects) {
         if (!object->Compare(obj)) {
-            log_warning("%s:%d: Skipping non-synthesizable object of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(),
-                        UHDM::VpiTypeName(obj_h).c_str());
+            log_warning("%.*s:%d: Skipping non-synthesizable object of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                        object->VpiLineNo(), UHDM::VpiTypeName(obj_h).c_str());
             return nullptr;
         }
     }
@@ -4505,8 +4516,8 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiProgram:
     default:
-        report_error("%s:%d: Encountered unhandled object '%s' of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(),
-                     object->VpiName().c_str(), UHDM::VpiTypeName(obj_h).c_str());
+        report_error("%.*s:%d: Encountered unhandled object '%.*s' of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                     object->VpiLineNo(), (int)object->VpiName().length(), object->VpiName().data(), UHDM::VpiTypeName(obj_h).c_str());
         break;
     }
 
