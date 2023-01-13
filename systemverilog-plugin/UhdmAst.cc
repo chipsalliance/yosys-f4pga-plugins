@@ -340,7 +340,7 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     log_assert(AST_INTERNAL::current_scope.count(wiretype_node->str));
     wiretype_ast = AST_INTERNAL::current_scope[wiretype_node->str];
     // we need to setup current top ast as this simplify
-    // needs to have access to all already definied ids
+    // needs to have access to all already defined ids
     while (wire_node->simplify(true, false, false, 1, -1, false, false)) {
     }
     if (wiretype_ast->children[0]->type == AST::AST_STRUCT && wire_node->type == AST::AST_WIRE) {
@@ -450,11 +450,27 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
     size_t packed_size = 1;
     size_t unpacked_size = 1;
     std::vector<AST::AstNode *> ranges;
-    bool convert_node = packed_ranges.size() > 1 || unpacked_ranges.size() > 1 || wire_node->attributes.count(ID::wiretype) ||
-                        wire_node->type == AST::AST_PARAMETER || wire_node->type == AST::AST_LOCALPARAM ||
-                        ((wire_node->is_input || wire_node->is_output) && ((packed_ranges.size() > 0 || unpacked_ranges.size() > 0))) ||
-                        (wire_node->attributes.count(UhdmAst::force_convert()) && wire_node->attributes[UhdmAst::force_convert()]->integer == 1);
-    // Convert only when atleast 1 of the ranges has more then 1 range
+
+    // Convert only when node is not a memory and at least 1 of the ranges has more than 1 range
+    const bool convert_node = [&]() {
+        if (wire_node->type == AST::AST_MEMORY)
+            return false;
+        if (packed_ranges.size() > 1)
+            return true;
+        if (unpacked_ranges.size() > 1)
+            return true;
+        if (wire_node->attributes.count(ID::wiretype))
+            return true;
+        if (wire_node->type == AST::AST_PARAMETER)
+            return true;
+        if (wire_node->type == AST::AST_LOCALPARAM)
+            return true;
+        if ((wire_node->is_input || wire_node->is_output) && (packed_ranges.size() > 0 || unpacked_ranges.size() > 0))
+            return true;
+        if (wire_node->attributes.count(UhdmAst::force_convert()) && wire_node->attributes[UhdmAst::force_convert()]->integer == 1)
+            return true;
+        return false;
+    }();
     if (convert_node) {
         if (wire_node->multirange_dimensions.empty()) {
             packed_size = add_multirange_attribute(wire_node, packed_ranges);
@@ -474,6 +490,7 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
         if (wire_node->type == AST::AST_WIRE && packed_ranges.size() == 1 && unpacked_ranges.size() == 1 && !wire_node->is_input &&
             !wire_node->is_output) {
             wire_node->type = AST::AST_MEMORY;
+            wire_node->is_logic = true;
         }
     }
 
@@ -1919,6 +1936,10 @@ void UhdmAst::process_array_typespec()
             delete node;
         }
     });
+    if (auto elemtypespec_h = vpi_handle(vpiElemTypespec, obj_h)) {
+        visit_one_to_many({vpiRange}, elemtypespec_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
+        vpi_release_handle(elemtypespec_h);
+    }
     visit_one_to_many({vpiRange}, obj_h, [&](AST::AstNode *node) { unpacked_ranges.push_back(node); });
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
 }
