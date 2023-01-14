@@ -14,6 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 NAME = ql-iob
 SOURCES = ql-iob.cc pcf_parser.cc pinmap_parser.cc
 include ../Makefile_plugin.common

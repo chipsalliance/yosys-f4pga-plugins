@@ -23,20 +23,39 @@
 #include "uhdm/SynthSubset.h"
 #include "uhdm/VpiListener.h"
 #include <string>
+#include <type_traits>
 #include <vector>
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
 
-struct UhdmCommonFrontend : public Frontend {
+// FIXME (mglb): temporary fix to support UHDM both before and after the following change:
+// https://github.com/chipsalliance/UHDM/commit/d78d094448bd94926644e48adea4df293b82f101
+// The commit introducing this code should to be reverted after Surelog is bumped to recent versions in all our repositories.
+template <typename ObjT, typename... ArgN, std::enable_if_t<std::is_constructible_v<ObjT, ArgN...>, bool> = true>
+static inline ObjT *make_new_object_with_optional_extra_true_arg(ArgN &&... arg_n)
+{
+    // Older UHDM version
+    return new ObjT(std::forward<ArgN>(arg_n)...);
+}
+
+template <typename ObjT, typename... ArgN, std::enable_if_t<!std::is_constructible_v<ObjT, ArgN...>, bool> = true>
+static inline ObjT *make_new_object_with_optional_extra_true_arg(ArgN &&... arg_n)
+{
+    // Newer UHDM version
+    return new ObjT(std::forward<ArgN>(arg_n)..., true);
+}
+
+struct UhdmCommonFrontend : public ::Yosys::Frontend {
     UhdmAstShared shared;
     std::string report_directory;
     std::vector<std::string> args;
     UhdmCommonFrontend(std::string name, std::string short_help) : Frontend(name, short_help) {}
     virtual void print_read_options();
     virtual void help() = 0;
-    virtual AST::AstNode *parse(std::string filename) = 0;
-    virtual void call_log_header(RTLIL::Design *design) = 0;
-    void execute(std::istream *&f, std::string filename, std::vector<std::string> args, RTLIL::Design *design);
+    virtual ::Yosys::AST::AstNode *parse(std::string filename) = 0;
+    virtual void call_log_header(::Yosys::RTLIL::Design *design) = 0;
+    void execute(std::istream *&f, std::string filename, std::vector<std::string> args, ::Yosys::RTLIL::Design *design);
 };
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin

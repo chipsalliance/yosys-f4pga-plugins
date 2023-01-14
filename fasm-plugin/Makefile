@@ -14,6 +14,8 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+
 NAME = fasm
 SOURCES = fasm.cc
 include ../Makefile_plugin.common

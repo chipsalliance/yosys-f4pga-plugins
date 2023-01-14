@@ -19,7 +19,10 @@
 
 #include "uhdmcommonfrontend.h"
 
-YOSYS_NAMESPACE_BEGIN
+namespace systemverilog_plugin
+{
+
+using namespace ::Yosys;
 
 /* Stub for AST::process */
 static void set_line_num(int) {}
@@ -62,12 +65,18 @@ void UhdmCommonFrontend::print_read_options()
     log("        parameters of modules yield invalid or not synthesizable code.\n");
     log("        Needs to be followed by read_systemverilog -link after reading\n");
     log("        all files.\n");
+    log("\n");
     log("    -link\n");
     log("        performs linking and elaboration of the files read with -defer\n");
+    log("\n");
     log("    -parse-only\n");
     log("        this parameter only applies to read_systemverilog command,\n");
     log("        it runs only Surelog to parse design, but doesn't load generated\n");
     log("        tree into Yosys.\n");
+    log("\n");
+    log("    -formal\n");
+    log("        enable support for SystemVerilog assertions and some Yosys extensions\n");
+    log("        replace the implicit -D SYNTHESIS with -D FORMAL\n");
     log("\n");
 }
 
@@ -117,6 +126,10 @@ void UhdmCommonFrontend::execute(std::istream *&f, std::string filename, std::ve
             this->shared.link = true;
             // Surelog needs it in the command line to link correctly
             unhandled_args.push_back(args[i]);
+        } else if (args[i] == "-formal") {
+            this->shared.formal = true;
+            // Surelog needs it in the command line to annotate UHDM
+            unhandled_args.push_back(args[i]);
         } else {
             unhandled_args.push_back(args[i]);
         }
@@ -147,4 +160,4 @@ void UhdmCommonFrontend::execute(std::istream *&f, std::string filename, std::ve
     }
 }
 
-YOSYS_NAMESPACE_END
+} // namespace systemverilog_plugin

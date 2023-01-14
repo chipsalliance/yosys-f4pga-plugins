@@ -162,7 +162,7 @@ struct QlDspSimdPass : public Pass {
                     const RTLIL::Cell *dsp_a = group[i];
                     const RTLIL::Cell *dsp_b = group[i + 1];
 
-                    std::string name = stringf("simd_%s_%s", RTLIL::unescape_id(dsp_a->name).c_str(), RTLIL::unescape_id(dsp_b->name).c_str());
+                    std::string name = stringf("simd%ld", i / 2);
                     std::string SimdDspType;
 
                     if (use_cfg_params)

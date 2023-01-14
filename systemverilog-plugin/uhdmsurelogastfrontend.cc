@@ -29,6 +29,9 @@
 #include <sys/param.h>
 #include <unistd.h>
 #endif
+#include <memory>
+
+#include <list>
 
 #include "Surelog/ErrorReporting/Report.h"
 #include "Surelog/surelog.h"
@@ -39,44 +42,78 @@ extern void visit_object(vpiHandle obj_h, int indent, const char *relation, std:
                          bool shallowVisit = false);
 }
 
-YOSYS_NAMESPACE_BEGIN
-
-std::vector<vpiHandle> executeCompilation(SURELOG::SymbolTable *symbolTable, SURELOG::ErrorContainer *errors, SURELOG::CommandLineParser *clp,
-                                          SURELOG::scompiler *compiler)
+namespace systemverilog_plugin
 {
-    bool success = true;
-    bool noFatalErrors = true;
-    unsigned int codedReturn = 0;
-    clp->setWriteUhdm(false);
-    errors->printMessages(clp->muteStdout());
-    std::vector<vpiHandle> the_design;
-    if (success && (!clp->help())) {
-        compiler = SURELOG::start_compiler(clp);
-        if (!compiler)
+
+using namespace ::Yosys;
+
+// Store systemverilog defaults to be passed for every invocation of read_systemverilog
+static std::vector<std::string> systemverilog_defaults;
+static std::list<std::vector<std::string>> systemverilog_defaults_stack;
+
+// Store global definitions for top-level defines
+static std::vector<std::string> systemverilog_defines;
+
+// SURELOG::scompiler wrapper.
+// Owns UHDM/VPI resources used by designs returned from `execute`
+class Compiler
+{
+  public:
+    Compiler() = default;
+    ~Compiler()
+    {
+        if (this->scompiler) {
+            SURELOG::shutdown_compiler(this->scompiler);
+        }
+    }
+
+    const std::vector<vpiHandle> &execute(std::unique_ptr<SURELOG::ErrorContainer> errors, std::unique_ptr<SURELOG::CommandLineParser> clp)
+    {
+        log_assert(!this->errors && !this->clp && !this->scompiler);
+
+        bool success = true;
+        bool noFatalErrors = true;
+        unsigned int codedReturn = 0;
+        clp->setWriteUhdm(false);
+        errors->printMessages(clp->muteStdout());
+        if (success && (!clp->help())) {
+            this->scompiler = SURELOG::start_compiler(clp.get());
+            if (!this->scompiler)
+                codedReturn |= 1;
+            this->designs.push_back(SURELOG::get_uhdm_design(this->scompiler));
+        }
+        SURELOG::ErrorContainer::Stats stats;
+        if (!clp->help()) {
+            stats = errors->getErrorStats();
+            if (stats.nbFatal)
+                codedReturn |= 1;
+            if (stats.nbSyntax)
+                codedReturn |= 2;
+        }
+        bool noFErrors = true;
+        if (!clp->help())
+            noFErrors = errors->printStats(stats, clp->muteStdout());
+        if (noFErrors == false) {
+            noFatalErrors = false;
+        }
+        if ((!noFatalErrors) || (!success) || (errors->getErrorStats().nbError))
             codedReturn |= 1;
-        the_design.push_back(SURELOG::get_uhdm_design(compiler));
+        if (codedReturn) {
+            log_error("Error when parsing design. Aborting!\n");
+        }
+
+        this->clp = std::move(clp);
+        this->errors = std::move(errors);
+
+        return this->designs;
     }
-    SURELOG::ErrorContainer::Stats stats;
-    if (!clp->help()) {
-        stats = errors->getErrorStats();
-        if (stats.nbFatal)
-            codedReturn |= 1;
-        if (stats.nbSyntax)
-            codedReturn |= 2;
-    }
-    bool noFErrors = true;
-    if (!clp->help())
-        noFErrors = errors->printStats(stats, clp->muteStdout());
-    if (noFErrors == false) {
-        noFatalErrors = false;
-    }
-    if ((!noFatalErrors) || (!success) || (errors->getErrorStats().nbError))
-        codedReturn |= 1;
-    if (codedReturn) {
-        log_error("Error when parsing design. Aborting!\n");
-    }
-    return the_design;
-}
+
+  private:
+    std::unique_ptr<SURELOG::ErrorContainer> errors = nullptr;
+    std::unique_ptr<SURELOG::CommandLineParser> clp = nullptr;
+    SURELOG::scompiler *scompiler = nullptr;
+    std::vector<vpiHandle> designs = {};
+};
 
 struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
     UhdmSurelogAstFrontend(std::string name, std::string short_help) : UhdmCommonFrontend(name, short_help) {}
@@ -94,13 +131,38 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
     AST::AstNode *parse(std::string filename) override
     {
         std::vector<const char *> cstrings;
-        cstrings.reserve(this->args.size());
-        for (size_t i = 0; i < this->args.size(); ++i)
+        bool link = false;
+        if (this->shared.formal) {
+            systemverilog_defines.push_back("-DFORMAL=1");
+        } else {
+            systemverilog_defines.push_back("-DSYNTHESIS=1");
+        }
+        cstrings.reserve(this->args.size() + systemverilog_defaults.size() + systemverilog_defines.size());
+        for (size_t i = 0; i < this->args.size(); ++i) {
             cstrings.push_back(const_cast<char *>(this->args[i].c_str()));
+            if (this->args[i] == "-link")
+                link = true;
+        }
 
-        SURELOG::SymbolTable *symbolTable = new SURELOG::SymbolTable();
-        SURELOG::ErrorContainer *errors = new SURELOG::ErrorContainer(symbolTable);
-        SURELOG::CommandLineParser *clp = new SURELOG::CommandLineParser(errors, symbolTable, false, false);
+        if (!link) {
+            // Add systemverilog defaults args
+            for (size_t i = 0; i < systemverilog_defaults.size(); ++i) {
+                // Convert args to surelog compatible
+                if (systemverilog_defaults[i] == "-defer")
+                    this->shared.defer = true;
+                // Pass any remainings args directly to surelog
+                else
+                    cstrings.push_back(const_cast<char *>(systemverilog_defaults[i].c_str()));
+            }
+
+            // Add systemverilog defines args
+            for (size_t i = 0; i < systemverilog_defines.size(); ++i)
+                cstrings.push_back(const_cast<char *>(systemverilog_defines[i].c_str()));
+        }
+
+        auto symbolTable = std::make_unique<SURELOG::SymbolTable>();
+        auto errors = std::make_unique<SURELOG::ErrorContainer>(symbolTable.get());
+        auto clp = std::make_unique<SURELOG::CommandLineParser>(errors.get(), symbolTable.get(), false, false);
         bool success = clp->parseCommandLine(cstrings.size(), &cstrings[0]);
         if (!success) {
             log_error("Error parsing Surelog arguments!\n");
@@ -122,25 +184,21 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
             clp->setLink(true);
         }
 
-        SURELOG::scompiler *compiler = nullptr;
-        const std::vector<vpiHandle> uhdm_design = executeCompilation(symbolTable, errors, clp, compiler);
+        Compiler compiler;
+        const auto &uhdm_designs = compiler.execute(std::move(errors), std::move(clp));
+
         if (this->shared.debug_flag || !this->report_directory.empty()) {
-            for (auto design : uhdm_design) {
-                std::stringstream strstr;
-                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : strstr);
+            for (auto design : uhdm_designs) {
+                std::ofstream null_stream;
+                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : null_stream);
             }
         }
 
-        SURELOG::shutdown_compiler(compiler);
-        delete clp;
-        delete symbolTable;
-        delete errors;
         // on parse_only mode, don't try to load design
         // into yosys
         if (this->shared.parse_only)
             return nullptr;
 
-        UhdmAst uhdm_ast(this->shared);
         if (this->shared.defer && !this->shared.link)
             return nullptr;
 
@@ -149,16 +207,21 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
         // Should be called 1. for normal flow 2. after finishing with `-link`
         if (!this->shared.defer) {
             UHDM::Serializer serializer;
-            UHDM::SynthSubset *synthSubset = new UHDM::SynthSubset(&serializer, this->shared.nonSynthesizableObjects, false);
-            synthSubset->listenDesigns(uhdm_design);
+            UHDM::SynthSubset *synthSubset =
+              make_new_object_with_optional_extra_true_arg<UHDM::SynthSubset>(&serializer, this->shared.nonSynthesizableObjects, false);
+            synthSubset->listenDesigns(uhdm_designs);
             delete synthSubset;
         }
 
-        AST::AstNode *current_ast = uhdm_ast.visit_designs(uhdm_design);
+        UhdmAst uhdm_ast(this->shared);
+        AST::AstNode *current_ast = uhdm_ast.visit_designs(uhdm_designs);
         if (!this->report_directory.empty()) {
             this->shared.report.write(this->report_directory);
         }
 
+        // FIXME: Check and reset remaining shared data
+        this->shared.top_nodes.clear();
+        this->shared.nonSynthesizableObjects.clear();
         return current_ast;
     }
     void call_log_header(RTLIL::Design *design) override { log_header(design, "Executing Verilog with UHDM frontend.\n"); }
@@ -175,7 +238,164 @@ struct UhdmSystemVerilogFrontend : public UhdmSurelogAstFrontend {
         log("Read SystemVerilog files using Surelog into the current design\n");
         log("\n");
         this->print_read_options();
+        log("    -Ipath\n");
+        log("        add include path.\n");
+        log("\n");
+        log("    -Pparameter=value\n");
+        log("        define parameter as value.\n");
+        log("\n");
     }
 } UhdmSystemVerilogFrontend;
 
-YOSYS_NAMESPACE_END
+struct SystemVerilogDefaults : public Pass {
+    SystemVerilogDefaults() : Pass("systemverilog_defaults", "set default options for read_systemverilog") {}
+    void help() override
+    {
+        //   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
+        log("\n");
+        log("    systemverilog_defaults -add [options]\n");
+        log("\n");
+        log("Add the specified options to the list of default options to read_systemverilog.\n");
+        log("\n");
+        log("\n");
+        log("    systemverilog_defaults -clear\n");
+        log("\n");
+        log("Clear the list of Systemverilog default options.\n");
+        log("\n");
+        log("\n");
+        log("    systemverilog_defaults -push\n");
+        log("    systemverilog_defaults -pop\n");
+        log("\n");
+        log("Push or pop the list of default options to a stack. Note that -push does\n");
+        log("not imply -clear.\n");
+        log("\n");
+    }
+    void execute(std::vector<std::string> args, RTLIL::Design *) override
+    {
+        if (args.size() < 2)
+            cmd_error(args, 1, "Missing argument.");
+
+        if (args[1] == "-add") {
+            systemverilog_defaults.insert(systemverilog_defaults.end(), args.begin() + 2, args.end());
+            return;
+        }
+
+        if (args.size() != 2)
+            cmd_error(args, 2, "Extra argument.");
+
+        if (args[1] == "-clear") {
+            systemverilog_defaults.clear();
+            return;
+        }
+
+        if (args[1] == "-push") {
+            systemverilog_defaults_stack.push_back(systemverilog_defaults);
+            return;
+        }
+
+        if (args[1] == "-pop") {
+            if (systemverilog_defaults_stack.empty()) {
+                systemverilog_defaults.clear();
+            } else {
+                systemverilog_defaults.swap(systemverilog_defaults_stack.back());
+                systemverilog_defaults_stack.pop_back();
+            }
+            return;
+        }
+    }
+} SystemVerilogDefaults;
+
+struct SystemVerilogDefines : public Pass {
+    SystemVerilogDefines() : Pass("systemverilog_defines", "define and undefine systemverilog defines")
+    {
+        systemverilog_defines.push_back("-DYOSYS=1");
+    }
+    void help() override
+    {
+        //   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
+        log("\n");
+        log("    systemverilog_defines [options]\n");
+        log("\n");
+        log("Define and undefine systemverilog preprocessor macros.\n");
+        log("\n");
+        log("    -Dname[=definition]\n");
+        log("        define the preprocessor symbol 'name' and set its optional value\n");
+        log("        'definition'\n");
+        log("\n");
+        log("    -Uname[=definition]\n");
+        log("        undefine the preprocessor symbol 'name'\n");
+        log("\n");
+        log("    -reset\n");
+        log("        clear list of defined preprocessor symbols\n");
+        log("\n");
+        log("    -list\n");
+        log("        list currently defined preprocessor symbols\n");
+        log("\n");
+    }
+    void remove(const std::string name)
+    {
+        auto it = systemverilog_defines.begin();
+        while (it != systemverilog_defines.end()) {
+            std::string nm;
+            size_t equal = (*it).find('=', 2);
+            if (equal == std::string::npos)
+                nm = (*it).substr(2, std::string::npos);
+            else
+                nm = (*it).substr(2, equal - 2);
+            if (name == nm)
+                systemverilog_defines.erase(it);
+            else
+                it++;
+        }
+    }
+    void dump(void)
+    {
+        for (size_t i = 0; i < systemverilog_defines.size(); ++i) {
+            std::string name, value = "";
+            size_t equal = systemverilog_defines[i].find('=', 2);
+            name = systemverilog_defines[i].substr(2, equal - 2);
+            if (equal != std::string::npos)
+                value = systemverilog_defines[i].substr(equal + 1, std::string::npos);
+            Yosys::log("`define %s %s\n", name.c_str(), value.c_str());
+        }
+    }
+    void execute(std::vector<std::string> args, RTLIL::Design *design) override
+    {
+        size_t argidx;
+        for (argidx = 1; argidx < args.size(); argidx++) {
+            std::string arg = args[argidx];
+            if (arg == "-D" && argidx + 1 < args.size()) {
+                systemverilog_defines.push_back("-D" + args[++argidx]);
+                continue;
+            }
+            if (arg.compare(0, 2, "-D") == 0) {
+                systemverilog_defines.push_back(arg);
+                continue;
+            }
+            if (arg == "-U" && argidx + 1 < args.size()) {
+                std::string name = args[++argidx];
+                this->remove(name);
+                continue;
+            }
+            if (arg.compare(0, 2, "-U") == 0) {
+                std::string name = arg.substr(2);
+                this->remove(name);
+                continue;
+            }
+            if (arg == "-reset") {
+                systemverilog_defines.erase(systemverilog_defines.begin() + 1, systemverilog_defines.end());
+                continue;
+            }
+            if (arg == "-list") {
+                this->dump();
+                continue;
+            }
+            break;
+        }
+
+        if (args.size() != argidx)
+            cmd_error(args, argidx, "Extra argument.");
+    }
+} SystemVerilogDefines;
+
+} // namespace systemverilog_plugin
