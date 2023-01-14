@@ -16,3 +16,6 @@
 
 TESTS = regfile
 include $(shell pwd)/../../Makefile_test.common
+clockgate_test = diff $(1)/clockgated_regfile.golden.$(2) $(1)/clockgated_regfile.$(2)
+
+regfile_verify = $(call diff_test,regfile,v)

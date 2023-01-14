@@ -23,5 +23,5 @@ dffinit
 flatten
 opt;; 
 #check
-write_verilog -noattr -noexpr -nohex -nodec -defparam .$::env(DESIGN_TOP)/after_gl.v
+write_verilog -noattr -noexpr -nohex -nodec -defparam clockgated_regfile.v
             
