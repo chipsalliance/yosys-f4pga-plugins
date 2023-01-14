@@ -17,4 +17,4 @@
 TESTS = regfile
 include $(shell pwd)/../../Makefile_test.common
 
-regfile_verify = test $$(grep "dlclk" regfile/clockgated_regfile.v | wc -l) -eq 2
+regfile_verify = test $$(grep "dlclk" regfile/clockgated_regfile.v | wc -l) -eq 64
