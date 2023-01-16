@@ -67,6 +67,11 @@ enum AstNodeTypeExtended {
     static const IdString id("\\is_imported");
     return id;
 }
+/*static*/ const IdString &UhdmAst::is_simplified_wire()
+{
+    static const IdString id("\\is_simplified_wire");
+    return id;
+}
 
 static void sanitize_symbol_name(std::string &name)
 {
@@ -335,7 +340,7 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     log_assert(AST_INTERNAL::current_scope.count(wiretype_node->str));
     wiretype_ast = AST_INTERNAL::current_scope[wiretype_node->str];
     // we need to setup current top ast as this simplify
-    // needs to have access to all already definied ids
+    // needs to have access to all already defined ids
     while (wire_node->simplify(true, false, false, 1, -1, false, false)) {
     }
     if (wiretype_ast->children[0]->type == AST::AST_STRUCT && wire_node->type == AST::AST_WIRE) {
@@ -445,11 +450,27 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
     size_t packed_size = 1;
     size_t unpacked_size = 1;
     std::vector<AST::AstNode *> ranges;
-    bool convert_node = packed_ranges.size() > 1 || unpacked_ranges.size() > 1 || wire_node->attributes.count(ID::wiretype) ||
-                        wire_node->type == AST::AST_PARAMETER || wire_node->type == AST::AST_LOCALPARAM ||
-                        ((wire_node->is_input || wire_node->is_output) && ((packed_ranges.size() > 0 || unpacked_ranges.size() > 0))) ||
-                        (wire_node->attributes.count(UhdmAst::force_convert()) && wire_node->attributes[UhdmAst::force_convert()]->integer == 1);
-    // Convert only when atleast 1 of the ranges has more then 1 range
+
+    // Convert only when node is not a memory and at least 1 of the ranges has more than 1 range
+    const bool convert_node = [&]() {
+        if (wire_node->type == AST::AST_MEMORY)
+            return false;
+        if (packed_ranges.size() > 1)
+            return true;
+        if (unpacked_ranges.size() > 1)
+            return true;
+        if (wire_node->attributes.count(ID::wiretype))
+            return true;
+        if (wire_node->type == AST::AST_PARAMETER)
+            return true;
+        if (wire_node->type == AST::AST_LOCALPARAM)
+            return true;
+        if ((wire_node->is_input || wire_node->is_output) && (packed_ranges.size() > 0 || unpacked_ranges.size() > 0))
+            return true;
+        if (wire_node->attributes.count(UhdmAst::force_convert()) && wire_node->attributes[UhdmAst::force_convert()]->integer == 1)
+            return true;
+        return false;
+    }();
     if (convert_node) {
         if (wire_node->multirange_dimensions.empty()) {
             packed_size = add_multirange_attribute(wire_node, packed_ranges);
@@ -469,6 +490,7 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
         if (wire_node->type == AST::AST_WIRE && packed_ranges.size() == 1 && unpacked_ranges.size() == 1 && !wire_node->is_input &&
             !wire_node->is_output) {
             wire_node->type = AST::AST_MEMORY;
+            wire_node->is_logic = true;
         }
     }
 
@@ -944,6 +966,8 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
         AST_INTERNAL::current_scope[current_node->str] = current_node;
         break;
     case AST::AST_WIRE:
+        current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
+        [[fallthrough]];
     case AST::AST_PARAMETER:
     case AST::AST_LOCALPARAM:
         AST_INTERNAL::current_scope[current_node->str] = current_node;
@@ -956,7 +980,11 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
                 break;
             }
             AST::AstNode *wire_node = AST_INTERNAL::current_scope[current_node->str];
-            simplify(wire_node, nullptr);
+
+            // if a wire is simplified multiple times, its ranges may be added multiple times and be redundant as a result
+            if (!wire_node->attributes.count(UhdmAst::is_simplified_wire())) {
+                simplify(wire_node, nullptr);
+            }
             const std::vector<AST::AstNode *> packed_ranges = wire_node->attributes.count(UhdmAst::packed_ranges())
                                                                 ? wire_node->attributes[UhdmAst::packed_ranges()]->children
                                                                 : std::vector<AST::AstNode *>();
@@ -1181,7 +1209,8 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         default: {
             const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
             const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-            report_error("%s:%d: Encountered unhandled constant format %d\n", object->VpiFile().c_str(), object->VpiLineNo(), val.format);
+            report_error("%.*s:%d: Encountered unhandled constant format %d\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                         object->VpiLineNo(), val.format);
         }
         }
         // handle vpiBinStrVal, vpiDecStrVal and vpiHexStrVal
@@ -1397,7 +1426,7 @@ static void add_or_replace_child(AST::AstNode *parent, AST::AstNode *child)
                 if (child->type == AST::AST_MEMORY)
                     child->type = AST::AST_WIRE;
             }
-            child->is_signed = (*it)->is_signed;
+            child->is_signed = child->is_signed || (*it)->is_signed;
             if (!(*it)->children.empty() && child->children.empty()) {
                 // This is a bit ugly, but if the child we're replacing has children and
                 // our node doesn't, we copy its children to not lose any information
@@ -1633,6 +1662,10 @@ void UhdmAst::process_design()
         visitEachDescendant(current_node, [&](AST::AstNode *node) {
             node->attributes.erase(UhdmAst::packed_ranges());
             node->attributes.erase(UhdmAst::unpacked_ranges());
+            if (node->attributes.count(UhdmAst::is_simplified_wire())) {
+                delete node->attributes[UhdmAst::is_simplified_wire()];
+                node->attributes.erase(UhdmAst::is_simplified_wire());
+            }
         });
     }
 }
@@ -1679,8 +1712,8 @@ void UhdmAst::process_module()
                                            [](auto node) { return node->type == AST::AST_INITIAL || node->type == AST::AST_ALWAYS; });
             auto children_after_process = std::vector<AST::AstNode *>(process_it, current_node->children.end());
             current_node->children.erase(process_it, current_node->children.end());
-            visit_one_to_many({vpiModule, vpiInterface, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiTaskFunc, vpiGenScopeArray,
-                               vpiContAssign, vpiVariables},
+            visit_one_to_many({vpiModuleInst, vpiInterfaceInst, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiTaskFunc,
+                               vpiGenScopeArray, vpiContAssign, vpiVariables},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
                                       add_or_replace_child(current_node, node);
@@ -1710,8 +1743,8 @@ void UhdmAst::process_module()
                     move_type_to_new_typedef(current_node, node);
                 }
             });
-            visit_one_to_many({vpiModule, vpiInterface, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiGenScopeArray,
-                               vpiProcess, vpiClockingBlock, vpiAssertion},
+            visit_one_to_many({vpiModuleInst, vpiInterfaceInst, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet,
+                               vpiGenScopeArray, vpiProcess, vpiClockingBlock, vpiAssertion},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
                                       if (node->type == AST::AST_ASSIGN && node->children.size() < 2)
@@ -1836,7 +1869,7 @@ void UhdmAst::process_module()
                 add_or_replace_child(module_node, node);
             }
         });
-        visit_one_to_many({vpiInterface, vpiModule, vpiPort, vpiGenScopeArray, vpiContAssign}, obj_h, [&](AST::AstNode *node) {
+        visit_one_to_many({vpiInterfaceInst, vpiModuleInst, vpiPort, vpiGenScopeArray, vpiContAssign}, obj_h, [&](AST::AstNode *node) {
             if (node) {
                 add_or_replace_child(module_node, node);
             }
@@ -1903,6 +1936,10 @@ void UhdmAst::process_array_typespec()
             delete node;
         }
     });
+    if (auto elemtypespec_h = vpi_handle(vpiElemTypespec, obj_h)) {
+        visit_one_to_many({vpiRange}, elemtypespec_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
+        vpi_release_handle(elemtypespec_h);
+    }
     visit_one_to_many({vpiRange}, obj_h, [&](AST::AstNode *node) { unpacked_ranges.push_back(node); });
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
 }
@@ -2013,16 +2050,18 @@ void UhdmAst::process_typespec_member()
         });
         break;
     case vpiVoidTypespec: {
-        report_error("%s:%d: Void typespecs are currently unsupported", object->VpiFile().c_str(), object->VpiLineNo());
+        report_error("%.*s:%d: Void typespecs are currently unsupported", (int)object->VpiFile().length(), object->VpiFile().data(),
+                     object->VpiLineNo());
         break;
     }
     case vpiClassTypespec: {
-        report_error("%s:%d: Class typespecs are unsupported", object->VpiFile().c_str(), object->VpiLineNo());
+        report_error("%.*s:%d: Class typespecs are unsupported", (int)object->VpiFile().length(), object->VpiFile().data(), object->VpiLineNo());
         break;
     }
     default: {
-        report_error("%s:%d: Encountered unhandled typespec in process_typespec_member: '%s' of type '%s'\n", object->VpiFile().c_str(),
-                     object->VpiLineNo(), object->VpiName().c_str(), UHDM::VpiTypeName(typespec_h).c_str());
+        report_error("%.*s:%d: Encountered unhandled typespec in process_typespec_member: '%.*s' of type '%s'\n", (int)object->VpiFile().length(),
+                     object->VpiFile().data(), object->VpiLineNo(), (int)object->VpiName().length(), object->VpiName().data(),
+                     UHDM::VpiTypeName(typespec_h).c_str());
         break;
     }
     }
@@ -2429,8 +2468,8 @@ void UhdmAst::process_assignment(const UHDM::BaseClass *object)
         default:
             delete current_node;
             current_node = nullptr;
-            report_error("%s:%d: Encountered unhandled compound assignment with operation type %d\n", object->VpiFile().c_str(), object->VpiLineNo(),
-                         op_type);
+            report_error("%.*s:%d: Encountered unhandled compound assignment with operation type %d\n", (int)object->VpiFile().length(),
+                         object->VpiFile().data(), object->VpiLineNo(), op_type);
             return;
         }
         log_assert(current_node->children.size() == 2);
@@ -2674,7 +2713,8 @@ void UhdmAst::process_event_control(const UHDM::BaseClass *object)
         if (node) {
             auto process_node = find_ancestor({AST::AST_ALWAYS});
             if (!process_node) {
-                log_error("%s:%d: Currently supports only event control stmts inside 'always'\n", object->VpiFile().c_str(), object->VpiLineNo());
+                log_error("%.*s:%d: Currently supports only event control stmts inside 'always'\n", (int)object->VpiFile().length(),
+                          object->VpiFile().data(), object->VpiLineNo());
             }
             process_node->children.push_back(node);
         }
@@ -2773,7 +2813,8 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
         break;
     case vpiWildEqOp:
     case vpiWildNeqOp: {
-        report_error("%s:%d: Wildcard operators are not supported yet\n", object->VpiFile().c_str(), object->VpiLineNo());
+        report_error("%.*s:%d: Wildcard operators are not supported yet\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                     object->VpiLineNo());
         break;
     }
     default: {
@@ -2931,7 +2972,8 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
             break;
         case vpiPostIncOp: {
             // TODO: Make this an actual post-increment op (currently it's a pre-increment)
-            log_warning("%s:%d: Post-incrementation operations are handled as pre-incrementation.\n", object->VpiFile().c_str(), object->VpiLineNo());
+            log_warning("%.*s:%d: Post-incrementation operations are handled as pre-incrementation.\n", (int)object->VpiFile().length(),
+                        object->VpiFile().data(), object->VpiLineNo());
             [[fallthrough]];
         }
         case vpiPreIncOp: {
@@ -2945,7 +2987,8 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
         }
         case vpiPostDecOp: {
             // TODO: Make this an actual post-decrement op (currently it's a pre-decrement)
-            log_warning("%s:%d: Post-decrementation operations are handled as pre-decrementation.\n", object->VpiFile().c_str(), object->VpiLineNo());
+            log_warning("%.*s:%d: Post-decrementation operations are handled as pre-decrementation.\n", (int)object->VpiFile().length(),
+                        object->VpiFile().data(), object->VpiLineNo());
             [[fallthrough]];
         }
         case vpiPreDecOp: {
@@ -2995,7 +3038,8 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
         default: {
             delete current_node;
             current_node = nullptr;
-            report_error("%s:%d: Encountered unhandled operation type %d\n", object->VpiFile().c_str(), object->VpiLineNo(), operation);
+            report_error("%.*s:%d: Encountered unhandled operation type %d\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                         object->VpiLineNo(), operation);
         }
         }
     }
@@ -3373,8 +3417,8 @@ void UhdmAst::process_gen_scope()
     });
 
     visit_one_to_many(
-      {vpiParamAssign, vpiParameter, vpiNet, vpiArrayNet, vpiVariables, vpiContAssign, vpiProcess, vpiModule, vpiGenScopeArray, vpiTaskFunc}, obj_h,
-      [&](AST::AstNode *node) {
+      {vpiParamAssign, vpiParameter, vpiNet, vpiArrayNet, vpiVariables, vpiContAssign, vpiProcess, vpiModuleInst, vpiGenScopeArray, vpiTaskFunc},
+      obj_h, [&](AST::AstNode *node) {
           if (node) {
               if ((node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) && node->children.empty()) {
                   delete node; // skip parameters without any children
@@ -3438,12 +3482,14 @@ void UhdmAst::process_range(const UHDM::BaseClass *object)
     visit_one_to_one({vpiLeftRange, vpiRightRange}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
     if (current_node->children.size() > 0) {
         if (current_node->children[0]->str == "unsized") {
-            log_error("%s:%d: Currently not supported object of type 'unsized range'\n", object->VpiFile().c_str(), object->VpiLineNo());
+            log_error("%.*s:%d: Currently not supported object of type 'unsized range'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                      object->VpiLineNo());
         }
     }
     if (current_node->children.size() > 1) {
         if (current_node->children[1]->str == "unsized") {
-            log_error("%s:%d: Currently not supported object of type 'unsized range'\n", object->VpiFile().c_str(), object->VpiLineNo());
+            log_error("%.*s:%d: Currently not supported object of type 'unsized range'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                      object->VpiLineNo());
         }
     }
 }
@@ -3868,7 +3914,7 @@ void UhdmAst::process_port()
         auto actual_type = vpi_get(vpiType, actual_h);
         switch (actual_type) {
         case vpiModport: {
-            vpiHandle iface_h = vpi_handle(vpiInterface, actual_h);
+            vpiHandle iface_h = vpi_handle(vpiInterfaceInst, actual_h);
             if (iface_h) {
                 std::string cellName, ifaceName;
                 if (auto s = vpi_get_str(vpiName, actual_h)) {
@@ -3890,7 +3936,7 @@ void UhdmAst::process_port()
             }
             break;
         }
-        case vpiInterface: {
+        case vpiInterfaceInst: {
             auto typeNode = new AST::AstNode(AST::AST_INTERFACEPORTTYPE);
             if (auto s = vpi_get_str(vpiDefName, actual_h)) {
                 typeNode->str = s;
@@ -3945,8 +3991,8 @@ void UhdmAst::process_port()
         default: {
             const uhdm_handle *const handle = (const uhdm_handle *)actual_h;
             const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-            report_error("%s:%d: Encountered unhandled type in process_port: %s\n", object->VpiFile().c_str(), object->VpiLineNo(),
-                         UHDM::VpiTypeName(actual_h).c_str());
+            report_error("%.*s:%d: Encountered unhandled type in process_port: %s\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                         object->VpiLineNo(), UHDM::VpiTypeName(actual_h).c_str());
             break;
         }
         }
@@ -3968,7 +4014,7 @@ void UhdmAst::process_port()
                     current_node->children = std::move(node->children);
                 }
             }
-            current_node->is_signed = node->is_signed;
+            current_node->is_signed = current_node->is_signed || node->is_signed;
             delete node;
         }
     });
@@ -4102,8 +4148,9 @@ void UhdmAst::process_parameter()
         default: {
             const uhdm_handle *const handle = (const uhdm_handle *)typespec_h;
             const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-            report_error("%s:%d: Encountered unhandled typespec in process_parameter: '%s' of type '%s'\n", object->VpiFile().c_str(),
-                         object->VpiLineNo(), object->VpiName().c_str(), UHDM::VpiTypeName(typespec_h).c_str());
+            report_error("%.*s:%d: Encountered unhandled typespec in process_parameter: '%.*s' of type '%s'\n", (int)object->VpiFile().length(),
+                         object->VpiFile().data(), object->VpiLineNo(), (int)object->VpiName().length(), object->VpiName().data(),
+                         UHDM::VpiTypeName(typespec_h).c_str());
             break;
         }
         }
@@ -4216,8 +4263,8 @@ void UhdmAst::process_primterm()
 
 void UhdmAst::process_unsupported_stmt(const UHDM::BaseClass *object)
 {
-    log_error("%s:%d: Currently not supported object of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(),
-              UHDM::VpiTypeName(obj_h).c_str());
+    log_error("%.*s:%d: Currently not supported object of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+              object->VpiLineNo(), UHDM::VpiTypeName(obj_h).c_str());
 }
 
 AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
@@ -4228,8 +4275,8 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
     for (auto *obj : shared.nonSynthesizableObjects) {
         if (!object->Compare(obj)) {
-            log_warning("%s:%d: Skipping non-synthesizable object of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(),
-                        UHDM::VpiTypeName(obj_h).c_str());
+            log_warning("%.*s:%d: Skipping non-synthesizable object of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                        object->VpiLineNo(), UHDM::VpiTypeName(obj_h).c_str());
             return nullptr;
         }
     }
@@ -4248,7 +4295,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiPort:
         process_port();
         break;
-    case vpiModule:
+    case vpiModuleInst:
         process_module();
         break;
     case vpiStructTypespec:
@@ -4321,7 +4368,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiPackage:
         process_package();
         break;
-    case vpiInterface:
+    case vpiInterfaceInst:
         process_interface();
         break;
     case vpiModport:
@@ -4490,8 +4537,8 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiProgram:
     default:
-        report_error("%s:%d: Encountered unhandled object '%s' of type '%s'\n", object->VpiFile().c_str(), object->VpiLineNo(),
-                     object->VpiName().c_str(), UHDM::VpiTypeName(obj_h).c_str());
+        report_error("%.*s:%d: Encountered unhandled object '%.*s' of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                     object->VpiLineNo(), (int)object->VpiName().length(), object->VpiName().data(), UHDM::VpiTypeName(obj_h).c_str());
         break;
     }
 
