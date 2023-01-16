@@ -28,10 +28,6 @@ runs:
   using: 'composite'
   steps:
 
-    - uses: actions/checkout@v2
-      with:
-        submodules: recursive
-
     - uses: actions/setup-python@v2
 
     - name: Install

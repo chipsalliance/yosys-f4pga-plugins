@@ -45,6 +45,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: recursive
       - uses: ./.github/action
         with:
           plugin: ${{ matrix.plugin }}
