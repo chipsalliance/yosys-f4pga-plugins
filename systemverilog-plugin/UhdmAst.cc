@@ -1712,8 +1712,8 @@ void UhdmAst::process_module()
                                            [](auto node) { return node->type == AST::AST_INITIAL || node->type == AST::AST_ALWAYS; });
             auto children_after_process = std::vector<AST::AstNode *>(process_it, current_node->children.end());
             current_node->children.erase(process_it, current_node->children.end());
-            visit_one_to_many({vpiModule, vpiInterface, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiTaskFunc, vpiGenScopeArray,
-                               vpiContAssign, vpiVariables},
+            visit_one_to_many({vpiModuleInst, vpiInterfaceInst, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiTaskFunc,
+                               vpiGenScopeArray, vpiContAssign, vpiVariables},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
                                       add_or_replace_child(current_node, node);
@@ -1743,8 +1743,8 @@ void UhdmAst::process_module()
                     move_type_to_new_typedef(current_node, node);
                 }
             });
-            visit_one_to_many({vpiModule, vpiInterface, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiGenScopeArray,
-                               vpiProcess, vpiClockingBlock, vpiAssertion},
+            visit_one_to_many({vpiModuleInst, vpiInterfaceInst, vpiTaskFunc, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet,
+                               vpiGenScopeArray, vpiProcess, vpiClockingBlock, vpiAssertion},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
                                       if (node->type == AST::AST_ASSIGN && node->children.size() < 2)
@@ -1869,7 +1869,7 @@ void UhdmAst::process_module()
                 add_or_replace_child(module_node, node);
             }
         });
-        visit_one_to_many({vpiInterface, vpiModule, vpiPort, vpiGenScopeArray, vpiContAssign}, obj_h, [&](AST::AstNode *node) {
+        visit_one_to_many({vpiInterfaceInst, vpiModuleInst, vpiPort, vpiGenScopeArray, vpiContAssign}, obj_h, [&](AST::AstNode *node) {
             if (node) {
                 add_or_replace_child(module_node, node);
             }
@@ -3417,8 +3417,8 @@ void UhdmAst::process_gen_scope()
     });
 
     visit_one_to_many(
-      {vpiParamAssign, vpiParameter, vpiNet, vpiArrayNet, vpiVariables, vpiContAssign, vpiProcess, vpiModule, vpiGenScopeArray, vpiTaskFunc}, obj_h,
-      [&](AST::AstNode *node) {
+      {vpiParamAssign, vpiParameter, vpiNet, vpiArrayNet, vpiVariables, vpiContAssign, vpiProcess, vpiModuleInst, vpiGenScopeArray, vpiTaskFunc},
+      obj_h, [&](AST::AstNode *node) {
           if (node) {
               if ((node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) && node->children.empty()) {
                   delete node; // skip parameters without any children
@@ -3914,7 +3914,7 @@ void UhdmAst::process_port()
         auto actual_type = vpi_get(vpiType, actual_h);
         switch (actual_type) {
         case vpiModport: {
-            vpiHandle iface_h = vpi_handle(vpiInterface, actual_h);
+            vpiHandle iface_h = vpi_handle(vpiInterfaceInst, actual_h);
             if (iface_h) {
                 std::string cellName, ifaceName;
                 if (auto s = vpi_get_str(vpiName, actual_h)) {
@@ -3936,7 +3936,7 @@ void UhdmAst::process_port()
             }
             break;
         }
-        case vpiInterface: {
+        case vpiInterfaceInst: {
             auto typeNode = new AST::AstNode(AST::AST_INTERFACEPORTTYPE);
             if (auto s = vpi_get_str(vpiDefName, actual_h)) {
                 typeNode->str = s;
@@ -4295,7 +4295,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiPort:
         process_port();
         break;
-    case vpiModule:
+    case vpiModuleInst:
         process_module();
         break;
     case vpiStructTypespec:
@@ -4368,7 +4368,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiPackage:
         process_package();
         break;
-    case vpiInterface:
+    case vpiInterfaceInst:
         process_interface();
         break;
     case vpiModport:
