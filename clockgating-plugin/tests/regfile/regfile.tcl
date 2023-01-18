@@ -4,11 +4,11 @@ yosys -import  ;# ingest plugin commands
 
 read_verilog $::env(DESIGN_TOP).v
 read_liberty -lib -ignore_miss_dir -setattr blackbox ./lib/sky130_fd_sc_hd.lib 
-read_verilog ./sky130_hd_clkg_blackbox.v
+read_verilog ./lib/sky130_hd_clkg_blackbox.v
 hierarchy -check -auto-top
 
 
-reg_clock_gating ./sky130_hd_ff_map.v
+reg_clock_gating ./lib/sky130_hd_ff_map.v
 opt_clean -purge
 synth -top top
 dfflibmap -liberty ./lib/sky130_fd_sc_hd.lib 
