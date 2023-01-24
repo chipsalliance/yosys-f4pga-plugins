@@ -41,6 +41,7 @@ runs:
           gperf autoconf tclsh swig uuid-dev libgoogle-perftools-dev \
           default-jre lcov
         pip3 install orderedmultidict psutil
+
     - name: Format
       shell: bash
       run: source .github/workflows/format-check.sh
