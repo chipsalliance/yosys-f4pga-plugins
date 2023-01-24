@@ -20,10 +20,10 @@ on: [push, pull_request]
 
 jobs:
   Run-tests-reusable:
-  strategy:
-    fail-fast: false
-    matrix:
-      yosys-version: [conda, HEAD, yosys-0.25]
-  uses: ./.github/workflows/tests.yml
-  with:
-    yosys-version: ${{ matrix.yosys-version }}
+    strategy:
+      fail-fast: false
+      matrix:
+        yosys-version: [conda, HEAD, yosys-0.25]
+    uses: ./.github/workflows/tests.yml
+    with:
+      yosys-version: ${{ matrix.yosys-version }}
