@@ -4259,10 +4259,11 @@ void UhdmAst::process_primterm()
     visit_one_to_one({vpiExpr}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
 }
 
-void UhdmAst::process_unsupported_stmt(const UHDM::BaseClass *object)
+void UhdmAst::process_unsupported_stmt(const UHDM::BaseClass *object, bool is_error)
 {
-    log_error("%.*s:%d: Currently not supported object of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
-              object->VpiLineNo(), UHDM::VpiTypeName(obj_h).c_str());
+    const auto log_func = is_error ? log_error : log_warning;
+    std::string prefix = object->VpiLineNo() ? (std::string(object->VpiFile()) + ":" + std::to_string(object->VpiLineNo()) + ": ") : "";
+    log_func("%sCurrently not supported object of type '%s'\n", prefix.c_str(), UHDM::VpiTypeName(obj_h).c_str());
 }
 
 AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
@@ -4383,6 +4384,9 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiInitial:
         process_initial();
+        break;
+    case vpiFinal:
+        process_unsupported_stmt(object, false);
         break;
     case vpiNamedBegin:
         process_begin(true);
