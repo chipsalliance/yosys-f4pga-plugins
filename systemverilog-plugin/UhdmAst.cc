@@ -4537,6 +4537,13 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiClockingBlock:
         process_unsupported_stmt(object);
         break;
+    case vpiTypeParameter:
+        // Instances in an `uhdmTopModules` tree already have all parameter references
+        // substituted with the parameter type/value by Surelog,
+        // so the plugin doesn't need to process the parameter itself.
+        // Other parameter types are handled by the plugin
+        // mainly because they were implemented before Surelog did the substitution.
+        break;
     case vpiProgram:
     default:
         report_error("%.*s:%d: Encountered unhandled object '%.*s' of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
