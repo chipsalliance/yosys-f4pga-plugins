@@ -107,3 +107,16 @@ The plugin adds the following commands:
 * read_uhdm
 
 Detailed help on the supported command(s) can be obtained by running `help <command_name>` in Yosys.
+
+
+## Clock Gating plugin
+
+Performs dynamic power optimization by automatically clock gating registers in design.
+
+For Full documentation check [Lighter](https://github.com/Cloud-V/Lighter).
+
+The plugin adds the following command:
+
+* reg_clock_gating
+
+Detailed help on the supported command(s) can be obtained by running `help <command_name>` in Yosys.
