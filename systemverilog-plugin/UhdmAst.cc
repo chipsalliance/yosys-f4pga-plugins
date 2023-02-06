@@ -3166,12 +3166,37 @@ void UhdmAst::process_list_op()
 {
     // Add all operands as children of process node
     if (auto parent_node = find_ancestor({AST::AST_ALWAYS, AST::AST_COND})) {
+        std::vector<AST::AstNode *> nodes;
+        // vpiListOp is returned in 2 cases:
+        // a, b, c ... -> multiple vpiListOp with single item
+        // [a : b] -> single vpiListOp with 2 items
         visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
-            // add directly to process/cond node
             if (node) {
-                parent_node->children.push_back(node);
+                nodes.push_back(node);
             }
         });
+        if (nodes.size() == 1) {
+            parent_node->children.push_back(nodes[0]);
+        } else {
+            log_assert(nodes.size() == 2);
+            // TODO(krak): we should actually simplify this nodes first,
+            // but that would require to delay this to later.
+            // For now check that they are constants.
+            log_assert(nodes[0]->type == AST::AST_CONSTANT);
+            log_assert(nodes[1]->type == AST::AST_CONSTANT);
+            const int low = nodes[0]->integer;
+            const int high = nodes[1]->integer;
+            // According to standard:
+            // If the bound to the left of the colon is greater than the
+            // bound to the right, the range is empty and contains no values.
+            for (int i = low; i >= low && i <= high; i++) {
+                // TODO(krak): get proper width of constant
+                log_assert(nodes[0]->range_left == 31);
+                parent_node->children.push_back(AST::AstNode::mkconst_int(i, false, 32));
+            }
+        }
+    } else {
+        log_error("Unhandled list op, couldn't find parent node.");
     }
     // Do not create a node
     shared.report.mark_handled(obj_h);
