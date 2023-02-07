@@ -3450,6 +3450,15 @@ void UhdmAst::process_case()
     visit_one_to_one({vpiCondition}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
     visit_one_to_many({vpiCaseItem}, obj_h, [&](AST::AstNode *node) {
         node->type = cond_type;
+        // TODO(krak): We are changing here Sx to Sz to match
+        // yosys read_verilog -sv output
+        if (cond_type == AST::AST_CONDX) {
+            for (unsigned i = 0; i < node->bits.size(); i++) {
+                if (node->bits[i] == RTLIL::State::Sx) {
+                    node->bits[i] = RTLIL::State::Sz;
+                }
+            }
+        }
         current_node->children.push_back(node);
     });
 }
