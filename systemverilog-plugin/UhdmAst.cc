@@ -1771,6 +1771,7 @@ void UhdmAst::process_module()
     name = strip_package_name(name);
     if (!is_module_instance) {
         if (shared.top_nodes.find(type) != shared.top_nodes.end()) {
+            // processing nodes belonging to 'uhdmtopModules'
             current_node = shared.top_nodes[type];
             shared.current_top_node = current_node;
             auto process_it = std::find_if(current_node->children.begin(), current_node->children.end(),
@@ -1798,6 +1799,7 @@ void UhdmAst::process_module()
                 current_node->attributes.erase(it);
             }
         } else {
+            // processing nodes belonging to 'uhdmallModules'
             current_node = make_ast_node(AST::AST_MODULE);
             current_node->str = type;
             shared.top_nodes[current_node->str] = current_node;
