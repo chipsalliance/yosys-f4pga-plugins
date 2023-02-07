@@ -3430,8 +3430,28 @@ void UhdmAst::process_gen_scope()
 void UhdmAst::process_case()
 {
     current_node = make_ast_node(AST::AST_CASE);
+    auto cond_type = AST::AST_COND;
+    switch (vpi_get(vpiCaseType, obj_h)) {
+    case vpiCaseExact:
+        cond_type = AST::AST_COND;
+        break;
+    case vpiCaseX:
+        cond_type = AST::AST_CONDX;
+        break;
+    case vpiCaseZ:
+        cond_type = AST::AST_CONDZ;
+        break;
+    default: {
+        const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+        const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
+        report_error("%.*s:%d: Unknown case type", (int)object->VpiFile().length(), object->VpiFile().data(), object->VpiLineNo());
+    }
+    }
     visit_one_to_one({vpiCondition}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
-    visit_one_to_many({vpiCaseItem}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
+    visit_one_to_many({vpiCaseItem}, obj_h, [&](AST::AstNode *node) {
+        node->type = cond_type;
+        current_node->children.push_back(node);
+    });
 }
 
 void UhdmAst::process_case_item()
