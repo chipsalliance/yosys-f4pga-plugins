@@ -79,6 +79,12 @@ enum AstNodeTypeExtended {
     return id;
 }
 
+/*static*/ const IdString &UhdmAst::is_type_parameter()
+{
+    static const IdString id("\\is_type_parameter");
+    return id;
+}
+
 static void sanitize_symbol_name(std::string &name)
 {
     if (!name.empty()) {
@@ -1694,6 +1700,7 @@ void UhdmAst::process_design()
             continue;
         if (pair.second->type == AST::AST_PACKAGE) {
             check_memories(pair.second);
+            clear_current_scope();
             setup_current_scope(shared.top_nodes, pair.second);
             simplify(pair.second, nullptr);
             clear_current_scope();
@@ -1730,6 +1737,10 @@ void UhdmAst::process_design()
             if (node->attributes.count(UhdmAst::is_simplified_wire())) {
                 delete node->attributes[UhdmAst::is_simplified_wire()];
                 node->attributes.erase(UhdmAst::is_simplified_wire());
+            }
+            if (node->attributes.count(UhdmAst::is_type_parameter())) {
+                delete node->attributes[UhdmAst::is_type_parameter()];
+                node->attributes.erase(UhdmAst::is_type_parameter());
             }
         });
     }
@@ -1822,6 +1833,21 @@ void UhdmAst::process_module()
         // Not a top module, create instance
         current_node = make_ast_node(AST::AST_CELL);
         std::string module_parameters;
+
+        // For some reason 'vpiParameter' causes 'vpiTypeParameter' to be found, too.
+        visit_one_to_many({vpiParameter}, obj_h, [&](AST::AstNode *node) {
+            if (!node->attributes.count(UhdmAst::is_type_parameter())) {
+                // process type parameters only
+                return;
+            }
+            // process_type_parameter should have created a node with the parameter name
+            //   and a child with the name of the value assigned to the parameter
+            log_assert(node->children.size() > 0);
+            if (!node->children[0]->str.empty()) {
+                module_parameters += node->str + "=" + node->children[0]->str;
+            }
+        });
+
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
             if (node && node->type == AST::AST_PARAMETER) {
                 if (node->children[0]->type != AST::AST_CONSTANT) {
@@ -4376,6 +4402,22 @@ void UhdmAst::process_unsupported_stmt(const UHDM::BaseClass *object, bool is_er
     log_func("%sCurrently not supported object of type '%s'\n", prefix.c_str(), UHDM::VpiTypeName(obj_h).c_str());
 }
 
+void UhdmAst::process_type_parameter()
+{
+    current_node = make_ast_node(AST::AST_PARAMETER);
+    // Use an attribute to distinguish "type parameters" from other parameters
+    current_node->attributes[UhdmAst::is_type_parameter()] = AST::AstNode::mkconst_int(1, false, 1);
+    visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
+        if (node->type == AST::AST_WIRE) {
+            node->type = AST::AST_IDENTIFIER;
+        }
+        current_node->children.push_back(node->clone());
+        // The child stores information about the type assigned to the parameter
+        //   this information will be used to rename the module
+        delete node;
+    });
+}
+
 AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
 {
     obj_h = obj_handle;
@@ -4653,6 +4695,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         // so the plugin doesn't need to process the parameter itself.
         // Other parameter types are handled by the plugin
         // mainly because they were implemented before Surelog did the substitution.
+        process_type_parameter();
         break;
     case vpiProgram:
     default:
