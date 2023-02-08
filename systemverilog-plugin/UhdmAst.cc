@@ -37,7 +37,8 @@ namespace Extended
 enum AstNodeTypeExtended {
     AST_DOT = ::Yosys::AST::AST_BIND + 1, // here we always want to point to the last element of yosys' AstNodeType
     AST_BREAK,
-    AST_CONTINUE
+    AST_CONTINUE,
+    AST_LOW_HIGH_BOUND
 };
 }
 } // namespace AST
@@ -959,6 +960,34 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
     for (size_t i = 0; i < current_node->children.size(); i++) {
         simplify(current_node->children[i], current_node);
     }
+    if (current_node->type == static_cast<AST::AstNodeType>(AST::Extended::AST_LOW_HIGH_BOUND)) {
+        log_assert(current_node->children.size() == 2);
+        while (current_node->children[0]->simplify(true, false, false, 1, -1, false, false)) {
+        };
+        while (current_node->children[1]->simplify(true, false, false, 1, -1, false, false)) {
+        };
+        log_assert(current_node->children[0]->type == AST::AST_CONSTANT);
+        log_assert(current_node->children[1]->type == AST::AST_CONSTANT);
+        const int low = current_node->children[0]->integer;
+        const int high = current_node->children[1]->integer;
+        int range = current_node->children[0]->range_left;
+        while (!current_node->children.empty()) {
+            delete current_node->children.back();
+            current_node->children.pop_back();
+        }
+        // According to standard:
+        // If the bound to the left of the colon is greater than the
+        // bound to the right, the range is empty and contains no values.
+        for (int i = low; i >= low && i <= high; i++) {
+            // TODO(krak): what should be correct constant range if we don't have
+            // information about range?
+            if (range == -1) {
+                range = 64;
+            }
+            parent_node->children.push_back(AST::AstNode::mkconst_int(i, false, range));
+        }
+        return;
+    }
     switch (current_node->type) {
     case AST::AST_TYPEDEF:
     case AST::AST_ENUM:
@@ -1027,6 +1056,14 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
     case AST::AST_TCALL:
         if (current_node->str == "$display" || current_node->str == "$write")
             simplify_format_string(current_node);
+        break;
+    case AST::AST_COND:
+    case AST::AST_CONDX:
+    case AST::AST_CONDZ:
+        if (!current_node->children.empty() && current_node->children[0]->type == static_cast<AST::AstNodeType>(AST::Extended::AST_LOW_HIGH_BOUND)) {
+            delete current_node->children[0];
+            current_node->children.erase(current_node->children.begin());
+        }
         break;
     default:
         break;
@@ -3501,25 +3538,10 @@ void UhdmAst::process_case_item()
             // a, b, c ... -> multiple vpiListOp with single item
             // [a : b] -> single vpiListOp with 2 items
             if (current_node->children.size() == 2) {
-                // TODO(krak): we should actually simplify this nodes first,
-                // but that would require to delay this to later.
-                // For now check that they are constants.
-                log_assert(current_node->children[0]->type == AST::AST_CONSTANT);
-                log_assert(current_node->children[1]->type == AST::AST_CONSTANT);
-                const int low = current_node->children[0]->integer;
-                const int high = current_node->children[1]->integer;
-                // TODO(krak): get proper width of constant
-                log_assert(current_node->children[0]->range_left == 31);
-                // According to standard:
-                // If the bound to the left of the colon is greater than the
-                // bound to the right, the range is empty and contains no values.
-                while (!current_node->children.empty()) {
-                    delete current_node->children.back();
-                    current_node->children.pop_back();
-                }
-                for (int i = low; i >= low && i <= high; i++) {
-                    current_node->children.push_back(AST::AstNode::mkconst_int(i, false, 32));
-                }
+                auto bound = new AST::AstNode(static_cast<AST::AstNodeType>(AST::Extended::AST_LOW_HIGH_BOUND));
+                bound->children = current_node->children;
+                current_node->children.erase(current_node->children.begin(), current_node->children.end());
+                current_node->children.push_back(bound);
             }
         } else {
             UhdmAst uhdm_ast(this, shared, indent + "  ");
