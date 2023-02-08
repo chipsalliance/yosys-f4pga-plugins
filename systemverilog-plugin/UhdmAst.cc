@@ -3190,35 +3190,12 @@ void UhdmAst::process_list_op()
 {
     // Add all operands as children of process node
     if (auto parent_node = find_ancestor({AST::AST_ALWAYS, AST::AST_COND})) {
-        std::vector<AST::AstNode *> nodes;
-        // vpiListOp is returned in 2 cases:
-        // a, b, c ... -> multiple vpiListOp with single item
-        // [a : b] -> single vpiListOp with 2 items
         visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
+            // add directly to process/cond node
             if (node) {
-                nodes.push_back(node);
+                parent_node->children.push_back(node);
             }
         });
-        if (nodes.size() == 1) {
-            parent_node->children.push_back(nodes[0]);
-        } else {
-            log_assert(nodes.size() == 2);
-            // TODO(krak): we should actually simplify this nodes first,
-            // but that would require to delay this to later.
-            // For now check that they are constants.
-            log_assert(nodes[0]->type == AST::AST_CONSTANT);
-            log_assert(nodes[1]->type == AST::AST_CONSTANT);
-            const int low = nodes[0]->integer;
-            const int high = nodes[1]->integer;
-            // According to standard:
-            // If the bound to the left of the colon is greater than the
-            // bound to the right, the range is empty and contains no values.
-            for (int i = low; i >= low && i <= high; i++) {
-                // TODO(krak): get proper width of constant
-                log_assert(nodes[0]->range_left == 31);
-                parent_node->children.push_back(AST::AstNode::mkconst_int(i, false, 32));
-            }
-        }
     } else {
         log_error("Unhandled list op, couldn't find parent node.");
     }
@@ -3510,13 +3487,40 @@ void UhdmAst::process_case_item()
     while (vpiHandle expr_h = vpi_scan(itr)) {
         // case ... inside statement, the operation is stored in UHDM inside case items
         // Retrieve just the InsideOp arguments here, we don't add any special handling
-        // TODO: handle inside range (list operations) properly here
         if (vpi_get(vpiType, expr_h) == vpiOperation && vpi_get(vpiOpType, expr_h) == vpiInsideOp) {
+            std::vector<AST::AstNode *> nodes;
             visit_one_to_many({vpiOperand}, expr_h, [&](AST::AstNode *node) {
-                if (node) {
-                    current_node->children.push_back(node);
-                }
+                // Currently we are adding nodes directly to ancestor
+                // inside process_list_op, so after this function, we have
+                // nodes already in `current_node`.
+                // We should probably refactor this to return node instead.
+                // For now, make sure this function doesn't return any nodes.
+                log_assert(node == nullptr);
             });
+            // vpiListOp is returned in 2 cases:
+            // a, b, c ... -> multiple vpiListOp with single item
+            // [a : b] -> single vpiListOp with 2 items
+            if (current_node->children.size() == 2) {
+                // TODO(krak): we should actually simplify this nodes first,
+                // but that would require to delay this to later.
+                // For now check that they are constants.
+                log_assert(current_node->children[0]->type == AST::AST_CONSTANT);
+                log_assert(current_node->children[1]->type == AST::AST_CONSTANT);
+                const int low = current_node->children[0]->integer;
+                const int high = current_node->children[1]->integer;
+                // TODO(krak): get proper width of constant
+                log_assert(current_node->children[0]->range_left == 31);
+                // According to standard:
+                // If the bound to the left of the colon is greater than the
+                // bound to the right, the range is empty and contains no values.
+                while (!current_node->children.empty()) {
+                    delete current_node->children.back();
+                    current_node->children.pop_back();
+                }
+                for (int i = low; i >= low && i <= high; i++) {
+                    current_node->children.push_back(AST::AstNode::mkconst_int(i, false, 32));
+                }
+            }
         } else {
             UhdmAst uhdm_ast(this, shared, indent + "  ");
             auto *node = uhdm_ast.process_object(expr_h);
