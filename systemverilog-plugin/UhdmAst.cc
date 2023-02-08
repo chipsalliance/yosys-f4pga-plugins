@@ -399,42 +399,61 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     }
 }
 
-static void add_force_convert_attribute(AST::AstNode *wire_node, int val = 1)
+static void add_force_convert_attribute(AST::AstNode *wire_node, uint32_t val = 1)
 {
-    wire_node->attributes[UhdmAst::force_convert()] = AST::AstNode::mkconst_int(val, true);
+    AST::AstNode *&attr = wire_node->attributes[UhdmAst::force_convert()];
+    if (!attr) {
+        attr = AST::AstNode::mkconst_int(val, true);
+    } else if (attr->integer != val) {
+        attr->integer = val;
+    }
 }
 
-static void check_memories(AST::AstNode *module_node)
+static void check_memories(AST::AstNode *node, std::string scope, std::map<std::string, AST::AstNode *> &memories)
 {
-    std::map<std::string, AST::AstNode *> memories;
-    std::string current_scope_str = "";
-    visitEachDescendant(module_node, [&](AST::AstNode *node) {
-        if (node->type == AST::AST_GENBLOCK) {
-            current_scope_str = "." + node->str;
+    for (auto *child : node->children) {
+        check_memories(child, node->type == AST::AST_GENBLOCK ? scope + "." + node->str : scope, memories);
+    }
+
+    if (node->str == "\\$readmemh") {
+        if (node->children.size() != 2 || node->children[1]->str.empty() || node->children[1]->type != AST::AST_IDENTIFIER) {
+            log_error("%s:%d: Wrong usage of '\\$readmemh'\n", node->filename.c_str(), node->location.first_line);
         }
-        if (node->str == "\\$readmemh") {
-            if (node->children.size() != 2 || node->children[1]->str.empty() || node->children[1]->type != AST::AST_IDENTIFIER) {
-                log_error("%s:%d: Wrong usage of '\\$readmemh'\n", node->filename.c_str(), node->location.first_line);
-            }
-            if (memories[current_scope_str + node->children[1]->str])
-                add_force_convert_attribute(memories[node->children[1]->str], 0);
+        // TODO: Look for the memory in all other scope levels, like we do in case of AST::AST_IDENTIFIER,
+        // as here the memory can also be defined before before the current scope.
+        std::string name = scope + "." + node->children[1]->str;
+        const auto iter = memories.find(name);
+        if (iter != memories.end()) {
+            add_force_convert_attribute(iter->second, 0);
         }
-        if (node->type == AST::AST_WIRE) {
-            const std::vector<AST::AstNode *> packed_ranges =
-              node->attributes.count(UhdmAst::packed_ranges()) ? node->attributes[UhdmAst::packed_ranges()]->children : std::vector<AST::AstNode *>();
-            const std::vector<AST::AstNode *> unpacked_ranges = node->attributes.count(UhdmAst::unpacked_ranges())
-                                                                  ? node->attributes[UhdmAst::unpacked_ranges()]->children
-                                                                  : std::vector<AST::AstNode *>();
-            if (packed_ranges.size() == 1 && unpacked_ranges.size() == 1) {
-                log_assert(!memories.count(current_scope_str + node->str));
-                memories[current_scope_str + node->str] = node;
-            }
+    }
+
+    if (node->type == AST::AST_WIRE) {
+        const std::size_t packed_ranges_count =
+          node->attributes.count(UhdmAst::packed_ranges()) ? node->attributes[UhdmAst::packed_ranges()]->children.size() : 0;
+        const std::size_t unpacked_ranges_count =
+          node->attributes.count(UhdmAst::unpacked_ranges()) ? node->attributes[UhdmAst::unpacked_ranges()]->children.size() : 0;
+
+        if (packed_ranges_count == 1 && unpacked_ranges_count == 1) {
+            std::string name = scope + "." + node->str;
+            auto [iter, did_insert] = memories.insert_or_assign(std::move(name), node);
+            log_assert(did_insert);
         }
-        if (node->type == AST::AST_IDENTIFIER) {
-            std::string name = current_scope_str + node->str;
-            bool force_convert = false;
-            if (memories.count(name)) {
-                if (!memories[name]->attributes.count(UhdmAst::force_convert())) {
+        return;
+    }
+
+    if (node->type == AST::AST_IDENTIFIER) {
+        std::string full_id = scope;
+        std::size_t scope_end_pos = scope.size();
+
+        for (;;) {
+            full_id += "." + node->str;
+            const auto iter = memories.find(full_id);
+            if (iter != memories.end()) {
+                // Memory node found!
+                if (!iter->second->attributes.count(UhdmAst::force_convert())) {
+                    const bool is_full_memory_access = (node->children.size() == 0);
+                    const bool is_slice_memory_access = (node->children.size() == 1 && node->children[0]->children.size() != 1);
                     // convert memory to list of registers
                     // in case of access to whole memory
                     // or slice of memory
@@ -447,36 +466,34 @@ static void check_memories(AST::AstNode *module_node)
                     // don't convert in case of accessing
                     // memory using address, e.g.
                     // mem[0] <= '{default:0}
-                    //
-                    // Access to whole memory
-                    if (node->children.size() == 0) {
-                        force_convert = true;
-                    }
-                    // Access to slice of memory
-                    if (node->children.size() == 1 && node->children[0]->children.size() != 1) {
-                        force_convert = true;
+                    if (is_full_memory_access || is_slice_memory_access) {
+                        add_force_convert_attribute(iter->second);
                     }
                 }
+                break;
             } else {
-                name = node->str;
-                if (memories.count(name)) {
-                    if (!memories[name]->attributes.count(UhdmAst::force_convert())) {
-                        // Access to whole memory
-                        if (node->children.size() == 0) {
-                            force_convert = true;
-                        }
-                        // Access to slice of memory
-                        if (node->children.size() == 1 && node->children[0]->children.size() != 1) {
-                            force_convert = true;
-                        }
+                if (scope_end_pos == 0) {
+                    // We reached the top scope and the memory node wasn't found.
+                    break;
+                } else {
+                    // Memory node wasn't found.
+                    // Erase node name and last segment of the scope to check the previous scope.
+                    // FIXME: This doesn't work with escaped identifiers containing a dot.
+                    scope_end_pos = full_id.find_last_of('.', scope_end_pos - 1);
+                    if (scope_end_pos == std::string::npos) {
+                        scope_end_pos = 0;
                     }
+                    full_id.erase(scope_end_pos);
                 }
-            }
-            if (force_convert) {
-                add_force_convert_attribute(memories[name]);
             }
         }
-    });
+    }
+}
+
+static void check_memories(AST::AstNode *node)
+{
+    std::map<std::string, AST::AstNode *> memories;
+    check_memories(node, "", memories);
 }
 
 // This function is workaround missing support for multirange (with n-ranges) packed/unpacked nodes
