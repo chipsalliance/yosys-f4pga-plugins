@@ -16,8 +16,6 @@
 
 PLUGIN_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
-ODIN_II_DIR=src
-
 NAME = parmys
 SOURCES = parmys.cc \
 		  parmys_arch.cc \
