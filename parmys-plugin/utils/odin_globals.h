@@ -18,8 +18,8 @@
 #ifndef _ODIN_GLOBALS_H_
 #define _ODIN_GLOBALS_H_
 
-#include "hard_soft_logic_mixer.h"
 #include "config_t.h"
+#include "hard_soft_logic_mixer.h"
 #include "hash_table.h"
 #include "odin_types.h"
 #include "read_xml_arch_file.h"
