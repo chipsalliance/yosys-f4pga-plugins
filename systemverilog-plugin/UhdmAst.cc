@@ -1213,9 +1213,33 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                          object->VpiLineNo(), val.format);
         }
         }
+        // if this constant is under case/casex/casez
+        // get current case type
+        char caseType = ' ';
+        if (vpiHandle caseItem_h = vpi_handle(vpiParent, obj_h)) {
+            if (vpiHandle case_h = vpi_handle(vpiParent, caseItem_h)) {
+                switch (vpi_get(vpiCaseType, case_h)) {
+                case vpiCaseExact:
+                    caseType = ' ';
+                    break;
+                case vpiCaseX:
+                    caseType = 'x';
+                    break;
+                case vpiCaseZ:
+                    caseType = 'z';
+                    break;
+                default: {
+                    caseType = ' ';
+                    break;
+                }
+                }
+                vpi_release_handle(case_h);
+            }
+            vpi_release_handle(caseItem_h);
+        }
         // handle vpiBinStrVal, vpiDecStrVal and vpiHexStrVal
         if (std::strchr(val.value.str, '\'')) {
-            return ::systemverilog_plugin::const2ast(val.value.str, 0, false);
+            return ::systemverilog_plugin::const2ast(val.value.str, caseType, false);
         } else {
             auto size = vpi_get(vpiSize, obj_h);
             if (size == 0) {
@@ -1223,7 +1247,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 c->is_unsized = true;
                 return c;
             } else {
-                return ::systemverilog_plugin::const2ast(std::to_string(size) + strValType + val.value.str, 0, false);
+                return ::systemverilog_plugin::const2ast(std::to_string(size) + strValType + val.value.str, caseType, false);
             }
         }
     }
@@ -3166,12 +3190,37 @@ void UhdmAst::process_list_op()
 {
     // Add all operands as children of process node
     if (auto parent_node = find_ancestor({AST::AST_ALWAYS, AST::AST_COND})) {
+        std::vector<AST::AstNode *> nodes;
+        // vpiListOp is returned in 2 cases:
+        // a, b, c ... -> multiple vpiListOp with single item
+        // [a : b] -> single vpiListOp with 2 items
         visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
-            // add directly to process/cond node
             if (node) {
-                parent_node->children.push_back(node);
+                nodes.push_back(node);
             }
         });
+        if (nodes.size() == 1) {
+            parent_node->children.push_back(nodes[0]);
+        } else {
+            log_assert(nodes.size() == 2);
+            // TODO(krak): we should actually simplify this nodes first,
+            // but that would require to delay this to later.
+            // For now check that they are constants.
+            log_assert(nodes[0]->type == AST::AST_CONSTANT);
+            log_assert(nodes[1]->type == AST::AST_CONSTANT);
+            const int low = nodes[0]->integer;
+            const int high = nodes[1]->integer;
+            // According to standard:
+            // If the bound to the left of the colon is greater than the
+            // bound to the right, the range is empty and contains no values.
+            for (int i = low; i >= low && i <= high; i++) {
+                // TODO(krak): get proper width of constant
+                log_assert(nodes[0]->range_left == 31);
+                parent_node->children.push_back(AST::AstNode::mkconst_int(i, false, 32));
+            }
+        }
+    } else {
+        log_error("Unhandled list op, couldn't find parent node.");
     }
     // Do not create a node
     shared.report.mark_handled(obj_h);
@@ -3436,7 +3485,27 @@ void UhdmAst::process_case()
 
 void UhdmAst::process_case_item()
 {
-    current_node = make_ast_node(AST::AST_COND);
+    auto cond_type = AST::AST_COND;
+    if (vpiHandle parent_h = vpi_handle(vpiParent, obj_h)) {
+        switch (vpi_get(vpiCaseType, parent_h)) {
+        case vpiCaseExact:
+            cond_type = AST::AST_COND;
+            break;
+        case vpiCaseX:
+            cond_type = AST::AST_CONDX;
+            break;
+        case vpiCaseZ:
+            cond_type = AST::AST_CONDZ;
+            break;
+        default: {
+            const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+            const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
+            report_error("%.*s:%d: Unknown case type", (int)object->VpiFile().length(), object->VpiFile().data(), object->VpiLineNo());
+        }
+        }
+        vpi_release_handle(parent_h);
+    }
+    current_node = make_ast_node(cond_type);
     vpiHandle itr = vpi_iterate(vpiExpr, obj_h);
     while (vpiHandle expr_h = vpi_scan(itr)) {
         // case ... inside statement, the operation is stored in UHDM inside case items
