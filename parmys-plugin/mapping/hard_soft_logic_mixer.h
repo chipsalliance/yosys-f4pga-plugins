@@ -18,8 +18,8 @@
 #ifndef _HARD_SOFT_LOGIC_MIXER_HPP_
 #define _HARD_SOFT_LOGIC_MIXER_HPP_
 
+#include "odin_types.h"
 #include "mixing_optimization.h"
-#include "odin_types.h" // netlist_t, config_t
 
 class HardSoftLogicMixer
 {
