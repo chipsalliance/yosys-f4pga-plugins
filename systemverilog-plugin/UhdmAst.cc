@@ -1056,17 +1056,14 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
             log_assert(low_high_bound->children[1]->type == AST::AST_CONSTANT);
             const int low = low_high_bound->children[0]->integer;
             const int high = low_high_bound->children[1]->integer;
-            int range = low_high_bound->children[0]->range_left;
+            const int range = low_high_bound->children[1]->range_valid
+                                ? low_high_bound->children[1]->range_left
+                                : low_high_bound->children[0]->range_valid ? low_high_bound->children[0]->range_left : 32;
             delete low_high_bound;
             // According to standard:
             // If the bound to the left of the colon is greater than the
             // bound to the right, the range is empty and contains no values.
             for (int i = low; i >= low && i <= high; i++) {
-                // TODO(krak): what should be correct constant range if we don't have
-                // information about range?
-                if (range == -1) {
-                    range = 64;
-                }
                 current_node->children.push_back(AST::AstNode::mkconst_int(i, false, range));
             }
             current_node->children.push_back(result);
@@ -3548,7 +3545,7 @@ void UhdmAst::process_case_item()
             // here handle 2 items with custom low_high_bound attribute
             if (current_node->children.size() == 2) {
                 auto block = make_ast_node(AST::AST_BLOCK);
-                block->children = current_node->children;
+                block->children = std::move(current_node->children);
                 current_node->children.clear();
                 current_node->children.push_back(block);
                 current_node->attributes[UhdmAst::low_high_bound()] = AST::AstNode::mkconst_int(1, false, 1);
