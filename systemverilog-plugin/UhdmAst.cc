@@ -73,6 +73,12 @@ enum AstNodeTypeExtended {
     return id;
 }
 
+/*static*/ const IdString &UhdmAst::low_high_bound()
+{
+    static const IdString id("\\low_high_bound");
+    return id;
+}
+
 static void sanitize_symbol_name(std::string &name)
 {
     if (!name.empty()) {
@@ -1027,6 +1033,42 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
     case AST::AST_TCALL:
         if (current_node->str == "$display" || current_node->str == "$write")
             simplify_format_string(current_node);
+        break;
+    case AST::AST_COND:
+    case AST::AST_CONDX:
+    case AST::AST_CONDZ:
+        // handle custom low high bound
+        if (current_node->attributes.count(UhdmAst::low_high_bound())) {
+            log_assert(!current_node->children.empty());
+            log_assert(current_node->children[0]->type == AST::AST_BLOCK);
+            log_assert(current_node->children[0]->children.size() == 2);
+            auto low_high_bound = current_node->children[0];
+            // this is executed when condition is met
+            // save pointer that will be added later again
+            // as conditions needs to go before this block
+            auto result = current_node->children[1];
+            current_node->children.clear();
+            while (low_high_bound->children[0]->simplify(true, false, false, 1, -1, false, false)) {
+            };
+            while (low_high_bound->children[1]->simplify(true, false, false, 1, -1, false, false)) {
+            };
+            log_assert(low_high_bound->children[0]->type == AST::AST_CONSTANT);
+            log_assert(low_high_bound->children[1]->type == AST::AST_CONSTANT);
+            const int low = low_high_bound->children[0]->integer;
+            const int high = low_high_bound->children[1]->integer;
+            const int range = low_high_bound->children[1]->range_valid
+                                ? low_high_bound->children[1]->range_left
+                                : low_high_bound->children[0]->range_valid ? low_high_bound->children[0]->range_left : 32;
+            delete low_high_bound;
+            // According to standard:
+            // If the bound to the left of the colon is greater than the
+            // bound to the right, the range is empty and contains no values.
+            for (int i = low; i >= low && i <= high; i++) {
+                current_node->children.push_back(AST::AstNode::mkconst_int(i, false, range));
+            }
+            current_node->children.push_back(result);
+            current_node->attributes.erase(UhdmAst::low_high_bound());
+        }
         break;
     default:
         break;
@@ -3190,35 +3232,12 @@ void UhdmAst::process_list_op()
 {
     // Add all operands as children of process node
     if (auto parent_node = find_ancestor({AST::AST_ALWAYS, AST::AST_COND})) {
-        std::vector<AST::AstNode *> nodes;
-        // vpiListOp is returned in 2 cases:
-        // a, b, c ... -> multiple vpiListOp with single item
-        // [a : b] -> single vpiListOp with 2 items
         visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
+            // add directly to process/cond node
             if (node) {
-                nodes.push_back(node);
+                parent_node->children.push_back(node);
             }
         });
-        if (nodes.size() == 1) {
-            parent_node->children.push_back(nodes[0]);
-        } else {
-            log_assert(nodes.size() == 2);
-            // TODO(krak): we should actually simplify this nodes first,
-            // but that would require to delay this to later.
-            // For now check that they are constants.
-            log_assert(nodes[0]->type == AST::AST_CONSTANT);
-            log_assert(nodes[1]->type == AST::AST_CONSTANT);
-            const int low = nodes[0]->integer;
-            const int high = nodes[1]->integer;
-            // According to standard:
-            // If the bound to the left of the colon is greater than the
-            // bound to the right, the range is empty and contains no values.
-            for (int i = low; i >= low && i <= high; i++) {
-                // TODO(krak): get proper width of constant
-                log_assert(nodes[0]->range_left == 31);
-                parent_node->children.push_back(AST::AstNode::mkconst_int(i, false, 32));
-            }
-        }
     } else {
         log_error("Unhandled list op, couldn't find parent node.");
     }
@@ -3510,13 +3529,27 @@ void UhdmAst::process_case_item()
     while (vpiHandle expr_h = vpi_scan(itr)) {
         // case ... inside statement, the operation is stored in UHDM inside case items
         // Retrieve just the InsideOp arguments here, we don't add any special handling
-        // TODO: handle inside range (list operations) properly here
         if (vpi_get(vpiType, expr_h) == vpiOperation && vpi_get(vpiOpType, expr_h) == vpiInsideOp) {
             visit_one_to_many({vpiOperand}, expr_h, [&](AST::AstNode *node) {
-                if (node) {
-                    current_node->children.push_back(node);
-                }
+                // Currently we are adding nodes directly to ancestor
+                // inside process_list_op, so after this function, we have
+                // nodes already in `current_node`.
+                // We should probably refactor this to return node instead.
+                // For now, make sure this function doesn't return any nodes.
+                log_assert(node == nullptr);
             });
+            // vpiListOp is returned in 2 cases:
+            // a, b, c ... -> multiple vpiListOp with single item
+            // [a : b] -> single vpiListOp with 2 items
+            // single item is handled by default,
+            // here handle 2 items with custom low_high_bound attribute
+            if (current_node->children.size() == 2) {
+                auto block = make_ast_node(AST::AST_BLOCK);
+                block->children = std::move(current_node->children);
+                current_node->children.clear();
+                current_node->children.push_back(block);
+                current_node->attributes[UhdmAst::low_high_bound()] = AST::AstNode::mkconst_int(1, false, 1);
+            }
         } else {
             UhdmAst uhdm_ast(this, shared, indent + "  ");
             auto *node = uhdm_ast.process_object(expr_h);
