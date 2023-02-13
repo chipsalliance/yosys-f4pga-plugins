@@ -1,14 +1,17 @@
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <functional>
 #include <limits>
 #include <regex>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "UhdmAst.h"
 #include "frontends/ast/ast.h"
 #include "libs/sha1/sha1.h"
+#include "uhdm/sv_vpi_user.h"
 
 // UHDM
 #include <uhdm/uhdm.h>
@@ -1027,6 +1030,50 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
     case AST::AST_TCALL:
         if (current_node->str == "$display" || current_node->str == "$write")
             simplify_format_string(current_node);
+        break;
+    case AST::AST_FCALL:
+        if (current_node->str == "\\$left" || current_node->str == "\\$right" || current_node->str == "\\$high" || current_node->str == "\\$low" ||
+            current_node->str == "\\$size") {
+            auto *id = current_node->children[0];
+            unsigned dimension = (current_node->children.size() > 1) ? current_node->children[1]->integer : 1;
+
+            if (AST_INTERNAL::current_scope.count(id->str)) {
+                auto *var = AST_INTERNAL::current_scope[id->str];
+                AST::AstNode *range = nullptr;
+                if (var->attributes.count(UhdmAst::unpacked_ranges())) {
+                    auto *unpacked_ranges = var->attributes[UhdmAst::unpacked_ranges()];
+                    if ((dimension - 1) < unpacked_ranges->children.size()) {
+                        range = unpacked_ranges->children[unpacked_ranges->children.size() - dimension];
+                    } else {
+                        dimension -= unpacked_ranges->children.size();
+                    }
+                }
+                if (!range && var->attributes.count(UhdmAst::packed_ranges())) {
+                    auto *packed_ranges = var->attributes[UhdmAst::packed_ranges()];
+                    if ((dimension - 1) < packed_ranges->children.size()) {
+                        range = packed_ranges->children[packed_ranges->children.size() - dimension];
+                    } else {
+                        std::cout << "Nonexistend dimension: " << dimension << " of " << id->str << std::endl;
+                        break;
+                    }
+                }
+
+                AST::AstNode *c = nullptr;
+                if (current_node->str == "\\$left")
+                    c = AST::AstNode::mkconst_int(!range->range_swapped ? range->range_left : range->range_right, true);
+                else if (current_node->str == "\\$right")
+                    c = AST::AstNode::mkconst_int(!range->range_swapped ? range->range_right : range->range_left, true);
+                else if (current_node->str == "\\$low")
+                    c = AST::AstNode::mkconst_int(std::min(range->range_left, range->range_right), true);
+                else if (current_node->str == "\\$high")
+                    c = AST::AstNode::mkconst_int(std::max(range->range_left, range->range_right), true);
+                else if (current_node->str == "\\$size")
+                    c = AST::AstNode::mkconst_int(
+                      std::max(range->range_left, range->range_right) - std::min(range->range_left, range->range_right) + 1, true);
+                c->cloneInto(current_node);
+                delete c;
+            }
+        }
         break;
     default:
         break;
@@ -3454,6 +3501,120 @@ void UhdmAst::process_for()
     transform_breaks_continues(loop, current_node);
 }
 
+void UhdmAst::process_foreach()
+{
+    // One of: packed array, unpacked array, string var
+    AST::AstNode *var_id = nullptr;
+    visit_one_to_one({vpiVariables}, obj_h, [&](AST::AstNode *node) { var_id = node; });
+
+    AST::AstNode *loop_body;
+    visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) { loop_body = node; });
+
+    struct id_dimension_pair {
+        std::string id;
+        int dimension;
+    };
+    std::vector<id_dimension_pair> loop_var_ids;
+    {
+        int current_dimension = 1;
+        visit_one_to_many({vpiLoopVars}, obj_h, [&](AST::AstNode *node) {
+            loop_var_ids.push_back({std::move(node->str), current_dimension});
+            ++current_dimension;
+            delete node;
+        });
+    }
+
+    auto loop_id = shared.next_loop_id();
+    current_node = loop_body;
+    for (auto it = loop_var_ids.rbegin(); it != loop_var_ids.rend(); ++it) {
+        // FIXME: use real range
+        auto *idx_var_id = make_identifier(it->id);
+
+        auto *left = make_ast_node(AST::AST_FCALL, {
+                                                     var_id->clone(),
+                                                     AST::AstNode::mkconst_int(it->dimension, true),
+                                                   });
+        left->str = "\\$left";
+        auto *right = make_ast_node(AST::AST_FCALL, {
+                                                      var_id->clone(),
+                                                      AST::AstNode::mkconst_int(it->dimension, true),
+                                                    });
+        right->str = "\\$right";
+        auto *low = make_ast_node(AST::AST_FCALL, {
+                                                    var_id->clone(),
+                                                    AST::AstNode::mkconst_int(it->dimension, true),
+                                                  });
+        low->str = "\\$low";
+        auto *high = make_ast_node(AST::AST_FCALL, {
+                                                     var_id->clone(),
+                                                     AST::AstNode::mkconst_int(it->dimension, true),
+                                                   });
+        high->str = "\\$high";
+
+        auto *init_expr = make_ast_node(AST::AST_ASSIGN_EQ, {
+                                                              idx_var_id->clone(),
+                                                              left->clone(),
+                                                            });
+
+        auto *cond_expr = make_ast_node(AST::AST_LOGIC_AND, {
+                                                              make_ast_node(AST::AST_GE,
+                                                                            {
+                                                                              idx_var_id->clone(),
+                                                                              low,
+                                                                            }),
+                                                              make_ast_node(AST::AST_LE,
+                                                                            {
+                                                                              idx_var_id->clone(),
+                                                                              high,
+                                                                            }),
+                                                            });
+
+        auto *mod_expr = make_ast_node(AST::AST_ASSIGN_EQ, {
+                                                             idx_var_id->clone(),
+                                                             make_ast_node(AST::AST_ADD,
+                                                                           {
+                                                                             idx_var_id,
+                                                                             make_ast_node(AST::AST_TERNARY,
+                                                                                           {
+                                                                                             make_ast_node(AST::AST_LT,
+                                                                                                           {
+                                                                                                             left,
+                                                                                                             right,
+                                                                                                           }),
+                                                                                             AST::AstNode::mkconst_int(1, true),
+                                                                                             AST::AstNode::mkconst_int(-1, true),
+                                                                                           }),
+                                                                           }),
+                                                           });
+
+        auto *body_block = make_ast_node(AST::AST_BLOCK, {current_node});
+        body_block->str = "$loop_" + std::to_string(loop_id) + "_" + std::to_string(it->dimension);
+
+        auto *for_loop = make_ast_node(AST::AST_FOR, {
+                                                       init_expr,
+                                                       cond_expr,
+                                                       mod_expr,
+                                                       body_block,
+                                                     });
+        for_loop->str = body_block->str;
+
+        auto *wire = make_ast_node(AST::AST_WIRE, {make_range(31, 0, true)});
+        wire->str = it->id;
+        wire->is_reg = true;
+        wire->is_signed = true;
+        wire->range_left = -1;
+        wire->range_right = 0;
+
+        auto *fordecl_block = make_ast_node(AST::AST_BLOCK, {
+                                                              for_loop,
+                                                              wire,
+                                                            });
+        fordecl_block->str = "$fordecl_block_" + std::to_string(loop_id) + "_" + std::to_string(it->dimension);
+
+        current_node = fordecl_block;
+    }
+}
+
 void UhdmAst::process_gen_scope()
 {
     current_node = make_ast_node(AST::AST_GENBLOCK);
@@ -4488,6 +4649,9 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         break;
     case vpiFor:
         process_for();
+        break;
+    case vpiForeachStmt:
+        process_foreach();
         break;
     case vpiBreak:
         // Will be resolved later by loop processor

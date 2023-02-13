@@ -120,6 +120,7 @@ class UhdmAst
     void process_var_select();
     void process_if_else();
     void process_for();
+    void process_foreach();
     void process_gen_scope_array();
     void process_gen_scope();
     void process_case();
