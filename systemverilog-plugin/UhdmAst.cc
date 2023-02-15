@@ -311,6 +311,7 @@ static AST::AstNode *convert_range(AST::AstNode *id, const std::vector<AST::AstN
     // return range from *current* selected range
     // in the end, it results in whole selected range
     id->basic_prep = true;
+    result->dumpAst(NULL, "> ");
     return result;
 }
 
@@ -3824,6 +3825,12 @@ void UhdmAst::process_tf_call(AST::AstNodeType type)
             current_node->children.push_back(node);
         }
     });
+    // Prefer fully qualified name of a function (prefixed with a scope).
+    // This is important when a single function which has been imported from a package
+    // calls another function that is not imported in the calling scope.
+    if (vpiHandle function_h = vpi_handle(vpiFunction, obj_h)) {
+        current_node->str = get_name(function_h, true);
+    }
 }
 
 void UhdmAst::process_immediate_assert()
