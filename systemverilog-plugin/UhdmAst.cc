@@ -311,7 +311,6 @@ static AST::AstNode *convert_range(AST::AstNode *id, const std::vector<AST::AstN
     // return range from *current* selected range
     // in the end, it results in whole selected range
     id->basic_prep = true;
-    result->dumpAst(NULL, "> ");
     return result;
 }
 
@@ -3830,6 +3829,7 @@ void UhdmAst::process_tf_call(AST::AstNodeType type)
     // calls another function that is not imported in the calling scope.
     if (vpiHandle function_h = vpi_handle(vpiFunction, obj_h)) {
         current_node->str = get_name(function_h, true);
+        vpi_release_handle(function_h);
     }
 }
 
