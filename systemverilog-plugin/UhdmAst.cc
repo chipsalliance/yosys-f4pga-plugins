@@ -1910,10 +1910,6 @@ void UhdmAst::process_module()
                 }
             }
         });
-        // TODO: setting keep attribute probably shouldn't be needed,
-        // but without this, modules that are generated in genscope are removed
-        // for now lets just add this attribute
-        module_node->attributes[ID::keep] = AST::AstNode::mkconst_int(1, false, 1);
         if (module_node->attributes.count(UhdmAst::partial())) {
             AST::AstNode *attr = module_node->attributes.at(UhdmAst::partial());
             if (attr->type == AST::AST_CONSTANT)
