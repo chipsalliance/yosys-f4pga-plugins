@@ -3716,8 +3716,22 @@ void UhdmAst::process_tagged_pattern()
         lhs_node = assign_node->children[0];
     } else {
         lhs_node = new AST::AstNode(AST::AST_IDENTIFIER);
-        auto ancestor = find_ancestor({AST::AST_WIRE, AST::AST_MEMORY, AST::AST_PARAMETER, AST::AST_LOCALPARAM});
-        if (!ancestor) {
+        auto ancestor = find_ancestor({AST::AST_WIRE, AST::AST_MEMORY, AST::AST_PARAMETER, AST::AST_LOCALPARAM, AST::AST_CELL});
+        if (ancestor == AST::AST_CELL) {
+            // special case: if this assignment pattern is inside cell high conn port
+            // and we are setting all values to some constant
+            auto typespec_h = vpi_handle(vpiTypespec, obj_h);
+            if (typespec_h && vpi_get(vpiType, typespec_h) == vpiStringTypespec) {
+                std::string field_name = vpi_get_str(vpiName, typespec_h);
+                if (field_name == "default") {
+                    visit_one_to_one({vpiPattern}, obj_h, [&](AST::AstNode *node) { current_node = node; });
+                    vpi_release_handle(typespec_h);
+                    return;
+                }
+            }
+            vpi_release_handle(typespec_h);
+            log_error("Couldn't find ancestor for tagged pattern!\n");
+        } else if (!ancestor) {
             log_error("Couldn't find ancestor for tagged pattern!\n");
         }
         lhs_node->str = ancestor->str;
