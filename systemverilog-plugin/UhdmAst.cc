@@ -439,9 +439,15 @@ static void check_memories(AST::AstNode *module_node)
                 //   mem <= '{default:0};
                 //   mem[7:1] <= mem[6:0];
                 // end
+                // don't convert in case of accessing
+                // memory using address, e.g.
+                // mem[0] <= '{default:0}
+                //
+                // Access to whole memory
                 if (node->children.size() == 0) {
                     force_convert = true;
                 }
+                // Access to slice of memory
                 if (node->children.size() == 1 && node->children[0]->children.size() != 1) {
                     force_convert = true;
                 }
