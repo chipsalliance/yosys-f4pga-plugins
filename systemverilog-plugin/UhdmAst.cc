@@ -3708,16 +3708,16 @@ void UhdmAst::process_gen_scope_array()
 
 void UhdmAst::process_tagged_pattern()
 {
-    auto assign_node = find_ancestor({AST::AST_ASSIGN, AST::AST_ASSIGN_EQ, AST::AST_ASSIGN_LE});
+    const auto *const assign_node = find_ancestor({AST::AST_ASSIGN, AST::AST_ASSIGN_EQ, AST::AST_ASSIGN_LE});
     auto assign_type = AST::AST_ASSIGN;
     AST::AstNode *lhs_node = nullptr;
     if (assign_node) {
         assign_type = assign_node->type;
-        lhs_node = assign_node->children[0];
+        lhs_node = assign_node->children[0]->clone();
     } else {
         lhs_node = new AST::AstNode(AST::AST_IDENTIFIER);
-        auto ancestor = find_ancestor({AST::AST_WIRE, AST::AST_MEMORY, AST::AST_PARAMETER, AST::AST_LOCALPARAM, AST::AST_CELL});
-        if (ancestor == AST::AST_CELL) {
+        const auto *const ancestor = find_ancestor({AST::AST_WIRE, AST::AST_MEMORY, AST::AST_PARAMETER, AST::AST_LOCALPARAM, AST::AST_CELL});
+        if (ancestor->type == AST::AST_CELL) {
             // special case: if this assignment pattern is inside cell high conn port
             // and we are setting all values to some constant
             auto typespec_h = vpi_handle(vpiTypespec, obj_h);
@@ -3737,7 +3737,7 @@ void UhdmAst::process_tagged_pattern()
         lhs_node->str = ancestor->str;
     }
     current_node = new AST::AstNode(assign_type);
-    current_node->children.push_back(lhs_node->clone());
+    current_node->children.push_back(lhs_node);
     auto typespec_h = vpi_handle(vpiTypespec, obj_h);
     if (vpi_get(vpiType, typespec_h) == vpiStringTypespec) {
         std::string field_name = vpi_get_str(vpiName, typespec_h);
