@@ -427,8 +427,32 @@ static void check_memories(AST::AstNode *module_node)
             }
         }
         if (node->type == AST::AST_IDENTIFIER && memories.count(node->str)) {
-            if (!memories[node->str]->attributes.count(UhdmAst::force_convert()) && node->children.size() == 0) {
-                add_force_convert_attribute(memories[node->str]);
+            if (!memories[node->str]->attributes.count(UhdmAst::force_convert())) {
+                bool force_convert = false;
+                // convert memory to list of registers
+                // in case of access to whole memory
+                // or slice of memory
+                // e.g.
+                // logic [3:0] mem [8:0];
+                // always_ff @ (posedge clk) begin
+                //   mem <= '{default:0};
+                //   mem[7:1] <= mem[6:0];
+                // end
+                // don't convert in case of accessing
+                // memory using address, e.g.
+                // mem[0] <= '{default:0}
+                //
+                // Access to whole memory
+                if (node->children.size() == 0) {
+                    force_convert = true;
+                }
+                // Access to slice of memory
+                if (node->children.size() == 1 && node->children[0]->children.size() != 1) {
+                    force_convert = true;
+                }
+                if (force_convert) {
+                    add_force_convert_attribute(memories[node->str]);
+                }
             }
         }
     });
@@ -1910,10 +1934,6 @@ void UhdmAst::process_module()
                 }
             }
         });
-        // TODO: setting keep attribute probably shouldn't be needed,
-        // but without this, modules that are generated in genscope are removed
-        // for now lets just add this attribute
-        module_node->attributes[ID::keep] = AST::AstNode::mkconst_int(1, false, 1);
         if (module_node->attributes.count(UhdmAst::partial())) {
             AST::AstNode *attr = module_node->attributes.at(UhdmAst::partial());
             if (attr->type == AST::AST_CONSTANT)
