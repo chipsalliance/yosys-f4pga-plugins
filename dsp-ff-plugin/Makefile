@@ -22,5 +22,5 @@ SOURCES = dsp_ff.cc
 include ../Makefile_plugin.common
 
 install:
-	install -D nexus-dsp_rules.txt $(YOSYS_DATA_DIR)/nexus/dsp_rules.txt
-
+	mkdir -p $(YOSYS_DATA_DIR)/nexus/
+	install nexus-dsp_rules.txt $(YOSYS_DATA_DIR)/nexus/dsp_rules.txt

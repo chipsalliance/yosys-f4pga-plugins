@@ -26,6 +26,13 @@ fi
 # Parallel builds!
 MAKEFLAGS="-j 2"
 
+export UNAME=`uname`
+if [ "$UNAME" == "Darwin" ]; then
+	export NPROC=`sysctl -n hw.physicalcpu`
+else
+	export NPROC=`nproc`
+fi
+
 function action_fold() {
 	if [ "$1" = "start" ]; then
 		echo "::group::$2"

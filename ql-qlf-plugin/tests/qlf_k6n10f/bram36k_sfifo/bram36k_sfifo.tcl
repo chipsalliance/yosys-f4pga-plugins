@@ -8,7 +8,7 @@ design -save bram36k_sfifo
 
 select f1024x36_1024x36
 select *
-synth_quicklogic -family qlf_k6n10f -top f1024x36_1024x36 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top f1024x36_1024x36 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -19,7 +19,7 @@ select -clear
 design -load bram36k_sfifo
 select f2048x18_2048x18
 select *
-synth_quicklogic -family qlf_k6n10f -top f2048x18_2048x18 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top f2048x18_2048x18 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -30,7 +30,7 @@ select -clear
 design -load bram36k_sfifo
 select f4096x9_4096x9
 select *
-synth_quicklogic -family qlf_k6n10f -top f4096x9_4096x9 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top f4096x9_4096x9 -bram_types
 opt_expr -undriven
 opt_clean
 stat

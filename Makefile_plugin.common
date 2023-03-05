@@ -46,6 +46,8 @@ TOP_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 _MAKEFILES := $(abspath $(filter-out %.d,$(MAKEFILE_LIST)))
 
+UNAME := $(shell uname)
+
 # Either find yosys in system and use its path or use the given path
 YOSYS_PATH ?= $(realpath $(dir $(shell command -v yosys))/..)
 
@@ -60,6 +62,10 @@ CXXFLAGS := $(shell $(YOSYS_CONFIG) --cxxflags) $(CXXFLAGS) #-DSDC_DEBUG
 LDFLAGS := $(shell $(YOSYS_CONFIG) --ldflags) $(LDFLAGS)
 LDLIBS := $(shell $(YOSYS_CONFIG) --ldlibs) $(LDLIBS)
 EXTRA_FLAGS ?=
+
+ifeq ($(shell uname), Linux)
+EXTRA_FLAGS := $(EXTRA_FLAGS) -MMD
+endif
 
 YOSYS_DATA_DIR = $(DESTDIR)$(shell $(YOSYS_CONFIG) --datdir)
 YOSYS_PLUGINS_DIR = $(YOSYS_DATA_DIR)/plugins
@@ -93,7 +99,7 @@ endef
 $(foreach source,$(SOURCES),$(eval $(value _process-single-source-file)))
 
 $(_ALL_OBJECTS): $(_MAKEFILES)
-	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(EXTRA_FLAGS) -MMD -c -o $@ $(TARGET_SOURCES)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(EXTRA_FLAGS) -c -o $@ $(TARGET_SOURCES)
 
 # Objects list for the purpose of adding extra dependencies after inclusion.
 # Example use: `$(OBJECTS): $(BUILD_DIR)/some-file.h`
@@ -126,7 +132,8 @@ endif
 # Installation
 
 $(YOSYS_PLUGINS_DIR)/$(NAME).so: $(SO_LIB) | $(YOSYS_PLUGINS_DIR)
-	install -D $(SO_LIB) $@
+	mkdir -p $(YOSYS_PLUGINS_DIR)
+	install $(SO_LIB) $@
 
 .PHONY: install_plugin
 install_plugin: $(YOSYS_PLUGINS_DIR)/$(NAME).so

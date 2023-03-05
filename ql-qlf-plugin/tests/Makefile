@@ -38,7 +38,6 @@ TESTS = \
 
 SIM_TESTS = \
      qlf_k6n10f/sim_dsp_mult_cfg_ports \
-     qlf_k6n10f/sim_dsp_mult_cfg_ports \
      qlf_k6n10f/sim_dsp_mult_cfg_params \
      qlf_k6n10f/sim_dsp_mult_r_cfg_ports \
      qlf_k6n10f/sim_dsp_mult_r_cfg_params \
