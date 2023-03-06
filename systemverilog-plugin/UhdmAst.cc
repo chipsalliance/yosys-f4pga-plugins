@@ -1236,6 +1236,8 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
     vpi_get_value(obj_h, &val);
     std::string strValType = "'";
     bool is_signed = false;
+    bool is_unsized = false;
+    int size = -1;
     if (vpiHandle typespec_h = vpi_handle(vpiTypespec, obj_h)) {
         is_signed = vpi_get(vpiSigned, typespec_h);
         if (is_signed) {
@@ -1281,11 +1283,10 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 break;
             }
 
-            int size = -1;
             // Surelog sometimes report size as part of vpiTypespec (e.g. int_typespec)
             // if it is the case, we need to set size to the left_range of first packed range
             visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
-                if (node && node->attributes.count(UhdmAst::packed_ranges()) && node->attributes[UhdmAst::packed_ranges()]->children.size() &&
+                if (node->attributes.count(UhdmAst::packed_ranges()) && node->attributes[UhdmAst::packed_ranges()]->children.size() &&
                     node->attributes[UhdmAst::packed_ranges()]->children[0]->children.size()) {
                     size = node->attributes[UhdmAst::packed_ranges()]->children[0]->children[0]->integer + 1;
                 }
@@ -1293,17 +1294,21 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             if (size == -1) {
                 size = vpi_get(vpiSize, obj_h);
             }
-            // Surelog by default returns 64 bit numbers and stardard says that they shall be at least 32bits
-            // yosys is assuming that int/uint is 32 bit, so we are setting here correct size
-            // NOTE: it *shouldn't* break on explicite 64 bit const values, as they *should* be handled
-            // above by vpi*StrVal
             if (size == 64) {
+                // we know that value can be stored in 32bit integer
+                // and yosys only supports 32 bits
                 size = 32;
-                is_signed = true;
             }
-            auto c = AST::AstNode::mkconst_int(val.format == vpiUIntVal ? val.value.uint : val.value.integer, is_signed, size > 0 ? size : 32);
-            if (size == 0 || size == -1)
-                c->is_unsized = true;
+            is_signed = true;
+            if (size == -1) {
+                is_unsized = false;
+                size = 32;
+            }
+            if (size > 32) {
+                report_error("Constant with size: %s bits handled by mkconst_int that doesn't work with values larger than 32bits: %d\n!", size);
+            }
+            auto c = AST::AstNode::mkconst_int(val.format == vpiUIntVal ? val.value.uint : val.value.integer, is_signed, size);
+            c->is_unsized = is_unsized;
             return c;
         }
         case vpiRealVal:
@@ -1345,7 +1350,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         if (std::strchr(val.value.str, '\'')) {
             return ::systemverilog_plugin::const2ast(val.value.str, caseType, false);
         } else {
-            auto size = vpi_get(vpiSize, obj_h);
+            size = vpi_get(vpiSize, obj_h);
             if (size == 0) {
                 auto c = AST::AstNode::mkconst_int(atoi(val.value.str), true, 32);
                 c->is_unsized = true;
@@ -4016,13 +4021,16 @@ void UhdmAst::process_string_typespec()
 
 void UhdmAst::process_bit_typespec()
 {
+    std::vector<AST::AstNode *> packed_ranges;   // comes before wire name
     current_node = make_ast_node(AST::AST_WIRE);
     visit_range(obj_h, [&](AST::AstNode *node) {
-        if (node) {
-            current_node->children.push_back(node);
-        }
+        packed_ranges.push_back(node);
     });
+    if (packed_ranges.empty()) {
+        packed_ranges.push_back(make_range(0,0));
+    }
     current_node->is_signed = vpi_get(vpiSigned, obj_h);
+    add_multirange_wire(current_node, packed_ranges, {});
 }
 
 void UhdmAst::process_repeat()
