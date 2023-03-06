@@ -496,6 +496,16 @@ static void check_memories(AST::AstNode *node)
     check_memories(node, "", memories);
 }
 
+static void warn_start_range(const std::vector<AST::AstNode *> ranges)
+{
+    for (size_t i = 0; i < ranges.size(); i++) {
+        auto start_elem = min(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer);
+        if (start_elem != 0) {
+            log_file_warning(ranges[i]->filename, ranges[i]->location.first_line, "Limited support for multirange wires that don't start from 0\n");
+        }
+    }
+}
+
 // This function is workaround missing support for multirange (with n-ranges) packed/unpacked nodes
 // It converts multirange node to single-range node and translates access to this node
 // to correct range
@@ -514,9 +524,6 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
         wire_node->range_valid = true;
         return;
     }
-    size_t size = 1;
-    size_t packed_size = 1;
-    size_t unpacked_size = 1;
     std::vector<AST::AstNode *> ranges;
 
     // Convert only when node is not a memory and at least 1 of the ranges has more than 1 range
@@ -540,11 +547,23 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
         return false;
     }();
     if (convert_node) {
+        // if not already converted
         if (wire_node->multirange_dimensions.empty()) {
-            packed_size = add_multirange_attribute(wire_node, packed_ranges);
-            unpacked_size = add_multirange_attribute(wire_node, unpacked_ranges);
-            size = packed_size * unpacked_size;
-            ranges.push_back(make_range(size - 1, 0));
+            const size_t packed_size = add_multirange_attribute(wire_node, packed_ranges);
+            const size_t unpacked_size = add_multirange_attribute(wire_node, unpacked_ranges);
+            if (packed_ranges.size() == 1 && unpacked_ranges.empty()) {
+                ranges.push_back(packed_ranges[0]->clone());
+            } else if (unpacked_ranges.size() == 1 && packed_ranges.empty()) {
+                ranges.push_back(unpacked_ranges[0]->clone());
+            } else {
+                // currently we have limited support
+                // for multirange wires that doesn't start from 0
+                warn_start_range(packed_ranges);
+                warn_start_range(unpacked_ranges);
+                const size_t size = packed_size * unpacked_size;
+                log_assert(size >= 1);
+                ranges.push_back(make_range(size - 1, 0));
+            }
         }
     } else {
         for (auto r : packed_ranges) {
