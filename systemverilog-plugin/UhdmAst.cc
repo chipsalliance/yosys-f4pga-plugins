@@ -1306,7 +1306,8 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             if (size > 32) {
                 const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
                 const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
-                report_error("%.*s:%d: Constant with size: %d bits handled by mkconst_int that doesn't work with values larger than 32bits\n!", (int)object->VpiFile().length(), object->VpiFile().data(), object->VpiLineNo(), size);
+                report_error("%.*s:%d: Constant with size: %d bits handled by mkconst_int that doesn't work with values larger than 32bits\n!",
+                             (int)object->VpiFile().length(), object->VpiFile().data(), object->VpiLineNo(), size);
             }
             auto c = AST::AstNode::mkconst_int(val.format == vpiUIntVal ? val.value.uint : val.value.integer, is_signed, size);
             c->is_unsized = is_unsized;
@@ -1901,15 +1902,28 @@ void UhdmAst::process_module()
                         module_parameters += node->str + "=" + node->children[0]->str;
                     } else if (node->children[0]->bits.size() > 32) {
                         std::string value = std::to_string(node->children[0]->bits.size()) + "'b";
-                        for (const auto& bit : node->children[0]->bits) {
+                        for (const auto &bit : node->children[0]->bits) {
                             switch (bit) {
-                                case RTLIL::State::S0: value += "0"; break;
-                                case RTLIL::State::S1: value += "1"; break;
-                                case RTLIL::State::Sx: value += "x"; break;
-                                case RTLIL::State::Sz: value += "z"; break;
-                                case RTLIL::State::Sa: value += "a"; break;
-                                case RTLIL::State::Sm: value += "m"; break;
-                                default: report_error("Unhandled RTLIL State case!\n");
+                            case RTLIL::State::S0:
+                                value += "0";
+                                break;
+                            case RTLIL::State::S1:
+                                value += "1";
+                                break;
+                            case RTLIL::State::Sx:
+                                value += "x";
+                                break;
+                            case RTLIL::State::Sz:
+                                value += "z";
+                                break;
+                            case RTLIL::State::Sa:
+                                value += "a";
+                                break;
+                            case RTLIL::State::Sm:
+                                value += "m";
+                                break;
+                            default:
+                                report_error("Unhandled RTLIL State case!\n");
                             }
                         }
                         module_parameters += node->str + "=" + value;
@@ -4037,13 +4051,11 @@ void UhdmAst::process_string_typespec()
 
 void UhdmAst::process_bit_typespec()
 {
-    std::vector<AST::AstNode *> packed_ranges;   // comes before wire name
+    std::vector<AST::AstNode *> packed_ranges; // comes before wire name
     current_node = make_ast_node(AST::AST_WIRE);
-    visit_range(obj_h, [&](AST::AstNode *node) {
-        packed_ranges.push_back(node);
-    });
+    visit_range(obj_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
     if (packed_ranges.empty()) {
-        packed_ranges.push_back(make_range(0,0));
+        packed_ranges.push_back(make_range(0, 0));
     }
     current_node->is_signed = vpi_get(vpiSigned, obj_h);
     add_multirange_wire(current_node, packed_ranges, {});
