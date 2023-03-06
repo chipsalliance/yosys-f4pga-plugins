@@ -1276,13 +1276,6 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             }
             [[fallthrough]];
         case vpiIntVal: {
-            if (val.value.integer > std::numeric_limits<std::int32_t>::max()) {
-                strValType = "'sd";
-                string str_value = std::to_string(val.value.integer);
-                val.value.str = strdup(str_value.c_str());
-                break;
-            }
-
             // Surelog sometimes report size as part of vpiTypespec (e.g. int_typespec)
             // if it is the case, we need to set size to the left_range of first packed range
             visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
@@ -1304,8 +1297,16 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 is_unsized = false;
                 size = 32;
             }
+            if (val.value.integer > std::numeric_limits<std::int32_t>::max() || size > 32) {
+                strValType = "'sd";
+                string str_value = std::to_string(val.value.integer);
+                val.value.str = strdup(str_value.c_str());
+                break;
+            }
             if (size > 32) {
-                report_error("Constant with size: %s bits handled by mkconst_int that doesn't work with values larger than 32bits: %d\n!", size);
+                const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+                const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
+                report_error("%.*s:%d: Constant with size: %d bits handled by mkconst_int that doesn't work with values larger than 32bits\n!", (int)object->VpiFile().length(), object->VpiFile().data(), object->VpiLineNo(), size);
             }
             auto c = AST::AstNode::mkconst_int(val.format == vpiUIntVal ? val.value.uint : val.value.integer, is_signed, size);
             c->is_unsized = is_unsized;
@@ -1896,11 +1897,26 @@ void UhdmAst::process_module()
                     }
                 }
                 if (shared.top_nodes.count(type)) {
-                    if (!node->children[0]->str.empty())
+                    if (!node->children[0]->str.empty()) {
                         module_parameters += node->str + "=" + node->children[0]->str;
-                    else
+                    } else if (node->children[0]->bits.size() > 32) {
+                        std::string value = std::to_string(node->children[0]->bits.size()) + "'b";
+                        for (const auto& bit : node->children[0]->bits) {
+                            switch (bit) {
+                                case RTLIL::State::S0: value += "0"; break;
+                                case RTLIL::State::S1: value += "1"; break;
+                                case RTLIL::State::Sx: value += "x"; break;
+                                case RTLIL::State::Sz: value += "z"; break;
+                                case RTLIL::State::Sa: value += "a"; break;
+                                case RTLIL::State::Sm: value += "m"; break;
+                                default: report_error("Unhandled RTLIL State case!\n");
+                            }
+                        }
+                        module_parameters += node->str + "=" + value;
+                    } else {
                         module_parameters +=
                           node->str + "=" + std::to_string(node->children[0]->bits.size()) + "'d" + std::to_string(node->children[0]->integer);
+                    }
                 }
                 delete node;
             }
