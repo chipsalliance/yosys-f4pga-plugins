@@ -1908,9 +1908,11 @@ void UhdmAst::process_module()
                 if (node->children[0]->type != AST::AST_CONSTANT) {
                     if (shared.top_nodes.count(type)) {
                         simplify_parameter(node, shared.top_nodes[type]);
-                        log_assert(node->children[0]->type == AST::AST_CONSTANT || node->children[0]->type == AST::AST_REALVALUE);
+                    } else {
+                        simplify_parameter(node, nullptr);
                     }
                 }
+                log_assert(node->children[0]->type == AST::AST_CONSTANT || node->children[0]->type == AST::AST_REALVALUE);
                 parameters.push_back(std::make_pair(node->str, node->children[0]->asParaConst()));
                 delete node;
             }
@@ -1944,39 +1946,14 @@ void UhdmAst::process_module()
                         log_assert(node->children[0]->type == AST::AST_CONSTANT || node->children[0]->type == AST::AST_REALVALUE);
                     }
                 }
-                auto parent_node = std::find_if(module_node->children.begin(), module_node->children.end(), [&](AST::AstNode *child) -> bool {
-                    return ((child->type == AST::AST_PARAMETER) || (child->type == AST::AST_LOCALPARAM)) && child->str == node->str &&
-                           // skip real parameters as they are currently not working: https://github.com/alainmarcel/Surelog/issues/1035
-                           child->type != AST::AST_REALVALUE;
-                });
-                if (parent_node != module_node->children.end()) {
-                    if ((*parent_node)->type == AST::AST_PARAMETER) {
-                        if (cell_instance ||
-                            (!node->children.empty() &&
-                             node->children[0]->type !=
-                               AST::AST_CONSTANT)) { // if cell is a blackbox or we need to simplify parameter first, left setting parameters to yosys
-                            // We only want to add AST_PARASET for parameters that is different than already set
-                            // to match the name yosys gives to the module.
-                            // Note: this should also be applied for other (not only cell_instance) modules
-                            // but as we are using part of the modules parsed by sv2v and other
-                            // part by uhdm, we need to always rename module if it is parametrized,
-                            // Otherwise, verilog frontend can use module parsed by uhdm and try to set
-                            // parameters, but this module would be already parametrized
-                            if ((node->children[0]->integer != (*parent_node)->children[0]->integer ||
-                                 node->children[0]->str != (*parent_node)->children[0]->str)) {
-                                node->type = AST::AST_PARASET;
-                                current_node->children.push_back(node);
-                            }
-                        } else {
-                            add_or_replace_child(module_node, node);
-                        }
-                    } else {
-                        add_or_replace_child(module_node, node);
-                    }
-                } else if ((module_node->attributes.count(UhdmAst::partial()) && module_node->attributes[UhdmAst::partial()]->integer == 2)) {
-                    // When module definition is not parsed by Surelog, left setting parameters to yosys
+                // if module is cell instance
+                // Surelog doesn't have definition of this module,
+                // so we need to left setting of parameters to yosys
+                if (cell_instance) {
                     node->type = AST::AST_PARASET;
                     current_node->children.push_back(node);
+                } else {
+                    add_or_replace_child(module_node, node);
                 }
             }
         });
