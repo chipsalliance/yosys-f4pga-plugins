@@ -521,6 +521,8 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
     if (packed_ranges.empty() && unpacked_ranges.empty()) {
         wire_node->attributes.erase(UhdmAst::packed_ranges());
         wire_node->attributes.erase(UhdmAst::unpacked_ranges());
+        wire_node->range_left = 0;
+        wire_node->range_right = 0;
         wire_node->range_valid = true;
         return;
     }
