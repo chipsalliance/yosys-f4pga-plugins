@@ -1902,7 +1902,7 @@ void UhdmAst::process_module()
     } else {
         // Not a top module, create instance
         current_node = make_ast_node(AST::AST_CELL);
-        std::string module_parameters;
+        std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
             if (node && node->type == AST::AST_PARAMETER) {
                 if (node->children[0]->type != AST::AST_CONSTANT) {
@@ -1911,24 +1911,11 @@ void UhdmAst::process_module()
                         log_assert(node->children[0]->type == AST::AST_CONSTANT || node->children[0]->type == AST::AST_REALVALUE);
                     }
                 }
-                if (shared.top_nodes.count(type)) {
-                    if (!node->children[0]->str.empty())
-                        module_parameters += node->str + "=" + node->children[0]->str;
-                    else
-                        module_parameters +=
-                          node->str + "=" + std::to_string(node->children[0]->bits.size()) + "'d" + std::to_string(node->children[0]->integer);
-                }
+                parameters.push_back(std::make_pair(node->str, node->children[0]->asParaConst()));
                 delete node;
             }
         });
-        // rename module in same way yosys do
-        std::string module_name;
-        if (module_parameters.size() > 60)
-            module_name = "$paramod$" + sha1(module_parameters) + type;
-        else if (!module_parameters.empty())
-            module_name = "$paramod" + type + module_parameters;
-        else
-            module_name = type;
+        std::string module_name = !parameters.empty() ? AST::derived_module_name(type, parameters).c_str() : type;
         auto module_node = shared.top_nodes[module_name];
         auto cell_instance = vpi_get(vpiCellInstance, obj_h);
         if (!module_node) {
@@ -1940,7 +1927,7 @@ void UhdmAst::process_module()
                 cell_instance = 1;
                 module_name = type;
             }
-            if (!module_parameters.empty()) {
+            if (!parameters.empty()) {
                 module_node = module_node->clone();
             }
         }
