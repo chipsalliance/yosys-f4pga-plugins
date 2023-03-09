@@ -11,6 +11,7 @@
 #include "libs/sha1/sha1.h"
 
 // UHDM
+#include <uhdm/ExprEval.h>
 #include <uhdm/uhdm.h>
 #include <uhdm/vpi_user.h>
 
@@ -2173,6 +2174,19 @@ void UhdmAst::process_typespec_member()
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
 }
 
+static UHDM::expr *reduce_expression(const UHDM::any *expr, const UHDM::any *inst, const UHDM::any *pexpr)
+{
+    log_assert(expr);
+    log_assert(inst);
+    log_assert(pexpr);
+
+    bool invalidvalue = false;
+    UHDM::ExprEval eval;
+    UHDM::expr *resolved_operation = eval.reduceExpr(expr, invalidvalue, inst, pexpr);
+    log_assert(!invalidvalue);
+    return resolved_operation;
+}
+
 void UhdmAst::process_enum_typespec()
 {
     // BaseTypespec specifies underlying type of the enum.
@@ -2180,6 +2194,42 @@ void UhdmAst::process_enum_typespec()
     // When base type is not specified in SystemVerilog code, it is assumed to be an int.
     // Type of enum items (constants) is the same as the enum type.
     current_node = make_ast_node(AST::AST_ENUM);
+
+    const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+    const auto *enum_object = (const UHDM::enum_typespec *)handle->object;
+    const auto *typespec = enum_object->Base_typespec();
+
+    if (typespec && typespec->UhdmType() == UHDM::uhdmlogic_typespec) {
+        // If it's a logic_typespec, try to reduce expressions inside of it.
+        // The `reduceExpr` function needs the whole context of the enum typespec
+        //   so it's called here instead of `process_operation` or any other more specific function.
+
+        const UHDM::logic_typespec *logic_typespec_obj = enum_object->Base_typespec()->Cast<const UHDM::logic_typespec *>();
+        std::vector<UHDM::range *> ranges;
+        // Check if ranges exist, as Ranges() returns a pointer to std::vector.
+        if (logic_typespec_obj->Ranges()) {
+            ranges = *(logic_typespec_obj->Ranges());
+        }
+        for (UHDM::range *range_obj : ranges) {
+            // For each range, take both left and right and reduce them if they're of type uhdmoperation.
+            const auto *leftrange_obj = range_obj->Left_expr();
+            const auto *rightrange_obj = range_obj->Right_expr();
+            log_assert(leftrange_obj);
+            log_assert(rightrange_obj);
+
+            if (leftrange_obj->UhdmType() == UHDM::uhdmoperation) {
+                // Substitute the previous leftrange with the resolved operation result.
+                range_obj->Left_expr(reduce_expression(leftrange_obj, enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent(),
+                                                       enum_object->VpiParent()));
+            }
+            if (rightrange_obj->UhdmType() == UHDM::uhdmoperation) {
+                // Substitute the previous rightrange with the resolved operation result.
+                range_obj->Right_expr(reduce_expression(rightrange_obj, enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent(),
+                                                        enum_object->VpiParent()));
+            }
+        }
+    }
+
     bool has_base_type = false;
     visit_one_to_one({vpiBaseTypespec}, obj_h, [&](AST::AstNode *node) {
         has_base_type = true;
