@@ -1919,25 +1919,25 @@ void UhdmAst::process_module()
         });
         std::string module_name = !parameters.empty() ? AST::derived_module_name(type, parameters).c_str() : type;
         auto module_node = shared.top_nodes[module_name];
-        auto cell_instance = vpi_get(vpiCellInstance, obj_h);
+        // true, when Surelog don't have definition of module
+        // if so, we are left setting module parameters to yosys
+        // and don't rename module
+        bool isPrimitive = false;
         if (!module_node) {
             module_node = shared.top_nodes[type];
             if (!module_node) {
                 module_node = new AST::AstNode(AST::AST_MODULE);
                 module_node->str = type;
                 module_node->attributes[UhdmAst::partial()] = AST::AstNode::mkconst_int(2, false, 1);
-                cell_instance = 1;
-                module_name = type;
+                module_node->attributes[ID::whitebox] = AST::AstNode::mkconst_int(1, false, 1);
             }
-            if (!parameters.empty()) {
+            isPrimitive = module_node->attributes.count(UhdmAst::partial()) && module_node->attributes[UhdmAst::partial()]->integer == 2;
+            if (!parameters.empty() && !isPrimitive) {
                 module_node = module_node->clone();
+                module_node->str = module_name;
             }
         }
-        module_node->str = module_name;
         shared.top_nodes[module_node->str] = module_node;
-        if (cell_instance) {
-            module_node->attributes[ID::whitebox] = AST::AstNode::mkconst_int(1, false, 1);
-        }
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
             if (node) {
                 if (node->children[0]->type != AST::AST_CONSTANT) {
@@ -1946,10 +1946,10 @@ void UhdmAst::process_module()
                         log_assert(node->children[0]->type == AST::AST_CONSTANT || node->children[0]->type == AST::AST_REALVALUE);
                     }
                 }
-                // if module is cell instance
+                // if module is primitive
                 // Surelog doesn't have definition of this module,
                 // so we need to left setting of parameters to yosys
-                if (cell_instance) {
+                if (isPrimitive) {
                     node->type = AST::AST_PARASET;
                     current_node->children.push_back(node);
                 } else {
