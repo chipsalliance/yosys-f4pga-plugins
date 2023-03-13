@@ -1970,16 +1970,12 @@ void UhdmAst::process_module()
         current_node->children.insert(current_node->children.begin(), typeNode);
         auto old_top = shared.current_top_node;
         shared.current_top_node = module_node;
-        visit_one_to_many({vpiVariables, vpiNet, vpiArrayNet}, obj_h, [&](AST::AstNode *node) {
-            if (node) {
-                add_or_replace_child(module_node, node);
-            }
-        });
-        visit_one_to_many({vpiInterface, vpiModule, vpiPort, vpiGenScopeArray, vpiContAssign, vpiTaskFunc}, obj_h, [&](AST::AstNode *node) {
-            if (node) {
-                add_or_replace_child(module_node, node);
-            }
-        });
+        visit_one_to_many({vpiVariables, vpiNet, vpiArrayNet, vpiInterface, vpiModule, vpiPort, vpiGenScopeArray, vpiContAssign, vpiTaskFunc}, obj_h,
+                          [&](AST::AstNode *node) {
+                              if (node) {
+                                  add_or_replace_child(module_node, node);
+                              }
+                          });
         make_cell(obj_h, current_node, module_node);
         shared.current_top_node = old_top;
     }
