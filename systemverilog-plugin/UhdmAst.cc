@@ -1918,11 +1918,12 @@ void UhdmAst::process_module()
                 delete node;
             }
         });
+        // We need to rename module to prevent name collision with the same module, but with different parameters
         std::string module_name = !parameters.empty() ? AST::derived_module_name(type, parameters).c_str() : type;
         auto module_node = shared.top_nodes[module_name];
-        // true, when Surelog don't have definition of module
-        // if so, we are left setting module parameters to yosys
-        // and don't rename module
+        // true, when Surelog don't have definition of module while parsing design
+        // if so, we leaving module parameters to yosys and don't rename module
+        // as it will be done by yosys
         bool isPrimitive = false;
         if (!module_node) {
             module_node = shared.top_nodes[type];
