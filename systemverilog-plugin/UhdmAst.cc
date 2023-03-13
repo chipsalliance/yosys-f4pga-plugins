@@ -1905,6 +1905,7 @@ void UhdmAst::process_module()
         std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
             if (node && node->type == AST::AST_PARAMETER) {
+                log_assert(!node->children.empty());
                 if (node->children[0]->type != AST::AST_CONSTANT) {
                     if (shared.top_nodes.count(type)) {
                         simplify_parameter(node, shared.top_nodes[type]);
