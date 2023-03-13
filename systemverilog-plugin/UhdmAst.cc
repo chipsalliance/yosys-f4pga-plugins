@@ -1902,53 +1902,44 @@ void UhdmAst::process_module()
     } else {
         // Not a top module, create instance
         current_node = make_ast_node(AST::AST_CELL);
-        std::string module_parameters;
+        std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
             if (node && node->type == AST::AST_PARAMETER) {
+                log_assert(!node->children.empty());
                 if (node->children[0]->type != AST::AST_CONSTANT) {
                     if (shared.top_nodes.count(type)) {
                         simplify_parameter(node, shared.top_nodes[type]);
-                        log_assert(node->children[0]->type == AST::AST_CONSTANT || node->children[0]->type == AST::AST_REALVALUE);
+                    } else {
+                        simplify_parameter(node, nullptr);
                     }
                 }
-                if (shared.top_nodes.count(type)) {
-                    if (!node->children[0]->str.empty())
-                        module_parameters += node->str + "=" + node->children[0]->str;
-                    else
-                        module_parameters +=
-                          node->str + "=" + std::to_string(node->children[0]->bits.size()) + "'d" + std::to_string(node->children[0]->integer);
-                }
+                log_assert(node->children[0]->type == AST::AST_CONSTANT || node->children[0]->type == AST::AST_REALVALUE);
+                parameters.push_back(std::make_pair(node->str, node->children[0]->asParaConst()));
                 delete node;
             }
         });
-        // rename module in same way yosys do
-        std::string module_name;
-        if (module_parameters.size() > 60)
-            module_name = "$paramod$" + sha1(module_parameters) + type;
-        else if (!module_parameters.empty())
-            module_name = "$paramod" + type + module_parameters;
-        else
-            module_name = type;
+        // We need to rename module to prevent name collision with the same module, but with different parameters
+        std::string module_name = !parameters.empty() ? AST::derived_module_name(type, parameters).c_str() : type;
         auto module_node = shared.top_nodes[module_name];
-        auto cell_instance = vpi_get(vpiCellInstance, obj_h);
+        // true, when Surelog don't have definition of module while parsing design
+        // if so, we leaving module parameters to yosys and don't rename module
+        // as it will be done by yosys
+        bool isPrimitive = false;
         if (!module_node) {
             module_node = shared.top_nodes[type];
             if (!module_node) {
                 module_node = new AST::AstNode(AST::AST_MODULE);
                 module_node->str = type;
                 module_node->attributes[UhdmAst::partial()] = AST::AstNode::mkconst_int(2, false, 1);
-                cell_instance = 1;
-                module_name = type;
+                module_node->attributes[ID::whitebox] = AST::AstNode::mkconst_int(1, false, 1);
             }
-            if (!module_parameters.empty()) {
+            isPrimitive = module_node->attributes.count(UhdmAst::partial()) && module_node->attributes[UhdmAst::partial()]->integer == 2;
+            if (!parameters.empty() && !isPrimitive) {
                 module_node = module_node->clone();
+                module_node->str = module_name;
             }
         }
-        module_node->str = module_name;
         shared.top_nodes[module_node->str] = module_node;
-        if (cell_instance) {
-            module_node->attributes[ID::whitebox] = AST::AstNode::mkconst_int(1, false, 1);
-        }
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
             if (node) {
                 if (node->children[0]->type != AST::AST_CONSTANT) {
@@ -1957,39 +1948,14 @@ void UhdmAst::process_module()
                         log_assert(node->children[0]->type == AST::AST_CONSTANT || node->children[0]->type == AST::AST_REALVALUE);
                     }
                 }
-                auto parent_node = std::find_if(module_node->children.begin(), module_node->children.end(), [&](AST::AstNode *child) -> bool {
-                    return ((child->type == AST::AST_PARAMETER) || (child->type == AST::AST_LOCALPARAM)) && child->str == node->str &&
-                           // skip real parameters as they are currently not working: https://github.com/alainmarcel/Surelog/issues/1035
-                           child->type != AST::AST_REALVALUE;
-                });
-                if (parent_node != module_node->children.end()) {
-                    if ((*parent_node)->type == AST::AST_PARAMETER) {
-                        if (cell_instance ||
-                            (!node->children.empty() &&
-                             node->children[0]->type !=
-                               AST::AST_CONSTANT)) { // if cell is a blackbox or we need to simplify parameter first, left setting parameters to yosys
-                            // We only want to add AST_PARASET for parameters that is different than already set
-                            // to match the name yosys gives to the module.
-                            // Note: this should also be applied for other (not only cell_instance) modules
-                            // but as we are using part of the modules parsed by sv2v and other
-                            // part by uhdm, we need to always rename module if it is parametrized,
-                            // Otherwise, verilog frontend can use module parsed by uhdm and try to set
-                            // parameters, but this module would be already parametrized
-                            if ((node->children[0]->integer != (*parent_node)->children[0]->integer ||
-                                 node->children[0]->str != (*parent_node)->children[0]->str)) {
-                                node->type = AST::AST_PARASET;
-                                current_node->children.push_back(node);
-                            }
-                        } else {
-                            add_or_replace_child(module_node, node);
-                        }
-                    } else {
-                        add_or_replace_child(module_node, node);
-                    }
-                } else if ((module_node->attributes.count(UhdmAst::partial()) && module_node->attributes[UhdmAst::partial()]->integer == 2)) {
-                    // When module definition is not parsed by Surelog, left setting parameters to yosys
+                // if module is primitive
+                // Surelog doesn't have definition of this module,
+                // so we need to left setting of parameters to yosys
+                if (isPrimitive) {
                     node->type = AST::AST_PARASET;
                     current_node->children.push_back(node);
+                } else {
+                    add_or_replace_child(module_node, node);
                 }
             }
         });
@@ -2006,16 +1972,12 @@ void UhdmAst::process_module()
         current_node->children.insert(current_node->children.begin(), typeNode);
         auto old_top = shared.current_top_node;
         shared.current_top_node = module_node;
-        visit_one_to_many({vpiVariables, vpiNet, vpiArrayNet}, obj_h, [&](AST::AstNode *node) {
-            if (node) {
-                add_or_replace_child(module_node, node);
-            }
-        });
-        visit_one_to_many({vpiInterface, vpiModule, vpiPort, vpiGenScopeArray, vpiContAssign, vpiTaskFunc}, obj_h, [&](AST::AstNode *node) {
-            if (node) {
-                add_or_replace_child(module_node, node);
-            }
-        });
+        visit_one_to_many({vpiVariables, vpiNet, vpiArrayNet, vpiInterface, vpiModule, vpiPort, vpiGenScopeArray, vpiContAssign, vpiTaskFunc}, obj_h,
+                          [&](AST::AstNode *node) {
+                              if (node) {
+                                  add_or_replace_child(module_node, node);
+                              }
+                          });
         make_cell(obj_h, current_node, module_node);
         shared.current_top_node = old_top;
     }
