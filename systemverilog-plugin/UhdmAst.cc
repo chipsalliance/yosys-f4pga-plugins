@@ -79,6 +79,8 @@ enum AstNodeTypeExtended {
     return id;
 }
 
+static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node);
+
 static void sanitize_symbol_name(std::string &name)
 {
     if (!name.empty()) {
@@ -216,17 +218,21 @@ static size_t add_multirange_attribute(AST::AstNode *wire_node, const std::vecto
         if (ranges[i]->children.size() == 1) {
             ranges[i]->children.push_back(ranges[i]->children[0]->clone());
         }
+        simplify(ranges[i], wire_node);
         while (ranges[i]->simplify(true, false, false, 1, -1, false, false)) {
         }
         // this workaround case, where yosys doesn't follow id2ast and simplifies it to resolve constant
         if (ranges[i]->children[0]->id2ast) {
+            simplify(ranges[i]->children[0]->id2ast, ranges[i]->children[0]);
             while (ranges[i]->children[0]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
             }
         }
         if (ranges[i]->children[1]->id2ast) {
+            simplify(ranges[i]->children[1]->id2ast, ranges[i]->children[1]);
             while (ranges[i]->children[1]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
             }
         }
+        simplify(ranges[i], wire_node);
         while (ranges[i]->simplify(true, false, false, 1, -1, false, false)) {
         }
         log_assert(ranges[i]->children[0]->type == AST::AST_CONSTANT);
@@ -1836,7 +1842,31 @@ void UhdmAst::simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_n
         });
     }
     // first apply custom simplification step if needed
-    simplify(parameter, nullptr);
+    simplify(parameter, module_node);
+    // workaround for yosys sometimes not simplifying parameters children
+    // parameters can have 2 children:
+    // first child should be parameter value
+    // second child should be parameter range (optional)
+    log_assert(!parameter->children.empty());
+    simplify(parameter->children[0], parameter);
+    while (parameter->children[0]->simplify(true, false, false, 1, -1, false, false)) {
+    }
+    // follow id2ast as yosys doesn't do it by default
+    if (parameter->children[0]->id2ast) {
+        simplify(parameter->children[0]->id2ast, parameter);
+        while (parameter->children[0]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
+        }
+    }
+    if (parameter->children.size() > 1) {
+        simplify(parameter->children[1], parameter);
+        while (parameter->children[1]->simplify(true, false, false, 1, -1, false, false)) {
+        }
+        if (parameter->children[1]->id2ast) {
+            simplify(parameter->children[1]->id2ast, parameter);
+            while (parameter->children[1]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
+            }
+        }
+    }
     // then simplify parameter to AST_CONSTANT or AST_REALVALUE
     while (parameter->simplify(true, false, false, 1, -1, false, false)) {
     }
