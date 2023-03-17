@@ -66,6 +66,8 @@ class UhdmAstShared
     std::unordered_map<std::string, ::Yosys::AST::AstNode *> param_types;
 
     ::Yosys::AST::AstNode *current_top_node = nullptr;
+
+    std::vector<::Yosys::AST::AstNode *> elaborated_nodes;
     // Set of non-synthesizable objects to skip in current design;
     std::set<const UHDM::BaseClass *> nonSynthesizableObjects;
 };

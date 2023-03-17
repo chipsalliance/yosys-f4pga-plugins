@@ -24,6 +24,11 @@ class UhdmAst
     // ChildrenNodeTypes that are present in the given object.
     void visit_one_to_one(const std::vector<int> child_node_types, vpiHandle parent_handle, const std::function<void(::Yosys::AST::AstNode *)> &f);
 
+    // Walks through two-level relationships from given parent
+    // mainly used for type parameter propagation
+    void visit_one_to_two_levels(int child_node_type_level1, const std::vector<int> child_node_types, vpiHandle parent_handle,
+                                 const std::function<void(::Yosys::AST::AstNode *)> &f);
+
     // Visit children of type vpiRange that belong to the given parent node.
     void visit_range(vpiHandle obj_h, const std::function<void(::Yosys::AST::AstNode *)> &f);
 
@@ -152,6 +157,7 @@ class UhdmAst
     void process_primterm();
     void simplify_parameter(::Yosys::AST::AstNode *parameter, ::Yosys::AST::AstNode *module_node = nullptr);
     void process_unsupported_stmt(const UHDM::BaseClass *object, bool is_error = true);
+    void process_type_parameter();
 
     UhdmAst(UhdmAst *p, UhdmAstShared &s, const std::string &i) : parent(p), shared(s), indent(i)
     {
