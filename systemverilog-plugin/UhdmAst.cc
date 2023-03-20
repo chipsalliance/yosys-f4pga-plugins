@@ -350,7 +350,8 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     // needs to have access to all already defined ids
     while (wire_node->simplify(true, false, false, 1, -1, false, false)) {
     }
-    if (wiretype_ast->children[0]->type == AST::AST_STRUCT && wire_node->type == AST::AST_WIRE) {
+    if ((wiretype_ast->children[0]->type == AST::AST_STRUCT || wiretype_ast->children[0]->type == AST::AST_UNION) &&
+        wire_node->type == AST::AST_WIRE) {
         auto struct_width = get_max_offset_struct(wiretype_ast->children[0]);
         wire_node->range_left = struct_width;
         wire_node->children[0]->range_left = struct_width;
@@ -606,22 +607,18 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
     current_struct_elem = *struct_elem_it;
 
     AST::AstNode *left = nullptr, *right = nullptr;
-    if (current_struct_elem->type == AST::AST_STRUCT_ITEM) {
+    switch (current_struct_elem->type) {
+    case AST::AST_STRUCT_ITEM:
+    case AST::AST_STRUCT:
+    case AST::AST_UNION:
         left = AST::AstNode::mkconst_int(current_struct_elem->range_left, true);
         right = AST::AstNode::mkconst_int(current_struct_elem->range_right, true);
-    } else if (current_struct_elem->type == AST::AST_STRUCT) {
-        // Struct can have multiple range, so to get size of 1 struct,
-        // we get left range for first children, and right range for last children
-        left = AST::AstNode::mkconst_int(current_struct_elem->children.front()->range_left, true);
-        right = AST::AstNode::mkconst_int(current_struct_elem->children.back()->range_right, true);
-    } else if (current_struct_elem->type == AST::AST_UNION) {
-        left = AST::AstNode::mkconst_int(current_struct_elem->range_left, true);
-        right = AST::AstNode::mkconst_int(current_struct_elem->range_right, true);
-    } else {
+        break;
+    default:
         // Structs currently can only have AST_STRUCT, AST_STRUCT_ITEM, or AST_UNION.
         log_file_error(current_struct_elem->filename, current_struct_elem->location.first_line,
                        "Accessing struct member of type %s is unsupported.\n", type2str(current_struct_elem->type).c_str());
-    }
+    };
 
     auto elem_size =
       new AST::AstNode(AST::AST_ADD, new AST::AstNode(AST::AST_SUB, left->clone(), right->clone()), AST::AstNode::mkconst_int(1, true));
@@ -636,7 +633,9 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
         }
         if (c->type == AST::AST_RANGE) {
             // Currently supporting only 1 range
-            log_assert(!struct_range);
+            if (struct_range) {
+                log_error("Currently support for dot-access is limited to single range\n");
+            }
             struct_range = c;
         }
     }
@@ -817,10 +816,6 @@ static int simplify_struct(AST::AstNode *snode, int base_offset, AST::AstNode *p
     std::vector<AST::AstNode *> ranges(it, snode->children.end());
     snode->children.erase(it, snode->children.end());
     if (!ranges.empty()) {
-        if (ranges.size() > 1) {
-            log_file_error(ranges[1]->filename, ranges[1]->location.first_line,
-                           "Currently support for custom-type with range is limited to single range\n");
-        }
         for (auto range : ranges) {
             snode->multirange_dimensions.push_back(min(range->range_left, range->range_right));
             snode->multirange_dimensions.push_back(max(range->range_left, range->range_right) - min(range->range_left, range->range_right) + 1);
@@ -835,9 +830,10 @@ static int simplify_struct(AST::AstNode *snode, int base_offset, AST::AstNode *p
             // embedded struct or union
             width = simplify_struct(node, base_offset + offset, parent_node);
             if (!node->multirange_dimensions.empty()) {
-                int number_of_structs = 1;
-                number_of_structs = node->multirange_dimensions.back();
-                width *= number_of_structs;
+                // reverse-iterate over multiranges, skip right_range
+                for (auto rit = node->multirange_dimensions.rbegin(); rit != node->multirange_dimensions.rend(); rit += 2) {
+                    width *= *rit;
+                }
             }
             // set range of struct
             node->range_right = base_offset + offset;
