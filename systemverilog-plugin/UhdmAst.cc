@@ -606,22 +606,6 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
     }
     current_struct_elem = *struct_elem_it;
 
-    AST::AstNode *left = nullptr, *right = nullptr;
-    switch (current_struct_elem->type) {
-    case AST::AST_STRUCT_ITEM:
-    case AST::AST_STRUCT:
-    case AST::AST_UNION:
-        left = AST::AstNode::mkconst_int(current_struct_elem->range_left, true);
-        right = AST::AstNode::mkconst_int(current_struct_elem->range_right, true);
-        break;
-    default:
-        // Structs currently can only have AST_STRUCT, AST_STRUCT_ITEM, or AST_UNION.
-        log_file_error(current_struct_elem->filename, current_struct_elem->location.first_line,
-                       "Accessing struct member of type %s is unsupported.\n", type2str(current_struct_elem->type).c_str());
-    };
-
-    auto elem_size =
-      new AST::AstNode(AST::AST_ADD, new AST::AstNode(AST::AST_SUB, left->clone(), right->clone()), AST::AstNode::mkconst_int(1, true));
     AST::AstNode *sub_dot = nullptr;
     AST::AstNode *struct_range = nullptr;
 
@@ -639,6 +623,38 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
             struct_range = c;
         }
     }
+    AST::AstNode *left = nullptr, *right = nullptr;
+    switch (current_struct_elem->type) {
+    case AST::AST_STRUCT_ITEM:
+        left = AST::AstNode::mkconst_int(current_struct_elem->range_left, true);
+        right = AST::AstNode::mkconst_int(current_struct_elem->range_right, true);
+        break;
+    case AST::AST_STRUCT:
+    case AST::AST_UNION:
+        // TODO(krak): add proper support for accessing struct/union elements
+        // with multirange
+        // Currently support only special access to 2 dimensional packed element
+        // when selecting single range
+        if (struct_range && current_struct_elem->multirange_swapped.size() == 2 /* 2 dimensional */) {
+            // get element size in number of bits
+            const int single_elem_size = current_struct_elem->children.front()->range_left + 1;
+            left = AST::AstNode::mkconst_int(single_elem_size * current_struct_elem->multirange_dimensions.back(), true);
+            right =
+              AST::AstNode::mkconst_int(current_struct_elem->children.back()->range_right * current_struct_elem->multirange_dimensions.back(), true);
+        } else {
+            left = AST::AstNode::mkconst_int(current_struct_elem->children.front()->range_left, true);
+            right = AST::AstNode::mkconst_int(current_struct_elem->children.back()->range_right, true);
+        }
+        break;
+    default:
+        // Structs currently can only have AST_STRUCT, AST_STRUCT_ITEM, or AST_UNION.
+        log_file_error(current_struct_elem->filename, current_struct_elem->location.first_line,
+                       "Accessing struct member of type %s is unsupported.\n", type2str(current_struct_elem->type).c_str());
+    };
+
+    auto elem_size =
+      new AST::AstNode(AST::AST_ADD, new AST::AstNode(AST::AST_SUB, left->clone(), right->clone()), AST::AstNode::mkconst_int(1, true));
+
     if (sub_dot) {
         // First select correct element in first struct
         delete left;
