@@ -350,6 +350,7 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     // needs to have access to all already defined ids
     while (wire_node->simplify(true, false, false, 1, -1, false, false)) {
     }
+    log_assert(!wiretype_ast->children.empty());
     if ((wiretype_ast->children[0]->type == AST::AST_STRUCT || wiretype_ast->children[0]->type == AST::AST_UNION) &&
         wire_node->type == AST::AST_WIRE) {
         auto struct_width = get_max_offset_struct(wiretype_ast->children[0]);
@@ -673,7 +674,7 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
                 auto range_size = new AST::AstNode(
                   AST::AST_ADD, new AST::AstNode(AST::AST_SUB, struct_range->children[0]->clone(), struct_range->children[1]->clone()),
                   AST::AstNode::mkconst_int(1, true));
-                right = new AST::AstNode(AST::AST_ADD, right->clone(), struct_range->children[1]->clone());
+                right = new AST::AstNode(AST::AST_ADD, right, struct_range->children[1]->clone());
                 left = new AST::AstNode(
                   AST::AST_ADD, left,
                   new AST::AstNode(AST::AST_ADD, struct_range->children[1]->clone(), new AST::AstNode(AST::AST_SUB, range_size, elem_size->clone())));
