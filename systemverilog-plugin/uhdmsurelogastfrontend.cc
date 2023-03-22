@@ -118,6 +118,7 @@ class Compiler
 struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
     UhdmSurelogAstFrontend(std::string name, std::string short_help) : UhdmCommonFrontend(name, short_help) {}
     UhdmSurelogAstFrontend() : UhdmCommonFrontend("verilog_with_uhdm", "generate/read UHDM file") {}
+
     void help() override
     {
         //   |---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|---v---|
@@ -128,6 +129,9 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
         log("\n");
         this->print_read_options();
     }
+
+    virtual void on_register() override { UhdmAst::static_init(); }
+
     AST::AstNode *parse(std::string filename) override
     {
         std::vector<const char *> cstrings;

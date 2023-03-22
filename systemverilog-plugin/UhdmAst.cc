@@ -42,41 +42,44 @@ enum AstNodeTypeExtended {
 }
 } // namespace AST
 
-/*static*/ const IdString &UhdmAst::partial()
+namespace attr_id
 {
-    static const IdString id("\\partial");
-    return id;
-}
-/*static*/ const IdString &UhdmAst::packed_ranges()
-{
-    static const IdString id("\\packed_ranges");
-    return id;
-}
-/*static*/ const IdString &UhdmAst::unpacked_ranges()
-{
-    static const IdString id("\\unpacked_ranges");
-    return id;
-}
-/*static*/ const IdString &UhdmAst::force_convert()
-{
-    static const IdString id("\\force_convert");
-    return id;
-}
-/*static*/ const IdString &UhdmAst::is_imported()
-{
-    static const IdString id("\\is_imported");
-    return id;
-}
-/*static*/ const IdString &UhdmAst::is_simplified_wire()
-{
-    static const IdString id("\\is_simplified_wire");
-    return id;
-}
+static IdString partial;
+static IdString packed_ranges;
+static IdString unpacked_ranges;
+static IdString force_convert;
+static IdString is_imported;
+static IdString is_simplified_wire;
+static IdString low_high_bound;
+}; // namespace attr_id
 
-/*static*/ const IdString &UhdmAst::low_high_bound()
+/*static*/ const IdString &UhdmAst::partial() { return attr_id::partial; }
+/*static*/ const IdString &UhdmAst::packed_ranges() { return attr_id::packed_ranges; }
+/*static*/ const IdString &UhdmAst::unpacked_ranges() { return attr_id::unpacked_ranges; }
+/*static*/ const IdString &UhdmAst::force_convert() { return attr_id::force_convert; }
+/*static*/ const IdString &UhdmAst::is_imported() { return attr_id::is_imported; }
+/*static*/ const IdString &UhdmAst::is_simplified_wire() { return attr_id::is_simplified_wire; }
+/*static*/ const IdString &UhdmAst::low_high_bound() { return attr_id::low_high_bound; }
+
+void UhdmAst::static_init()
 {
-    static const IdString id("\\low_high_bound");
-    return id;
+    // Initialize only once
+    static bool already_initialized = false;
+    if (already_initialized)
+        return;
+    already_initialized = true;
+
+    // Actual initialization
+
+    // Register IdStrings. Can't be done statically, as the IdString class uses resources created during Yosys initialization which happens after
+    // static initialization of the plugin when everything is statically linked.
+    attr_id::partial = IdString("$systemverilog_plugin$partial");
+    attr_id::packed_ranges = IdString("$systemverilog_plugin$packed_ranges");
+    attr_id::unpacked_ranges = IdString("$systemverilog_plugin$unpacked_ranges");
+    attr_id::force_convert = IdString("$systemverilog_plugin$force_convert");
+    attr_id::is_imported = IdString("$systemverilog_plugin$is_imported");
+    attr_id::is_simplified_wire = IdString("$systemverilog_plugin$is_simplified_wire");
+    attr_id::low_high_bound = IdString("$systemverilog_plugin$low_high_bound");
 }
 
 static void sanitize_symbol_name(std::string &name)
@@ -4721,6 +4724,16 @@ AST::AstNode *UhdmAst::visit_designs(const std::vector<vpiHandle> &designs)
             current_node->children.push_back(child);
         }
     }
+
+    // Release static copies of private IdStrings. Those should be last instances in use.
+    attr_id::low_high_bound = IdString();
+    attr_id::is_simplified_wire = IdString();
+    attr_id::is_imported = IdString();
+    attr_id::force_convert = IdString();
+    attr_id::unpacked_ranges = IdString();
+    attr_id::packed_ranges = IdString();
+    attr_id::partial = IdString();
+
     return current_node;
 }
 
