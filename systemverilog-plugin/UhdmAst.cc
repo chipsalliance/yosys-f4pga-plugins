@@ -17,6 +17,7 @@
 #include <uhdm/vpi_user.h>
 
 #include "third_party/yosys/const2ast.h"
+#include "third_party/yosys/simplify.h"
 
 YOSYS_NAMESPACE_BEGIN
 namespace VERILOG_FRONTEND
@@ -411,7 +412,7 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     wiretype_ast = AST_INTERNAL::current_scope[wiretype_node->str];
     // we need to setup current top ast as this simplify
     // needs to have access to all already defined ids
-    while (wire_node->simplify(true, false, false, 1, -1, false, false)) {
+    while (simplify(wire_node, true, false, false, 1, -1, false, false)) {
     }
     if (wiretype_ast->children[0]->type == AST::AST_STRUCT && wire_node->type == AST::AST_WIRE) {
         auto struct_width = get_max_offset_struct(wiretype_ast->children[0]);
@@ -879,7 +880,7 @@ static int simplify_struct(AST::AstNode *snode, int base_offset, AST::AstNode *p
     int packed_width = -1;
     for (auto s : snode->children) {
         if (s->type == AST::AST_RANGE) {
-            while (s->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(s, true, false, false, 1, -1, false, false)) {
             };
         }
     }
@@ -1040,7 +1041,7 @@ static void simplify_format_string(AST::AstNode *current_node)
             AST::AstNode *node_arg = current_node->children[next_arg];
             char cformat = sformat[++i];
             if (cformat == 'b' or cformat == 'B') {
-                node_arg->simplify(true, false, false, 1, -1, false, false);
+                simplify(node_arg, true, false, false, 1, -1, false, false);
                 if (node_arg->type != AST::AST_CONSTANT)
                     log_file_error(current_node->filename, current_node->location.first_line,
                                    "Failed to evaluate system task `%s' with non-constant argument.\n", current_node->str.c_str());
@@ -1183,7 +1184,7 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
     case AST::AST_STRUCT_ITEM:
         AST_INTERNAL::current_scope[current_node->str] = current_node;
         convert_packed_unpacked_range(current_node);
-        while (current_node->simplify(true, false, false, 1, -1, false, false)) {
+        while (simplify(current_node, true, false, false, 1, -1, false, false)) {
         };
         break;
     case AST::AST_TCALL:
@@ -1207,9 +1208,9 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
             current_node->children[0] = nullptr;
             current_node->children[1] = nullptr;
             delete_children(current_node);
-            while (low_high_bound->children[0]->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(low_high_bound->children[0], true, false, false, 1, -1, false, false)) {
             };
-            while (low_high_bound->children[1]->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(low_high_bound->children[1], true, false, false, 1, -1, false, false)) {
             };
             log_assert(low_high_bound->children[0]->type == AST::AST_CONSTANT);
             log_assert(low_high_bound->children[1]->type == AST::AST_CONSTANT);
@@ -1936,7 +1937,7 @@ void UhdmAst::simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_n
         }
     }
     // then simplify parameter to AST_CONSTANT or AST_REALVALUE
-    while (parameter->simplify(true, false, false, 1, -1, false, false)) {
+    while (simplify(parameter, true, false, false, 1, -1, false, false)) {
     }
     clear_current_scope();
 }
