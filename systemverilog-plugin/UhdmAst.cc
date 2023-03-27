@@ -53,6 +53,7 @@ static IdString is_simplified_wire;
 static IdString low_high_bound;
 }; // namespace attr_id
 
+// TODO(mglb): use attr_id::* directly everywhere and remove those methods.
 /*static*/ const IdString &UhdmAst::partial() { return attr_id::partial; }
 /*static*/ const IdString &UhdmAst::packed_ranges() { return attr_id::packed_ranges; }
 /*static*/ const IdString &UhdmAst::unpacked_ranges() { return attr_id::unpacked_ranges; }
@@ -61,7 +62,7 @@ static IdString low_high_bound;
 /*static*/ const IdString &UhdmAst::is_simplified_wire() { return attr_id::is_simplified_wire; }
 /*static*/ const IdString &UhdmAst::low_high_bound() { return attr_id::low_high_bound; }
 
-void UhdmAst::static_init()
+void attr_id_init()
 {
     // Initialize only once
     static bool already_initialized = false;
@@ -80,6 +81,18 @@ void UhdmAst::static_init()
     attr_id::is_imported = IdString("$systemverilog_plugin$is_imported");
     attr_id::is_simplified_wire = IdString("$systemverilog_plugin$is_simplified_wire");
     attr_id::low_high_bound = IdString("$systemverilog_plugin$low_high_bound");
+}
+
+void attr_id_cleanup()
+{
+    // Release static copies of private IdStrings.
+    attr_id::low_high_bound = IdString();
+    attr_id::is_simplified_wire = IdString();
+    attr_id::is_imported = IdString();
+    attr_id::force_convert = IdString();
+    attr_id::unpacked_ranges = IdString();
+    attr_id::packed_ranges = IdString();
+    attr_id::partial = IdString();
 }
 
 static void sanitize_symbol_name(std::string &name)
@@ -4715,6 +4728,8 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
 
 AST::AstNode *UhdmAst::visit_designs(const std::vector<vpiHandle> &designs)
 {
+    attr_id_init();
+
     current_node = new AST::AstNode(AST::AST_DESIGN);
     for (auto design : designs) {
         UhdmAst ast(this, shared, indent);
@@ -4725,14 +4740,7 @@ AST::AstNode *UhdmAst::visit_designs(const std::vector<vpiHandle> &designs)
         }
     }
 
-    // Release static copies of private IdStrings. Those should be last instances in use.
-    attr_id::low_high_bound = IdString();
-    attr_id::is_simplified_wire = IdString();
-    attr_id::is_imported = IdString();
-    attr_id::force_convert = IdString();
-    attr_id::unpacked_ranges = IdString();
-    attr_id::packed_ranges = IdString();
-    attr_id::partial = IdString();
+    attr_id_cleanup();
 
     return current_node;
 }

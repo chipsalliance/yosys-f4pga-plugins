@@ -130,8 +130,6 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
         this->print_read_options();
     }
 
-    virtual void on_register() override { UhdmAst::static_init(); }
-
     AST::AstNode *parse(std::string filename) override
     {
         std::vector<const char *> cstrings;

@@ -168,11 +168,6 @@ class UhdmAst
     // Visits all VPI design objects and returns created ASTs
     ::Yosys::AST::AstNode *visit_designs(const std::vector<vpiHandle> &designs);
 
-    // Does initialization of the class global data.
-    // Must be called before the first use of the class.
-    // Can be called multiple times; only the first call performs actual initialization.
-    static void static_init();
-
     static const ::Yosys::IdString &partial();
     static const ::Yosys::IdString &packed_ranges();
     static const ::Yosys::IdString &unpacked_ranges();
