@@ -27,31 +27,26 @@ SOURCES = UhdmAst.cc \
 # Directory to search for Surelog and UHDM libraries
 UHDM_INSTALL_DIR ?= /usr/local
 
+# Tell pkg-config to look in the provided install path first.
+# PKG_CONFIG_PATH and PKG_CONFIG_PATH_FOR_TARGET are search paths it looks in
+# so set the environment variables and prefix with our local install first
+PKG_CONFIG_INVOKE = \
+   PKG_CONFIG_PATH=$(UHDM_INSTALL_DIR)/lib/pkgconfig:${PKG_CONFIG_PATH} \
+   PKG_CONFIG_PATH_FOR_TARGET=$(UHDM_INSTALL_DIR)/lib/pkgconfig:${PKG_CONFIG_PATH_FOR_TARGET} \
+   pkg-config
+
 include ../Makefile_plugin.common
+
+# A litmus-test: make compilation fail if pkg-config fails
+.SECONDARY: $(BUILD_DIR)/.$(NAME)-deps-test
+$(BUILD_DIR)/.$(NAME)-deps-test:
+	$(PKG_CONFIG_INVOKE) --cflags Surelog
+
+${_SO_LIB}: | $(BUILD_DIR)/.$(NAME)-deps-test
 
 CXXFLAGS += -std=c++17 -Wall -W -Wextra \
             -Wno-deprecated-declarations \
             -Wno-unused-parameter \
-            -I${UHDM_INSTALL_DIR}/include \
-            -I${UHDM_INSTALL_DIR}/include/Surelog
+            $(shell $(PKG_CONFIG_INVOKE) --cflags Surelog)
 
-LDFLAGS += -L${UHDM_INSTALL_DIR}/lib/uhdm \
-           -L${UHDM_INSTALL_DIR}/lib/surelog \
-           -L${UHDM_INSTALL_DIR}/lib \
-           -L${UHDM_INSTALL_DIR}/lib64/uhdm \
-           -L${UHDM_INSTALL_DIR}/lib64/surelog \
-           -L${UHDM_INSTALL_DIR}/lib64
-
-LDLIBS += -Wl,--whole-archive \
-          -luhdm \
-          -Wl,--no-whole-archive \
-          -lsurelog \
-          -lantlr4-runtime \
-          -lflatbuffers \
-          -lcapnp \
-          -lkj \
-          -ldl \
-          -lutil \
-          -lm \
-          -lrt \
-          -lpthread
+LDFLAGS += $(shell $(PKG_CONFIG_INVOKE) --libs Surelog)
