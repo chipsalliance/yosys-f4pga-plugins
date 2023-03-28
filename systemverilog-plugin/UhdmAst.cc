@@ -619,7 +619,8 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
         if (c->type == AST::AST_RANGE) {
             // Currently supporting only 1 range
             if (struct_range) {
-                log_error("Currently support for dot-access is limited to single range\n");
+                log_file_error(struct_range->filename, struct_range->location.first_line,
+                               "Currently support for dot-access is limited to single range\n");
             }
             struct_range = c;
         }
@@ -636,7 +637,8 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
         // with multirange
         // Currently support only special access to 2 dimensional packed element
         // when selecting single range
-        if (struct_range && current_struct_elem->multirange_swapped.size() == 2 /* 2 dimensional */) {
+        log_assert(current_struct_elem->multirange_dimensions.size() % 2 == 0);
+        if (struct_range && (current_struct_elem->multirange_dimensions.size() / 2) == 2) {
             // get element size in number of bits
             const int single_elem_size = current_struct_elem->children.front()->range_left + 1;
             left = AST::AstNode::mkconst_int(single_elem_size * current_struct_elem->multirange_dimensions.back(), true);
@@ -847,9 +849,10 @@ static int simplify_struct(AST::AstNode *snode, int base_offset, AST::AstNode *p
             // embedded struct or union
             width = simplify_struct(node, base_offset + offset, parent_node);
             if (!node->multirange_dimensions.empty()) {
-                // reverse-iterate over multiranges, skip right_range
-                for (auto rit = node->multirange_dimensions.rbegin(); rit != node->multirange_dimensions.rend(); rit += 2) {
-                    width *= *rit;
+                // Multiply widths of all dimensions.
+                // `multirange_dimensions` stores (repeating) pairs of [offset, width].
+                for (size_t i = 1; i < node->multirange_dimensions.size(); i += 2) {
+                    width *= node->multirange_dimensions[i];
                 }
             }
             // set range of struct
