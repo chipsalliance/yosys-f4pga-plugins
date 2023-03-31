@@ -21,6 +21,13 @@ class UhdmAstShared
     unsigned loop_count = 0;
 
   public:
+    ~UhdmAstShared()
+    {
+        for (const auto &param : param_types)
+            delete param.second;
+        param_types.clear();
+    }
+
     // Generate the next enum ID (starting with 0)
     unsigned next_enum_id() { return enum_count++; }
 
