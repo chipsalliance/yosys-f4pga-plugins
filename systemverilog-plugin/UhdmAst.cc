@@ -1853,6 +1853,7 @@ void UhdmAst::process_design()
             continue;
         if (pair.second->type == AST::AST_PACKAGE) {
             check_memories(pair.second);
+            clear_current_scope();
             setup_current_scope(shared.top_nodes, pair.second);
             simplify(pair.second, nullptr);
             clear_current_scope();
