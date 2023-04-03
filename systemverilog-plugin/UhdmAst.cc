@@ -2650,6 +2650,7 @@ void UhdmAst::process_assignment(const UHDM::BaseClass *object)
             case AST::AST_PARAMETER:
             case AST::AST_LOCALPARAM:
                 node->type = AST::AST_IDENTIFIER;
+                delete_children(node);
                 delete_attribute(node, UhdmAst::packed_ranges());
                 delete_attribute(node, UhdmAst::unpacked_ranges());
                 break;
