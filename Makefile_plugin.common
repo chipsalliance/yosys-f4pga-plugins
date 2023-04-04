@@ -101,14 +101,14 @@ OBJECTS := $(_ALL_OBJECTS)
 
 # Shared library
 
-_SO_LIB := $(BUILD_DIR)/$(NAME).so
-_ALL_BUILD_SUBDIRS += $(abspath $(dir $(_SO_LIB)))
+SO_LIB := $(BUILD_DIR)/$(NAME).so
+_ALL_BUILD_SUBDIRS += $(abspath $(dir $(SO_LIB)))
 
-$(_SO_LIB): $(_ALL_OBJECTS) $(_MAKEFILES) | $(abspath $(dir $(_SO_LIB)))
+$(SO_LIB): $(_ALL_OBJECTS) $(_MAKEFILES) | $(abspath $(dir $(SO_LIB)))
 	$(CXX) $(CXXFLAGS) $(LDFLAGS) -shared -o $@ $(_ALL_OBJECTS) $(LDLIBS)
 
 .PHONY: $(NAME).so
-$(NAME).so: $(_SO_LIB)
+$(NAME).so: $(SO_LIB)
 
 # Tests
 
@@ -125,8 +125,8 @@ endif
 
 # Installation
 
-$(YOSYS_PLUGINS_DIR)/$(NAME).so: $(_SO_LIB) | $(YOSYS_PLUGINS_DIR)
-	install -D $(_SO_LIB) $@
+$(YOSYS_PLUGINS_DIR)/$(NAME).so: $(SO_LIB) | $(YOSYS_PLUGINS_DIR)
+	install -D $(SO_LIB) $@
 
 .PHONY: install_plugin
 install_plugin: $(YOSYS_PLUGINS_DIR)/$(NAME).so
@@ -151,4 +151,3 @@ PMGEN_PY := $(TOP_DIR)/pmgen.py
 
 $(PMGEN_PY):
 	@$(MAKE) -C $(TOP_DIR) pmgen.py
-

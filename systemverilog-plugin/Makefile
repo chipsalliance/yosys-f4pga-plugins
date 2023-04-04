@@ -42,7 +42,7 @@ include ../Makefile_plugin.common
 $(BUILD_DIR)/.$(NAME)-deps-test:
 	$(PKG_CONFIG_INVOKE) --cflags Surelog
 
-${_SO_LIB}: | $(BUILD_DIR)/.$(NAME)-deps-test
+${SO_LIB}: | $(BUILD_DIR)/.$(NAME)-deps-test
 
 CXXFLAGS += -std=c++17 -Wall -W -Wextra \
             -Wno-deprecated-declarations \
