@@ -4336,7 +4336,7 @@ void UhdmAst::process_port()
     }
     visit_one_to_one({vpiTypedef}, obj_h, [&](AST::AstNode *node) {
         if (node) {
-            if (current_node->children.empty() || (!current_node->children.empty() && current_node->children[0]->type != AST::AST_WIRETYPE)) {
+            if (current_node->children.empty() || current_node->children[0]->type != AST::AST_WIRETYPE) {
                 if (!node->str.empty()) {
                     auto wiretype_node = new AST::AstNode(AST::AST_WIRETYPE);
                     wiretype_node->str = node->str;
