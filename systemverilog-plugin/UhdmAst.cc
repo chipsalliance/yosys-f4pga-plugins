@@ -4292,7 +4292,7 @@ void UhdmAst::process_port()
                 }
                 delete node;
             });
-            visit_one_to_many({vpiRange}, actual_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
+            visit_one_to_many({vpiRange}, actual_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
             shared.report.mark_handled(actual_h);
             break;
         case vpiPackedArrayNet:
@@ -4300,7 +4300,7 @@ void UhdmAst::process_port()
             shared.report.mark_handled(actual_h);
             break;
         case vpiArrayVar:
-            visit_one_to_many({vpiRange}, actual_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
+            visit_one_to_many({vpiRange}, actual_h, [&](AST::AstNode *node) { unpacked_ranges.push_back(node); });
             shared.report.mark_handled(actual_h);
             break;
         case vpiEnumNet:
