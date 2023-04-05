@@ -1149,13 +1149,13 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         AST_INTERNAL::current_scope[current_node->str] = current_node;
         break;
     case AST::AST_WIRE:
-        delete_attribute(current_node, UhdmAst::is_simplified_wire());
-        current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
-        [[fallthrough]];
     case AST::AST_PARAMETER:
     case AST::AST_LOCALPARAM:
-        AST_INTERNAL::current_scope[current_node->str] = current_node;
-        convert_packed_unpacked_range(current_node);
+        if (!current_node->attributes.count(UhdmAst::is_simplified_wire())) {
+            current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
+            AST_INTERNAL::current_scope[current_node->str] = current_node;
+            convert_packed_unpacked_range(current_node);
+        }
         break;
     case AST::AST_IDENTIFIER:
         if (!current_node->children.empty() && !current_node->basic_prep) {
@@ -1183,19 +1183,22 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         break;
     case AST::AST_STRUCT:
     case AST::AST_UNION:
-        simplify_struct(current_node, 0, parent_node);
-        // instance rather than just a type in a typedef or outer struct?
-        if (!current_node->str.empty() && current_node->str[0] == '\\') {
-            // instance so add a wire for the packed structure
-            auto wnode = make_packed_struct_local(current_node, current_node->str);
-            convert_packed_unpacked_range(wnode);
-            log_assert(AST_INTERNAL::current_ast_mod);
-            AST_INTERNAL::current_ast_mod->children.push_back(wnode);
-            AST_INTERNAL::current_scope[wnode->str]->attributes[ID::wiretype] = AST::AstNode::mkconst_str(current_node->str);
-            AST_INTERNAL::current_scope[wnode->str]->attributes[ID::wiretype]->id2ast = current_node;
-        }
+        if (!current_node->attributes.count(UhdmAst::is_simplified_wire())) {
+            current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
+            simplify_struct(current_node, 0, parent_node);
+            // instance rather than just a type in a typedef or outer struct?
+            if (!current_node->str.empty() && current_node->str[0] == '\\') {
+                // instance so add a wire for the packed structure
+                auto wnode = make_packed_struct_local(current_node, current_node->str);
+                convert_packed_unpacked_range(wnode);
+                log_assert(AST_INTERNAL::current_ast_mod);
+                AST_INTERNAL::current_ast_mod->children.push_back(wnode);
+                AST_INTERNAL::current_scope[wnode->str]->attributes[ID::wiretype] = AST::AstNode::mkconst_str(current_node->str);
+                AST_INTERNAL::current_scope[wnode->str]->attributes[ID::wiretype]->id2ast = current_node;
+            }
 
-        current_node->basic_prep = true;
+            current_node->basic_prep = true;
+        }
         break;
     case AST::AST_STRUCT_ITEM:
         AST_INTERNAL::current_scope[current_node->str] = current_node;
