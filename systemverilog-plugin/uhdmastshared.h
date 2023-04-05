@@ -1,6 +1,8 @@
 #ifndef _UHDM_AST_SHARED_H_
 #define _UHDM_AST_SHARED_H_ 1
 
+#include "frontends/ast/ast.h"
+
 #include "uhdmastreport.h"
 #include <string>
 #include <unordered_map>
