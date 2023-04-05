@@ -46,7 +46,7 @@ ${SO_LIB}: | $(BUILD_DIR)/.$(NAME)-deps-test
 
 CXXFLAGS += -std=c++17 -Wall -W -Wextra \
             -Wno-deprecated-declarations \
-            -Wno-unused-parameter \
+            -Wno-unused-parameter
             $(shell $(PKG_CONFIG_INVOKE) --cflags Surelog)
 
 LDFLAGS += $(shell $(PKG_CONFIG_INVOKE) --libs-only-L Surelog)
