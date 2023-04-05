@@ -49,4 +49,6 @@ CXXFLAGS += -std=c++17 -Wall -W -Wextra \
             -Wno-unused-parameter \
             $(shell $(PKG_CONFIG_INVOKE) --cflags Surelog)
 
-LDFLAGS += $(shell $(PKG_CONFIG_INVOKE) --libs Surelog)
+LDFLAGS += $(shell $(PKG_CONFIG_INVOKE) --libs-only-L Surelog)
+
+LDLIBS += $(shell $(PKG_CONFIG_INVOKE) --libs-only-l --libs-only-other Surelog)
