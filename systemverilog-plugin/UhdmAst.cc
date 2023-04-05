@@ -1199,7 +1199,9 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         break;
     case AST::AST_STRUCT_ITEM:
         AST_INTERNAL::current_scope[current_node->str] = current_node;
-        convert_packed_unpacked_range(current_node);
+        if (current_node->attributes.count(UhdmAst::packed_ranges()) || current_node->attributes.count(UhdmAst::unpacked_ranges())) {
+            convert_packed_unpacked_range(current_node);
+        }
         while (simplify(current_node, true, false, false, 1, -1, false, false)) {
         };
         break;
