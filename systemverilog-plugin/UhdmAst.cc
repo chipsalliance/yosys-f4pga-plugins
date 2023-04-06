@@ -17,6 +17,7 @@
 #include <uhdm/vpi_user.h>
 
 #include "third_party/yosys/const2ast.h"
+#include "third_party/yosys/simplify.h"
 
 YOSYS_NAMESPACE_BEGIN
 namespace VERILOG_FRONTEND
@@ -137,7 +138,7 @@ static void delete_children(AST::AstNode *node)
     node->children.clear();
 }
 
-static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node);
+static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node);
 
 static void sanitize_symbol_name(std::string &name)
 {
@@ -276,22 +277,22 @@ static size_t add_multirange_attribute(AST::AstNode *wire_node, const std::vecto
         if (ranges[i]->children.size() == 1) {
             ranges[i]->children.push_back(ranges[i]->children[0]->clone());
         }
-        simplify(ranges[i], wire_node);
-        while (ranges[i]->simplify(true, false, false, 1, -1, false, false)) {
+        simplify_sv(ranges[i], wire_node);
+        while (simplify(ranges[i], true, false, false, 1, -1, false, false)) {
         }
         // this workaround case, where yosys doesn't follow id2ast and simplifies it to resolve constant
         if (ranges[i]->children[0]->id2ast) {
-            simplify(ranges[i]->children[0]->id2ast, ranges[i]->children[0]);
-            while (ranges[i]->children[0]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
+            simplify_sv(ranges[i]->children[0]->id2ast, ranges[i]->children[0]);
+            while (simplify(ranges[i]->children[0]->id2ast, true, false, false, 1, -1, false, false)) {
             }
         }
         if (ranges[i]->children[1]->id2ast) {
-            simplify(ranges[i]->children[1]->id2ast, ranges[i]->children[1]);
-            while (ranges[i]->children[1]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
+            simplify_sv(ranges[i]->children[1]->id2ast, ranges[i]->children[1]);
+            while (simplify(ranges[i]->children[1]->id2ast, true, false, false, 1, -1, false, false)) {
             }
         }
-        simplify(ranges[i], wire_node);
-        while (ranges[i]->simplify(true, false, false, 1, -1, false, false)) {
+        simplify_sv(ranges[i], wire_node);
+        while (simplify(ranges[i], true, false, false, 1, -1, false, false)) {
         }
         log_assert(ranges[i]->children[0]->type == AST::AST_CONSTANT);
         log_assert(ranges[i]->children[1]->type == AST::AST_CONSTANT);
@@ -411,7 +412,7 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     wiretype_ast = AST_INTERNAL::current_scope[wiretype_node->str];
     // we need to setup current top ast as this simplify
     // needs to have access to all already defined ids
-    while (wire_node->simplify(true, false, false, 1, -1, false, false)) {
+    while (simplify(wire_node, true, false, false, 1, -1, false, false)) {
     }
     log_assert(!wiretype_ast->children.empty());
     if ((wiretype_ast->children[0]->type == AST::AST_STRUCT || wiretype_ast->children[0]->type == AST::AST_UNION) &&
@@ -897,7 +898,7 @@ static int simplify_struct(AST::AstNode *snode, int base_offset, AST::AstNode *p
     int packed_width = -1;
     for (auto s : snode->children) {
         if (s->type == AST::AST_RANGE) {
-            while (s->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(s, true, false, false, 1, -1, false, false)) {
             };
         }
     }
@@ -1056,7 +1057,7 @@ static void simplify_format_string(AST::AstNode *current_node)
             AST::AstNode *node_arg = current_node->children[next_arg];
             char cformat = sformat[++i];
             if (cformat == 'b' or cformat == 'B') {
-                node_arg->simplify(true, false, false, 1, -1, false, false);
+                simplify(node_arg, true, false, false, 1, -1, false, false);
                 if (node_arg->type != AST::AST_CONSTANT)
                     log_file_error(current_node->filename, current_node->location.first_line,
                                    "Failed to evaluate system task `%s' with non-constant argument.\n", current_node->str.c_str());
@@ -1080,7 +1081,10 @@ static void simplify_format_string(AST::AstNode *current_node)
     current_node->children[0] = AST::AstNode::mkconst_str(preformatted_string);
 }
 
-static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
+// A wrapper for Yosys simplify function.
+// Simplifies AST constructs specific to this plugin to a form understandable by Yosys' simplify and then calls the latter if necessary.
+// Since simplify from Yosys has been forked to this codebase, all new code should be added there instead.
+static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
 {
     auto dot_it = std::find_if(current_node->children.begin(), current_node->children.end(),
                                [](auto c) { return c->type == static_cast<int>(AST::Extended::AST_DOT); });
@@ -1100,7 +1104,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
                         log_error("Multirange in AST_DOT is currently unsupported\n");
 
                     dot->type = AST::AST_IDENTIFIER;
-                    simplify(dot, nullptr);
+                    simplify_sv(dot, nullptr);
                     AST::AstNode *range_const = parent_node->children[0]->children[0];
                     prefix_node = new AST::AstNode(AST::AST_PREFIX, range_const->clone(), dot->clone());
                     break;
@@ -1123,7 +1127,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
         } else {
             auto wire_node = AST_INTERNAL::current_scope[current_node->str];
             // make sure wire_node is already simplified
-            simplify(wire_node, nullptr);
+            simplify_sv(wire_node, nullptr);
             expanded = convert_dot(wire_node, current_node, dot);
         }
     }
@@ -1136,7 +1140,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
     }
     // First simplify children
     for (size_t i = 0; i < current_node->children.size(); i++) {
-        simplify(current_node->children[i], current_node);
+        simplify_sv(current_node->children[i], current_node);
     }
     switch (current_node->type) {
     case AST::AST_TYPEDEF:
@@ -1163,7 +1167,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
 
             // if a wire is simplified multiple times, its ranges may be added multiple times and be redundant as a result
             if (!wire_node->attributes.count(UhdmAst::is_simplified_wire())) {
-                simplify(wire_node, nullptr);
+                simplify_sv(wire_node, nullptr);
             }
             const int packed_ranges_size =
               wire_node->attributes.count(UhdmAst::packed_ranges()) ? wire_node->attributes[UhdmAst::packed_ranges()]->children.size() : 0;
@@ -1196,7 +1200,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
     case AST::AST_STRUCT_ITEM:
         AST_INTERNAL::current_scope[current_node->str] = current_node;
         convert_packed_unpacked_range(current_node);
-        while (current_node->simplify(true, false, false, 1, -1, false, false)) {
+        while (simplify(current_node, true, false, false, 1, -1, false, false)) {
         };
         break;
     case AST::AST_TCALL:
@@ -1220,9 +1224,9 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
             current_node->children[0] = nullptr;
             current_node->children[1] = nullptr;
             delete_children(current_node);
-            while (low_high_bound->children[0]->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(low_high_bound->children[0], true, false, false, 1, -1, false, false)) {
             };
-            while (low_high_bound->children[1]->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(low_high_bound->children[1], true, false, false, 1, -1, false, false)) {
             };
             log_assert(low_high_bound->children[0]->type == AST::AST_CONSTANT);
             log_assert(low_high_bound->children[1]->type == AST::AST_CONSTANT);
@@ -1876,7 +1880,7 @@ void UhdmAst::process_design()
         if (pair.second->type == AST::AST_PACKAGE) {
             check_memories(pair.second);
             setup_current_scope(shared.top_nodes, pair.second);
-            simplify(pair.second, nullptr);
+            simplify_sv(pair.second, nullptr);
             clear_current_scope();
         }
     }
@@ -1891,7 +1895,7 @@ void UhdmAst::process_design()
             else {
                 check_memories(pair.second);
                 setup_current_scope(shared.top_nodes, pair.second);
-                simplify(pair.second, nullptr);
+                simplify_sv(pair.second, nullptr);
                 clear_current_scope();
                 current_node->children.push_back(pair.second);
             }
@@ -1923,33 +1927,33 @@ void UhdmAst::simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_n
         });
     }
     // first apply custom simplification step if needed
-    simplify(parameter, module_node);
+    simplify_sv(parameter, module_node);
     // workaround for yosys sometimes not simplifying parameters children
     // parameters can have 2 children:
     // first child should be parameter value
     // second child should be parameter range (optional)
     log_assert(!parameter->children.empty());
-    simplify(parameter->children[0], parameter);
-    while (parameter->children[0]->simplify(true, false, false, 1, -1, false, false)) {
+    simplify_sv(parameter->children[0], parameter);
+    while (simplify(parameter->children[0], true, false, false, 1, -1, false, false)) {
     }
     // follow id2ast as yosys doesn't do it by default
     if (parameter->children[0]->id2ast) {
-        simplify(parameter->children[0]->id2ast, parameter);
-        while (parameter->children[0]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
+        simplify_sv(parameter->children[0]->id2ast, parameter);
+        while (simplify(parameter->children[0]->id2ast, true, false, false, 1, -1, false, false)) {
         }
     }
     if (parameter->children.size() > 1) {
-        simplify(parameter->children[1], parameter);
-        while (parameter->children[1]->simplify(true, false, false, 1, -1, false, false)) {
+        simplify_sv(parameter->children[1], parameter);
+        while (simplify(parameter->children[1], true, false, false, 1, -1, false, false)) {
         }
         if (parameter->children[1]->id2ast) {
-            simplify(parameter->children[1]->id2ast, parameter);
-            while (parameter->children[1]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
+            simplify_sv(parameter->children[1]->id2ast, parameter);
+            while (simplify(parameter->children[1]->id2ast, true, false, false, 1, -1, false, false)) {
             }
         }
     }
     // then simplify parameter to AST_CONSTANT or AST_REALVALUE
-    while (parameter->simplify(true, false, false, 1, -1, false, false)) {
+    while (simplify(parameter, true, false, false, 1, -1, false, false)) {
     }
     clear_current_scope();
 }

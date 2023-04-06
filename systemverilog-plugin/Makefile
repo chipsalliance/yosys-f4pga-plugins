@@ -22,7 +22,8 @@ SOURCES = UhdmAst.cc \
           uhdmcommonfrontend.cc \
           uhdmsurelogastfrontend.cc \
           uhdmastreport.cc \
-          third_party/yosys/const2ast.cc
+          third_party/yosys/const2ast.cc \
+          third_party/yosys/simplify.cc
 
 # Directory to search for Surelog and UHDM libraries
 UHDM_INSTALL_DIR ?= /usr/local
