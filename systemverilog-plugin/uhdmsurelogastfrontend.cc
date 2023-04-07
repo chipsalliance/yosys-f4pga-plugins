@@ -33,8 +33,10 @@
 
 #include <list>
 
-#include "Surelog/ErrorReporting/Report.h"
-#include "Surelog/surelog.h"
+#include "Surelog/API/Surelog.h"
+#include "Surelog/CommandLine/CommandLineParser.h"
+#include "Surelog/ErrorReporting/ErrorContainer.h"
+#include "Surelog/SourceCompile/SymbolTable.h"
 
 namespace UHDM
 {
