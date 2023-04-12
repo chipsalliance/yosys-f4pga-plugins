@@ -150,6 +150,7 @@ class UhdmAst
     void process_while();
     void process_gate();
     void process_primterm();
+    void process_type_parameter();
     void simplify_parameter(::Yosys::AST::AstNode *parameter, ::Yosys::AST::AstNode *module_node = nullptr);
     void process_unsupported_stmt(const UHDM::BaseClass *object, bool is_error = true);
 

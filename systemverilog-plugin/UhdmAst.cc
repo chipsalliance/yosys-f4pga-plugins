@@ -54,6 +54,7 @@ static IdString force_convert;
 static IdString is_imported;
 static IdString is_simplified_wire;
 static IdString low_high_bound;
+static IdString is_type_parameter;
 }; // namespace attr_id
 
 // TODO(mglb): use attr_id::* directly everywhere and remove those methods.
@@ -84,6 +85,7 @@ void attr_id_init()
     attr_id::is_imported = IdString("$systemverilog_plugin$is_imported");
     attr_id::is_simplified_wire = IdString("$systemverilog_plugin$is_simplified_wire");
     attr_id::low_high_bound = IdString("$systemverilog_plugin$low_high_bound");
+    attr_id::is_type_parameter = IdString("$systemverilog_plugin$is_type_parameter");
 }
 
 void attr_id_cleanup()
@@ -96,6 +98,25 @@ void attr_id_cleanup()
     attr_id::unpacked_ranges = IdString();
     attr_id::packed_ranges = IdString();
     attr_id::partial = IdString();
+    attr_id::is_type_parameter = IdString();
+}
+
+static AST::AstNode *get_attribute(AST::AstNode *node, const IdString &attribute)
+{
+    log_assert(node);
+    if (!node->attributes.count(attribute))
+        return nullptr;
+
+    return node->attributes[attribute];
+}
+
+// Consumes attr_node.
+static void set_attribute(AST::AstNode *node, const IdString &attribute, AST::AstNode *attr_node)
+{
+    log_assert(node);
+    log_assert(attr_node);
+    delete node->attributes[attribute];
+    node->attributes[attribute] = attr_node;
 }
 
 // Delete the selected attribute if it exists.
@@ -119,7 +140,7 @@ static void delete_internal_attributes(AST::AstNode *node)
         return;
 
     for (auto &attr : {UhdmAst::partial(), UhdmAst::packed_ranges(), UhdmAst::unpacked_ranges(), UhdmAst::force_convert(), UhdmAst::is_imported(),
-                       UhdmAst::is_simplified_wire(), UhdmAst::low_high_bound()}) {
+                       UhdmAst::is_simplified_wire(), UhdmAst::low_high_bound(), attr_id::is_type_parameter}) {
         delete_attribute(node, attr);
     }
 }
@@ -1879,6 +1900,7 @@ void UhdmAst::process_design()
             continue;
         if (pair.second->type == AST::AST_PACKAGE) {
             check_memories(pair.second);
+            clear_current_scope();
             setup_current_scope(shared.top_nodes, pair.second);
             simplify_sv(pair.second, nullptr);
             clear_current_scope();
@@ -1992,6 +2014,7 @@ void UhdmAst::process_module()
 
             delete_attribute(current_node, UhdmAst::partial());
         } else {
+            // processing nodes belonging to 'uhdmallModules'
             current_node = make_ast_node(AST::AST_MODULE);
             current_node->str = type;
             shared.top_nodes[current_node->str] = current_node;
@@ -2004,7 +2027,8 @@ void UhdmAst::process_module()
             });
             visit_one_to_many({vpiModule, vpiParameter, vpiParamAssign, vpiNet, vpiArrayNet, vpiProcess}, obj_h, [&](AST::AstNode *node) {
                 if (node) {
-                    if (node->type == AST::AST_ASSIGN && node->children.size() < 2) {
+                    if ((node->type == AST::AST_ASSIGN && node->children.size() < 2) ||
+                        (node->type == AST::AST_PARAMETER && get_attribute(node, attr_id::is_type_parameter))) {
                         delete node;
                         return;
                     }
@@ -2016,6 +2040,42 @@ void UhdmAst::process_module()
         // Not a top module, create instance
         current_node = make_ast_node(AST::AST_CELL);
         std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
+
+        std::vector<AST::AstNode *> parameter_typedefs;
+
+        visit_one_to_many({vpiParameter}, obj_h, [&](AST::AstNode *node) {
+            log_assert(node);
+            AST::AstNode *attr = get_attribute(node, attr_id::is_type_parameter);
+
+            if (!attr) {
+                // Process type parameters only.
+                delete node;
+                return;
+            }
+
+            if (node->children.size() == 0) {
+                log_assert(!attr->str.empty());
+                // Anonymous types have no chidren, and store the parameter name in attr->str.
+                parameters.push_back(std::make_pair(node->str, attr->str));
+                delete node;
+                return;
+            }
+
+            for (auto child : node->children) {
+                if (child->type == AST::AST_TYPEDEF && !child->str.empty()) {
+                    // process_type_parameter should have created a node with the parameter name
+                    //   and a child with the name of the value assigned to the parameter.
+                    parameters.push_back(std::make_pair(node->str, child->str));
+                }
+
+                if (child->type == AST::AST_TYPEDEF || child->type == AST::AST_ENUM) {
+                    // Copy definition of the type provided as parameter.
+                    parameter_typedefs.push_back(child->clone());
+                }
+            }
+            delete node;
+        });
+
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
             if (node && node->type == AST::AST_PARAMETER) {
                 log_assert(!node->children.empty());
@@ -2072,6 +2132,7 @@ void UhdmAst::process_module()
                 }
             }
         });
+        module_node->children.insert(std::end(module_node->children), std::begin(parameter_typedefs), std::end(parameter_typedefs));
         if (module_node->attributes.count(UhdmAst::partial())) {
             AST::AstNode *attr = module_node->attributes.at(UhdmAst::partial());
             if (attr->type == AST::AST_CONSTANT)
@@ -4597,6 +4658,69 @@ void UhdmAst::process_unsupported_stmt(const UHDM::BaseClass *object, bool is_er
     log_func("%sCurrently not supported object of type '%s'\n", prefix.c_str(), UHDM::VpiTypeName(obj_h).c_str());
 }
 
+void UhdmAst::process_type_parameter()
+{
+    current_node = make_ast_node(AST::AST_PARAMETER);
+
+    // Use an attribute to distinguish "type parameters" from other parameters
+    set_attribute(current_node, attr_id::is_type_parameter, AST::AstNode::mkconst_int(1, false, 1));
+    std::string renamed_enum;
+
+    visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
+        if (!node)
+            return;
+
+        if (node->type == AST::AST_WIRE && node->str.empty()) {
+            // anonymous type
+            get_attribute(current_node, attr_id::is_type_parameter)->str = "anonymous_parameter" + std::to_string(shared.next_anonymous_type_id());
+            delete node;
+            return;
+        }
+
+        if (node->type == AST::AST_ENUM) {
+            // Enum typedefs are composed of AST_ENUM and AST_TYPEDEF where the enum shall be renamed,
+            // so that the original name used in code is assigned to the AST_TYPEDEF node,
+            // and a mangled name is assigned to the AST_ENUM node.
+            renamed_enum = node->str + "$enum" + std::to_string(shared.next_enum_id());
+        }
+
+        current_node->children.push_back(node->clone());
+
+        // The child stores information about the type assigned to the parameter
+        //   this information will be used to rename the module
+
+        // find the typedef for `node` in the upper scope and copy it to .children of the AST_PARAMETER node
+        // if unable to find the typedef, continue without error as this could be a globally available type
+
+        if (shared.current_top_node) {
+            for (auto child : shared.current_top_node->children) {
+                // name of the type we're looking for
+                if (child->str == node->str && child->type == AST::AST_TYPEDEF) {
+                    current_node->children.push_back(child->clone());
+                    break;
+                }
+            }
+        }
+        delete node;
+    });
+
+    if (!renamed_enum.empty()) {
+        for (auto child : current_node->children) {
+            if (child->type == AST::AST_TYPEDEF) {
+                log_assert(child->children.size() > 0);
+                set_attribute(child->children[0], ID::enum_type, AST::AstNode::mkconst_str(renamed_enum));
+            }
+            if (child->type == AST::AST_ENUM) {
+                child->str = renamed_enum;
+                // Names of enum variants need to be unique even accross Enums, otherwise Yosys fails.
+                for (auto grandchild : child->children) {
+                    grandchild->str = renamed_enum + "." + grandchild->str;
+                }
+            }
+        }
+    }
+}
+
 AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
 {
     obj_h = obj_handle;
@@ -4869,11 +4993,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         process_unsupported_stmt(object);
         break;
     case vpiTypeParameter:
-        // Instances in an `uhdmTopModules` tree already have all parameter references
-        // substituted with the parameter type/value by Surelog,
-        // so the plugin doesn't need to process the parameter itself.
-        // Other parameter types are handled by the plugin
-        // mainly because they were implemented before Surelog did the substitution.
+        process_type_parameter();
         break;
     case vpiProgram:
     default:
