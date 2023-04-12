@@ -2357,7 +2357,9 @@ static UHDM::expr *reduce_expression(const UHDM::any *expr, const UHDM::any *ins
     bool invalidvalue = false;
     UHDM::ExprEval eval;
     UHDM::expr *resolved_operation = eval.reduceExpr(expr, invalidvalue, inst, pexpr);
-    log_assert(!invalidvalue);
+    if (invalidvalue) {
+        log_file_warning(std::string(expr->VpiFile()), expr->VpiLineNo(), "Could not reduce expression.\n");
+    }
     return resolved_operation;
 }
 
