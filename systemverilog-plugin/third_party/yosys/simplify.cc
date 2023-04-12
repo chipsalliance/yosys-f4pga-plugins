@@ -175,6 +175,22 @@ static int size_packed_struct(Yosys::AST::AstNode *snode, int base_offset)
 	bool is_union = (snode->type == Yosys::AST::AST_UNION);
 	int offset = 0;
 	int packed_width = -1;
+
+	// embedded struct or union with range?
+	auto it = std::remove_if(snode->children.begin(), snode->children.end(), [](Yosys::AST::AstNode *node) { return node->type == Yosys::AST::AST_RANGE; });
+	std::vector<Yosys::AST::AstNode *> ranges(it, snode->children.end());
+	snode->children.erase(it, snode->children.end());
+	if (!ranges.empty()) {
+		if (ranges.size() > 1) {
+			log_file_error(ranges[1]->filename, ranges[1]->location.first_line,
+						   "Currently support for custom-type with range is limited to single range\n");
+		}
+		for (auto range : ranges) {
+			snode->multirange_dimensions.push_back(min(range->range_left, range->range_right));
+			snode->multirange_dimensions.push_back(max(range->range_left, range->range_right) - min(range->range_left, range->range_right) + 1);
+			snode->multirange_swapped.push_back(range->range_swapped);
+		}
+	}
 	// examine members from last to first
 	for (auto it = snode->children.rbegin(); it != snode->children.rend(); ++it) {
 		auto node = *it;
