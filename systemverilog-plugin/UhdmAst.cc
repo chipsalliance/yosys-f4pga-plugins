@@ -17,6 +17,7 @@
 #include <uhdm/vpi_user.h>
 
 #include "third_party/yosys/const2ast.h"
+#include "third_party/yosys/simplify.h"
 
 YOSYS_NAMESPACE_BEGIN
 namespace VERILOG_FRONTEND
@@ -53,6 +54,7 @@ static IdString force_convert;
 static IdString is_imported;
 static IdString is_simplified_wire;
 static IdString low_high_bound;
+static IdString is_type_parameter;
 }; // namespace attr_id
 
 // TODO(mglb): use attr_id::* directly everywhere and remove those methods.
@@ -83,6 +85,7 @@ void attr_id_init()
     attr_id::is_imported = IdString("$systemverilog_plugin$is_imported");
     attr_id::is_simplified_wire = IdString("$systemverilog_plugin$is_simplified_wire");
     attr_id::low_high_bound = IdString("$systemverilog_plugin$low_high_bound");
+    attr_id::is_type_parameter = IdString("$systemverilog_plugin$is_type_parameter");
 }
 
 void attr_id_cleanup()
@@ -95,6 +98,25 @@ void attr_id_cleanup()
     attr_id::unpacked_ranges = IdString();
     attr_id::packed_ranges = IdString();
     attr_id::partial = IdString();
+    attr_id::is_type_parameter = IdString();
+}
+
+static AST::AstNode *get_attribute(AST::AstNode *node, const IdString &attribute)
+{
+    log_assert(node);
+    if (!node->attributes.count(attribute))
+        return nullptr;
+
+    return node->attributes[attribute];
+}
+
+// Consumes attr_node.
+static void set_attribute(AST::AstNode *node, const IdString &attribute, AST::AstNode *attr_node)
+{
+    log_assert(node);
+    log_assert(attr_node);
+    delete node->attributes[attribute];
+    node->attributes[attribute] = attr_node;
 }
 
 // Delete the selected attribute if it exists.
@@ -118,7 +140,7 @@ static void delete_internal_attributes(AST::AstNode *node)
         return;
 
     for (auto &attr : {UhdmAst::partial(), UhdmAst::packed_ranges(), UhdmAst::unpacked_ranges(), UhdmAst::force_convert(), UhdmAst::is_imported(),
-                       UhdmAst::is_simplified_wire(), UhdmAst::low_high_bound()}) {
+                       UhdmAst::is_simplified_wire(), UhdmAst::low_high_bound(), attr_id::is_type_parameter}) {
         delete_attribute(node, attr);
     }
 }
@@ -136,6 +158,8 @@ static void delete_children(AST::AstNode *node)
     }
     node->children.clear();
 }
+
+static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node);
 
 static void sanitize_symbol_name(std::string &name)
 {
@@ -274,18 +298,22 @@ static size_t add_multirange_attribute(AST::AstNode *wire_node, const std::vecto
         if (ranges[i]->children.size() == 1) {
             ranges[i]->children.push_back(ranges[i]->children[0]->clone());
         }
-        while (ranges[i]->simplify(true, false, false, 1, -1, false, false)) {
+        simplify_sv(ranges[i], wire_node);
+        while (simplify(ranges[i], true, false, false, 1, -1, false, false)) {
         }
         // this workaround case, where yosys doesn't follow id2ast and simplifies it to resolve constant
         if (ranges[i]->children[0]->id2ast) {
-            while (ranges[i]->children[0]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
+            simplify_sv(ranges[i]->children[0]->id2ast, ranges[i]->children[0]);
+            while (simplify(ranges[i]->children[0]->id2ast, true, false, false, 1, -1, false, false)) {
             }
         }
         if (ranges[i]->children[1]->id2ast) {
-            while (ranges[i]->children[1]->id2ast->simplify(true, false, false, 1, -1, false, false)) {
+            simplify_sv(ranges[i]->children[1]->id2ast, ranges[i]->children[1]);
+            while (simplify(ranges[i]->children[1]->id2ast, true, false, false, 1, -1, false, false)) {
             }
         }
-        while (ranges[i]->simplify(true, false, false, 1, -1, false, false)) {
+        simplify_sv(ranges[i], wire_node);
+        while (simplify(ranges[i], true, false, false, 1, -1, false, false)) {
         }
         log_assert(ranges[i]->children[0]->type == AST::AST_CONSTANT);
         log_assert(ranges[i]->children[1]->type == AST::AST_CONSTANT);
@@ -405,9 +433,11 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     wiretype_ast = AST_INTERNAL::current_scope[wiretype_node->str];
     // we need to setup current top ast as this simplify
     // needs to have access to all already defined ids
-    while (wire_node->simplify(true, false, false, 1, -1, false, false)) {
+    while (simplify(wire_node, true, false, false, 1, -1, false, false)) {
     }
-    if (wiretype_ast->children[0]->type == AST::AST_STRUCT && wire_node->type == AST::AST_WIRE) {
+    log_assert(!wiretype_ast->children.empty());
+    if ((wiretype_ast->children[0]->type == AST::AST_STRUCT || wiretype_ast->children[0]->type == AST::AST_UNION) &&
+        wire_node->type == AST::AST_WIRE) {
         auto struct_width = get_max_offset_struct(wiretype_ast->children[0]);
         wire_node->range_left = struct_width;
         wire_node->children[0]->range_left = struct_width;
@@ -670,26 +700,6 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
     }
     current_struct_elem = *struct_elem_it;
 
-    AST::AstNode *left = nullptr, *right = nullptr;
-    if (current_struct_elem->type == AST::AST_STRUCT_ITEM) {
-        left = AST::AstNode::mkconst_int(current_struct_elem->range_left, true);
-        right = AST::AstNode::mkconst_int(current_struct_elem->range_right, true);
-    } else if (current_struct_elem->type == AST::AST_STRUCT) {
-        // Struct can have multiple range, so to get size of 1 struct,
-        // we get left range for first children, and right range for last children
-        left = AST::AstNode::mkconst_int(current_struct_elem->children.front()->range_left, true);
-        right = AST::AstNode::mkconst_int(current_struct_elem->children.back()->range_right, true);
-    } else if (current_struct_elem->type == AST::AST_UNION) {
-        left = AST::AstNode::mkconst_int(current_struct_elem->range_left, true);
-        right = AST::AstNode::mkconst_int(current_struct_elem->range_right, true);
-    } else {
-        // Structs currently can only have AST_STRUCT, AST_STRUCT_ITEM, or AST_UNION.
-        log_file_error(current_struct_elem->filename, current_struct_elem->location.first_line,
-                       "Accessing struct member of type %s is unsupported.\n", type2str(current_struct_elem->type).c_str());
-    }
-
-    auto elem_size =
-      new AST::AstNode(AST::AST_ADD, new AST::AstNode(AST::AST_SUB, left->clone(), right->clone()), AST::AstNode::mkconst_int(1, true));
     AST::AstNode *sub_dot = nullptr;
     AST::AstNode *struct_range = nullptr;
 
@@ -701,10 +711,46 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
         }
         if (c->type == AST::AST_RANGE) {
             // Currently supporting only 1 range
-            log_assert(!struct_range);
+            if (struct_range) {
+                log_file_error(struct_range->filename, struct_range->location.first_line,
+                               "Currently support for dot-access is limited to single range\n");
+            }
             struct_range = c;
         }
     }
+    AST::AstNode *left = nullptr, *right = nullptr;
+    switch (current_struct_elem->type) {
+    case AST::AST_STRUCT_ITEM:
+        left = AST::AstNode::mkconst_int(current_struct_elem->range_left, true);
+        right = AST::AstNode::mkconst_int(current_struct_elem->range_right, true);
+        break;
+    case AST::AST_STRUCT:
+    case AST::AST_UNION:
+        // TODO(krak): add proper support for accessing struct/union elements
+        // with multirange
+        // Currently support only special access to 2 dimensional packed element
+        // when selecting single range
+        log_assert(current_struct_elem->multirange_dimensions.size() % 2 == 0);
+        if (struct_range && (current_struct_elem->multirange_dimensions.size() / 2) == 2) {
+            // get element size in number of bits
+            const int single_elem_size = current_struct_elem->children.front()->range_left + 1;
+            left = AST::AstNode::mkconst_int(single_elem_size * current_struct_elem->multirange_dimensions.back(), true);
+            right =
+              AST::AstNode::mkconst_int(current_struct_elem->children.back()->range_right * current_struct_elem->multirange_dimensions.back(), true);
+        } else {
+            left = AST::AstNode::mkconst_int(current_struct_elem->children.front()->range_left, true);
+            right = AST::AstNode::mkconst_int(current_struct_elem->children.back()->range_right, true);
+        }
+        break;
+    default:
+        // Structs currently can only have AST_STRUCT, AST_STRUCT_ITEM, or AST_UNION.
+        log_file_error(current_struct_elem->filename, current_struct_elem->location.first_line,
+                       "Accessing struct member of type %s is unsupported.\n", type2str(current_struct_elem->type).c_str());
+    };
+
+    auto elem_size =
+      new AST::AstNode(AST::AST_ADD, new AST::AstNode(AST::AST_SUB, left->clone(), right->clone()), AST::AstNode::mkconst_int(1, true));
+
     if (sub_dot) {
         // First select correct element in first struct
         std::swap(left, sub_dot->children[0]);
@@ -873,7 +919,7 @@ static int simplify_struct(AST::AstNode *snode, int base_offset, AST::AstNode *p
     int packed_width = -1;
     for (auto s : snode->children) {
         if (s->type == AST::AST_RANGE) {
-            while (s->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(s, true, false, false, 1, -1, false, false)) {
             };
         }
     }
@@ -882,10 +928,6 @@ static int simplify_struct(AST::AstNode *snode, int base_offset, AST::AstNode *p
     std::vector<AST::AstNode *> ranges(it, snode->children.end());
     snode->children.erase(it, snode->children.end());
     if (!ranges.empty()) {
-        if (ranges.size() > 1) {
-            log_file_error(ranges[1]->filename, ranges[1]->location.first_line,
-                           "Currently support for custom-type with range is limited to single range\n");
-        }
         for (auto range : ranges) {
             snode->multirange_dimensions.push_back(min(range->range_left, range->range_right));
             snode->multirange_dimensions.push_back(max(range->range_left, range->range_right) - min(range->range_left, range->range_right) + 1);
@@ -901,9 +943,11 @@ static int simplify_struct(AST::AstNode *snode, int base_offset, AST::AstNode *p
             // embedded struct or union
             width = simplify_struct(node, base_offset + offset, parent_node);
             if (!node->multirange_dimensions.empty()) {
-                int number_of_structs = 1;
-                number_of_structs = node->multirange_dimensions.back();
-                width *= number_of_structs;
+                // Multiply widths of all dimensions.
+                // `multirange_dimensions` stores (repeating) pairs of [offset, width].
+                for (size_t i = 1; i < node->multirange_dimensions.size(); i += 2) {
+                    width *= node->multirange_dimensions[i];
+                }
             }
             // set range of struct
             node->range_right = base_offset + offset;
@@ -1034,7 +1078,7 @@ static void simplify_format_string(AST::AstNode *current_node)
             AST::AstNode *node_arg = current_node->children[next_arg];
             char cformat = sformat[++i];
             if (cformat == 'b' or cformat == 'B') {
-                node_arg->simplify(true, false, false, 1, -1, false, false);
+                simplify(node_arg, true, false, false, 1, -1, false, false);
                 if (node_arg->type != AST::AST_CONSTANT)
                     log_file_error(current_node->filename, current_node->location.first_line,
                                    "Failed to evaluate system task `%s' with non-constant argument.\n", current_node->str.c_str());
@@ -1058,7 +1102,10 @@ static void simplify_format_string(AST::AstNode *current_node)
     current_node->children[0] = AST::AstNode::mkconst_str(preformatted_string);
 }
 
-static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
+// A wrapper for Yosys simplify function.
+// Simplifies AST constructs specific to this plugin to a form understandable by Yosys' simplify and then calls the latter if necessary.
+// Since simplify from Yosys has been forked to this codebase, all new code should be added there instead.
+static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
 {
     auto dot_it = std::find_if(current_node->children.begin(), current_node->children.end(),
                                [](auto c) { return c->type == static_cast<int>(AST::Extended::AST_DOT); });
@@ -1078,7 +1125,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
                         log_error("Multirange in AST_DOT is currently unsupported\n");
 
                     dot->type = AST::AST_IDENTIFIER;
-                    simplify(dot, nullptr);
+                    simplify_sv(dot, nullptr);
                     AST::AstNode *range_const = parent_node->children[0]->children[0];
                     prefix_node = new AST::AstNode(AST::AST_PREFIX, range_const->clone(), dot->clone());
                     break;
@@ -1101,7 +1148,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
         } else {
             auto wire_node = AST_INTERNAL::current_scope[current_node->str];
             // make sure wire_node is already simplified
-            simplify(wire_node, nullptr);
+            simplify_sv(wire_node, nullptr);
             expanded = convert_dot(wire_node, current_node, dot);
         }
     }
@@ -1114,7 +1161,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
     }
     // First simplify children
     for (size_t i = 0; i < current_node->children.size(); i++) {
-        simplify(current_node->children[i], current_node);
+        simplify_sv(current_node->children[i], current_node);
     }
     switch (current_node->type) {
     case AST::AST_TYPEDEF:
@@ -1141,7 +1188,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
 
             // if a wire is simplified multiple times, its ranges may be added multiple times and be redundant as a result
             if (!wire_node->attributes.count(UhdmAst::is_simplified_wire())) {
-                simplify(wire_node, nullptr);
+                simplify_sv(wire_node, nullptr);
             }
             const int packed_ranges_size =
               wire_node->attributes.count(UhdmAst::packed_ranges()) ? wire_node->attributes[UhdmAst::packed_ranges()]->children.size() : 0;
@@ -1174,7 +1221,7 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
     case AST::AST_STRUCT_ITEM:
         AST_INTERNAL::current_scope[current_node->str] = current_node;
         convert_packed_unpacked_range(current_node);
-        while (current_node->simplify(true, false, false, 1, -1, false, false)) {
+        while (simplify(current_node, true, false, false, 1, -1, false, false)) {
         };
         break;
     case AST::AST_TCALL:
@@ -1198,9 +1245,9 @@ static void simplify(AST::AstNode *current_node, AST::AstNode *parent_node)
             current_node->children[0] = nullptr;
             current_node->children[1] = nullptr;
             delete_children(current_node);
-            while (low_high_bound->children[0]->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(low_high_bound->children[0], true, false, false, 1, -1, false, false)) {
             };
-            while (low_high_bound->children[1]->simplify(true, false, false, 1, -1, false, false)) {
+            while (simplify(low_high_bound->children[1], true, false, false, 1, -1, false, false)) {
             };
             log_assert(low_high_bound->children[0]->type == AST::AST_CONSTANT);
             log_assert(low_high_bound->children[1]->type == AST::AST_CONSTANT);
@@ -1853,8 +1900,9 @@ void UhdmAst::process_design()
             continue;
         if (pair.second->type == AST::AST_PACKAGE) {
             check_memories(pair.second);
+            clear_current_scope();
             setup_current_scope(shared.top_nodes, pair.second);
-            simplify(pair.second, nullptr);
+            simplify_sv(pair.second, nullptr);
             clear_current_scope();
         }
     }
@@ -1869,7 +1917,7 @@ void UhdmAst::process_design()
             else {
                 check_memories(pair.second);
                 setup_current_scope(shared.top_nodes, pair.second);
-                simplify(pair.second, nullptr);
+                simplify_sv(pair.second, nullptr);
                 clear_current_scope();
                 current_node->children.push_back(pair.second);
             }
@@ -1901,9 +1949,33 @@ void UhdmAst::simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_n
         });
     }
     // first apply custom simplification step if needed
-    simplify(parameter, nullptr);
+    simplify_sv(parameter, module_node);
+    // workaround for yosys sometimes not simplifying parameters children
+    // parameters can have 2 children:
+    // first child should be parameter value
+    // second child should be parameter range (optional)
+    log_assert(!parameter->children.empty());
+    simplify_sv(parameter->children[0], parameter);
+    while (simplify(parameter->children[0], true, false, false, 1, -1, false, false)) {
+    }
+    // follow id2ast as yosys doesn't do it by default
+    if (parameter->children[0]->id2ast) {
+        simplify_sv(parameter->children[0]->id2ast, parameter);
+        while (simplify(parameter->children[0]->id2ast, true, false, false, 1, -1, false, false)) {
+        }
+    }
+    if (parameter->children.size() > 1) {
+        simplify_sv(parameter->children[1], parameter);
+        while (simplify(parameter->children[1], true, false, false, 1, -1, false, false)) {
+        }
+        if (parameter->children[1]->id2ast) {
+            simplify_sv(parameter->children[1]->id2ast, parameter);
+            while (simplify(parameter->children[1]->id2ast, true, false, false, 1, -1, false, false)) {
+            }
+        }
+    }
     // then simplify parameter to AST_CONSTANT or AST_REALVALUE
-    while (parameter->simplify(true, false, false, 1, -1, false, false)) {
+    while (simplify(parameter, true, false, false, 1, -1, false, false)) {
     }
     clear_current_scope();
 }
@@ -1942,6 +2014,7 @@ void UhdmAst::process_module()
 
             delete_attribute(current_node, UhdmAst::partial());
         } else {
+            // processing nodes belonging to 'uhdmallModules'
             current_node = make_ast_node(AST::AST_MODULE);
             current_node->str = type;
             shared.top_nodes[current_node->str] = current_node;
@@ -1954,7 +2027,8 @@ void UhdmAst::process_module()
             });
             visit_one_to_many({vpiModule, vpiParameter, vpiParamAssign, vpiNet, vpiArrayNet, vpiProcess}, obj_h, [&](AST::AstNode *node) {
                 if (node) {
-                    if (node->type == AST::AST_ASSIGN && node->children.size() < 2) {
+                    if ((node->type == AST::AST_ASSIGN && node->children.size() < 2) ||
+                        (node->type == AST::AST_PARAMETER && get_attribute(node, attr_id::is_type_parameter))) {
                         delete node;
                         return;
                     }
@@ -1966,6 +2040,42 @@ void UhdmAst::process_module()
         // Not a top module, create instance
         current_node = make_ast_node(AST::AST_CELL);
         std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
+
+        std::vector<AST::AstNode *> parameter_typedefs;
+
+        visit_one_to_many({vpiParameter}, obj_h, [&](AST::AstNode *node) {
+            log_assert(node);
+            AST::AstNode *attr = get_attribute(node, attr_id::is_type_parameter);
+
+            if (!attr) {
+                // Process type parameters only.
+                delete node;
+                return;
+            }
+
+            if (node->children.size() == 0) {
+                log_assert(!attr->str.empty());
+                // Anonymous types have no chidren, and store the parameter name in attr->str.
+                parameters.push_back(std::make_pair(node->str, attr->str));
+                delete node;
+                return;
+            }
+
+            for (auto child : node->children) {
+                if (child->type == AST::AST_TYPEDEF && !child->str.empty()) {
+                    // process_type_parameter should have created a node with the parameter name
+                    //   and a child with the name of the value assigned to the parameter.
+                    parameters.push_back(std::make_pair(node->str, child->str));
+                }
+
+                if (child->type == AST::AST_TYPEDEF || child->type == AST::AST_ENUM) {
+                    // Copy definition of the type provided as parameter.
+                    parameter_typedefs.push_back(child->clone());
+                }
+            }
+            delete node;
+        });
+
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
             if (node && node->type == AST::AST_PARAMETER) {
                 log_assert(!node->children.empty());
@@ -2022,6 +2132,7 @@ void UhdmAst::process_module()
                 }
             }
         });
+        module_node->children.insert(std::end(module_node->children), std::begin(parameter_typedefs), std::end(parameter_typedefs));
         if (module_node->attributes.count(UhdmAst::partial())) {
             AST::AstNode *attr = module_node->attributes.at(UhdmAst::partial());
             if (attr->type == AST::AST_CONSTANT)
@@ -2246,7 +2357,9 @@ static UHDM::expr *reduce_expression(const UHDM::any *expr, const UHDM::any *ins
     bool invalidvalue = false;
     UHDM::ExprEval eval;
     UHDM::expr *resolved_operation = eval.reduceExpr(expr, invalidvalue, inst, pexpr);
-    log_assert(!invalidvalue);
+    if (invalidvalue) {
+        log_file_warning(std::string(expr->VpiFile()), expr->VpiLineNo(), "Could not reduce expression.\n");
+    }
     return resolved_operation;
 }
 
@@ -2636,9 +2749,27 @@ void UhdmAst::process_assignment(const UHDM::BaseClass *object)
 
     visit_one_to_one({vpiLhs, vpiRhs}, obj_h, [&](AST::AstNode *node) {
         if (node) {
-            if (node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) {
+            // fix node types for some assignments
+            // yosys requires that declaration of variable
+            // and assignment are separated
+            switch (node->type) {
+            case AST::AST_WIRE:
+                // wires can be declarated inside initialization block of for block
+                if (AST::AstNode *for_block = find_ancestor({AST::AST_BLOCK})) {
+                    if (for_block->str.find("$fordecl_block") != std::string::npos)
+                        break;
+                }
+                [[fallthrough]];
+            case AST::AST_PARAMETER:
+            case AST::AST_LOCALPARAM:
                 node->type = AST::AST_IDENTIFIER;
-            }
+                delete_children(node);
+                delete_attribute(node, UhdmAst::packed_ranges());
+                delete_attribute(node, UhdmAst::unpacked_ranges());
+                break;
+            default:
+                break;
+            };
             current_node->children.push_back(node);
         }
     });
@@ -3790,17 +3921,6 @@ void UhdmAst::process_function()
     visit_one_to_many({vpiVariables}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
     visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
         if (node) {
-            // Fix for assignments on declaration, e.g.:
-            // logic [63:0] key_out = key_in;
-            // key_out is already declared as vpiVariables, but it is also declared inside vpiStmt
-            const std::unordered_set<AST::AstNodeType> assign_types = {AST::AST_ASSIGN, AST::AST_ASSIGN_EQ, AST::AST_ASSIGN_LE};
-            for (auto c : node->children) {
-                if (assign_types.find(c->type) != assign_types.end() && c->children[0]->type == AST::AST_WIRE) {
-                    c->children[0]->type = AST::AST_IDENTIFIER;
-                    delete_attribute(c->children[0], UhdmAst::packed_ranges());
-                    delete_attribute(c->children[0], UhdmAst::unpacked_ranges());
-                }
-            }
             current_node->children.push_back(node);
         }
     });
@@ -4540,6 +4660,69 @@ void UhdmAst::process_unsupported_stmt(const UHDM::BaseClass *object, bool is_er
     log_func("%sCurrently not supported object of type '%s'\n", prefix.c_str(), UHDM::VpiTypeName(obj_h).c_str());
 }
 
+void UhdmAst::process_type_parameter()
+{
+    current_node = make_ast_node(AST::AST_PARAMETER);
+
+    // Use an attribute to distinguish "type parameters" from other parameters
+    set_attribute(current_node, attr_id::is_type_parameter, AST::AstNode::mkconst_int(1, false, 1));
+    std::string renamed_enum;
+
+    visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
+        if (!node)
+            return;
+
+        if (node->type == AST::AST_WIRE && node->str.empty()) {
+            // anonymous type
+            get_attribute(current_node, attr_id::is_type_parameter)->str = "anonymous_parameter" + std::to_string(shared.next_anonymous_type_id());
+            delete node;
+            return;
+        }
+
+        if (node->type == AST::AST_ENUM) {
+            // Enum typedefs are composed of AST_ENUM and AST_TYPEDEF where the enum shall be renamed,
+            // so that the original name used in code is assigned to the AST_TYPEDEF node,
+            // and a mangled name is assigned to the AST_ENUM node.
+            renamed_enum = node->str + "$enum" + std::to_string(shared.next_enum_id());
+        }
+
+        current_node->children.push_back(node->clone());
+
+        // The child stores information about the type assigned to the parameter
+        //   this information will be used to rename the module
+
+        // find the typedef for `node` in the upper scope and copy it to .children of the AST_PARAMETER node
+        // if unable to find the typedef, continue without error as this could be a globally available type
+
+        if (shared.current_top_node) {
+            for (auto child : shared.current_top_node->children) {
+                // name of the type we're looking for
+                if (child->str == node->str && child->type == AST::AST_TYPEDEF) {
+                    current_node->children.push_back(child->clone());
+                    break;
+                }
+            }
+        }
+        delete node;
+    });
+
+    if (!renamed_enum.empty()) {
+        for (auto child : current_node->children) {
+            if (child->type == AST::AST_TYPEDEF) {
+                log_assert(child->children.size() > 0);
+                set_attribute(child->children[0], ID::enum_type, AST::AstNode::mkconst_str(renamed_enum));
+            }
+            if (child->type == AST::AST_ENUM) {
+                child->str = renamed_enum;
+                // Names of enum variants need to be unique even accross Enums, otherwise Yosys fails.
+                for (auto grandchild : child->children) {
+                    grandchild->str = renamed_enum + "." + grandchild->str;
+                }
+            }
+        }
+    }
+}
+
 AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
 {
     obj_h = obj_handle;
@@ -4812,11 +4995,7 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
         process_unsupported_stmt(object);
         break;
     case vpiTypeParameter:
-        // Instances in an `uhdmTopModules` tree already have all parameter references
-        // substituted with the parameter type/value by Surelog,
-        // so the plugin doesn't need to process the parameter itself.
-        // Other parameter types are handled by the plugin
-        // mainly because they were implemented before Surelog did the substitution.
+        process_type_parameter();
         break;
     case vpiProgram:
     default:

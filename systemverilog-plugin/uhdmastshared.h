@@ -1,6 +1,8 @@
 #ifndef _UHDM_AST_SHARED_H_
 #define _UHDM_AST_SHARED_H_ 1
 
+#include "frontends/ast/ast.h"
+
 #include "uhdmastreport.h"
 #include <string>
 #include <unordered_map>
@@ -20,6 +22,9 @@ class UhdmAstShared
     // Used for generating loop names
     unsigned loop_count = 0;
 
+    // Used for generating unique names for anonymous types used as parameters.
+    unsigned anonymous_type_count = 0;
+
   public:
     ~UhdmAstShared()
     {
@@ -36,6 +41,9 @@ class UhdmAstShared
 
     // Generate the next loop ID (starting with 0)
     unsigned next_loop_id() { return loop_count++; }
+
+    // Generate the next anonymous type ID (starting with 0).
+    unsigned next_anonymous_type_id() { return anonymous_type_count++; }
 
     // Flag that determines whether debug info should be printed
     bool debug_flag = false;

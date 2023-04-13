@@ -20,6 +20,6 @@ channels:
   - litex-hub
 dependencies:
   - litex-hub::yosys=0.17_7_g990c9b8e1=20220512_085338_py37
-  - litex-hub::surelog=0.0_5580_g493120558=20230116_180937_py37
+  - litex-hub::surelog
   - litex-hub::iverilog
   - cas-atlantic::vtr-libs
