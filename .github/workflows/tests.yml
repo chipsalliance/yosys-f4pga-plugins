@@ -14,16 +14,40 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: Plugins builds and tests
+name: CI tests
 
-on: [push, pull_request]
+on:
+  workflow_call:
+    inputs:
+      yosys-version:
+        required: true
+        type: string
+
 
 jobs:
-  Run-tests-reusable:
+  Run-tests:
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
-        yosys-version: [conda, HEAD, yosys-0.25]
-    uses: ./.github/workflows/tests.yml
-    with:
-      yosys-version: ${{ matrix.yosys-version }}
+        plugin:
+          - design_introspection
+          - xdc
+          - sdc
+          - fasm
+          - params
+          - ql-iob
+          - integrateinv
+          - ql-qlf
+          - systemverilog
+          - uhdm
+          - dsp-ff
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - uses: ./.github/actions
+        with:
+          plugin: ${{ matrix.plugin }}
+          yosys-version: ${{ inputs.yosys-version }}

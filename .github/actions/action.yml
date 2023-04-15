@@ -1,0 +1,72 @@
+# Copyright 2020-2022 F4PGA Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+
+name: "Run tests"
+
+inputs:
+  plugin:
+    description: "Name of the plugin to run the tests for"
+    required: true
+  yosys-version:
+    description: "Which yosys version to build against ('conda' or branch name)"
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+
+    - uses: actions/setup-python@v2
+
+    - name: Install
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install git g++-9 build-essential bison flex \
+          libreadline-dev gawk tcl-dev libffi-dev git graphviz xdot \
+          pkg-config libboost-system-dev libboost-python-dev \
+          libboost-filesystem-dev zlib1g-dev clang-format-8 cmake \
+          gperf autoconf tclsh swig uuid-dev libgoogle-perftools-dev \
+          default-jre lcov
+        pip3 install orderedmultidict psutil
+
+    - name: Format
+      shell: bash
+      run: source .github/workflows/format-check.sh
+      env:
+        OS: ${{ runner.os }}
+
+    - name: ccache
+      uses: hendrikmuhs/ccache-action@v1
+
+    - name: Install Yosys
+      shell: bash
+      run: |
+        export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+        source .github/workflows/setup.sh
+      env:
+        OS: ${{ runner.os }}
+        YOSYS_VERSION: ${{ inputs.yosys-version }}
+
+    - name: Build and test plugins
+      shell: bash
+      run: |
+        export PATH="/usr/lib/ccache:/usr/local/opt/ccache/libexec:$PATH"
+        [ "${YOSYS_VERSION}" == "conda" ] && source env/conda/bin/activate yosys-plugins
+        source .github/workflows/build-and-test.sh
+      env:
+        OS: ${{ runner.os }}
+        PLUGIN_NAME: ${{ inputs.plugin }}
+        YOSYS_VERSION: ${{ inputs.yosys-version }}

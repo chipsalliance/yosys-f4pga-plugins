@@ -47,12 +47,52 @@ end_section
 #Install yosys
 start_section Install-Yosys
 (
-    echo '================================='
-    echo 'Making env with Yosys and Surelog'
-    echo '================================='
-    make env
-    source env/conda/bin/activate yosys-plugins
-    conda list
+    if [ -z "${YOSYS_VERSION}" ]; then
+        echo "Missing \${YOSYS_VERSION} env value"
+        echo "Defaulting to conda yosys"
+        YOSYS_VERSION="conda"
+    fi
+
+    if [ "${YOSYS_VERSION}" == "conda" ]; then
+        echo '================================='
+        echo 'Making env with Yosys and Surelog'
+        echo '================================='
+        make env
+        source env/conda/bin/activate yosys-plugins
+        conda list
+    else
+        PREFIX=${HOME}/.local
+        echo '=========================================='
+        echo 'Building Yosys version: "${YOSYS_VERSION}"'
+        echo '=========================================='
+        git clone https://github.com/YosysHQ/yosys.git
+        cd yosys
+        git checkout "${YOSYS_VERSION}"
+        make config-gcc
+        echo -n "PREFIX := $PREFIX" >> Makefile.conf
+        make -j`nproc`
+        make install
+        cd ..
+        echo '================'
+        echo 'Building Surelog'
+        echo '================'
+        git clone https://github.com/chipsalliance/Surelog.git
+        cd Surelog
+        git submodule update --init --recursive
+        make -j`nproc`
+        make install PREFIX=$PREFIX
+        cd ..
+        echo '================='
+        echo 'Building iverilog'
+        echo '================='
+        git clone https://github.com/steveicarus/iverilog.git
+        cd iverilog
+        sh autoconf.sh
+        ./configure --prefix=$PREFIX
+        make -j`nproc`
+        make install
+        cd ..
+    fi
 )
 end_section
 
@@ -60,7 +100,7 @@ end_section
 
 start_section Yosys-Version
 (
-    source env/conda/bin/activate yosys-plugins
+    [ "${YOSYS_VERSION}" == "conda" ] && source env/conda/bin/activate yosys-plugins
     echo $(which yosys)
     echo $(which yosys-config)
     echo $(yosys --version)
