@@ -433,6 +433,7 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     wiretype_ast = AST_INTERNAL::current_scope[wiretype_node->str];
     // we need to setup current top ast as this simplify
     // needs to have access to all already defined ids
+    simplify_sv(wiretype_ast, nullptr);
     while (simplify(wire_node, true, false, false, 1, -1, false, false)) {
     }
     log_assert(!wiretype_ast->children.empty());
@@ -1170,13 +1171,13 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         AST_INTERNAL::current_scope[current_node->str] = current_node;
         break;
     case AST::AST_WIRE:
-        delete_attribute(current_node, UhdmAst::is_simplified_wire());
-        current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
-        [[fallthrough]];
     case AST::AST_PARAMETER:
     case AST::AST_LOCALPARAM:
-        AST_INTERNAL::current_scope[current_node->str] = current_node;
-        convert_packed_unpacked_range(current_node);
+        if (!current_node->attributes.count(UhdmAst::is_simplified_wire())) {
+            current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
+            AST_INTERNAL::current_scope[current_node->str] = current_node;
+            convert_packed_unpacked_range(current_node);
+        }
         break;
     case AST::AST_IDENTIFIER:
         if (!current_node->children.empty() && !current_node->basic_prep) {
@@ -1204,23 +1205,28 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         break;
     case AST::AST_STRUCT:
     case AST::AST_UNION:
-        simplify_struct(current_node, 0, parent_node);
-        // instance rather than just a type in a typedef or outer struct?
-        if (!current_node->str.empty() && current_node->str[0] == '\\') {
-            // instance so add a wire for the packed structure
-            auto wnode = make_packed_struct_local(current_node, current_node->str);
-            convert_packed_unpacked_range(wnode);
-            log_assert(AST_INTERNAL::current_ast_mod);
-            AST_INTERNAL::current_ast_mod->children.push_back(wnode);
-            AST_INTERNAL::current_scope[wnode->str]->attributes[ID::wiretype] = AST::AstNode::mkconst_str(current_node->str);
-            AST_INTERNAL::current_scope[wnode->str]->attributes[ID::wiretype]->id2ast = current_node;
-        }
+        if (!current_node->attributes.count(UhdmAst::is_simplified_wire())) {
+            current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
+            simplify_struct(current_node, 0, parent_node);
+            // instance rather than just a type in a typedef or outer struct?
+            if (!current_node->str.empty() && current_node->str[0] == '\\') {
+                // instance so add a wire for the packed structure
+                auto wnode = make_packed_struct_local(current_node, current_node->str);
+                convert_packed_unpacked_range(wnode);
+                log_assert(AST_INTERNAL::current_ast_mod);
+                AST_INTERNAL::current_ast_mod->children.push_back(wnode);
+                AST_INTERNAL::current_scope[wnode->str]->attributes[ID::wiretype] = AST::AstNode::mkconst_str(current_node->str);
+                AST_INTERNAL::current_scope[wnode->str]->attributes[ID::wiretype]->id2ast = current_node;
+            }
 
-        current_node->basic_prep = true;
+            current_node->basic_prep = true;
+        }
         break;
     case AST::AST_STRUCT_ITEM:
         AST_INTERNAL::current_scope[current_node->str] = current_node;
-        convert_packed_unpacked_range(current_node);
+        if (current_node->attributes.count(UhdmAst::packed_ranges()) || current_node->attributes.count(UhdmAst::unpacked_ranges())) {
+            convert_packed_unpacked_range(current_node);
+        }
         while (simplify(current_node, true, false, false, 1, -1, false, false)) {
         };
         break;
@@ -4355,7 +4361,7 @@ void UhdmAst::process_port()
                 }
                 delete node;
             });
-            visit_one_to_many({vpiRange}, actual_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
+            visit_one_to_many({vpiRange}, actual_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
             shared.report.mark_handled(actual_h);
             break;
         case vpiPackedArrayNet:
@@ -4363,7 +4369,7 @@ void UhdmAst::process_port()
             shared.report.mark_handled(actual_h);
             break;
         case vpiArrayVar:
-            visit_one_to_many({vpiRange}, actual_h, [&](AST::AstNode *node) { current_node->children.push_back(node); });
+            visit_one_to_many({vpiRange}, actual_h, [&](AST::AstNode *node) { unpacked_ranges.push_back(node); });
             shared.report.mark_handled(actual_h);
             break;
         case vpiEnumNet:
@@ -4393,7 +4399,7 @@ void UhdmAst::process_port()
     }
     visit_one_to_one({vpiTypedef}, obj_h, [&](AST::AstNode *node) {
         if (node) {
-            if (!current_node->children.empty() && current_node->children[0]->type != AST::AST_WIRETYPE) {
+            if (current_node->children.empty() || current_node->children[0]->type != AST::AST_WIRETYPE) {
                 if (!node->str.empty()) {
                     auto wiretype_node = new AST::AstNode(AST::AST_WIRETYPE);
                     wiretype_node->str = node->str;
