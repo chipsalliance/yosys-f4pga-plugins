@@ -4008,7 +4008,10 @@ void UhdmAst::process_tagged_pattern()
         lhs_node = new AST::AstNode(AST::AST_IDENTIFIER);
         auto ancestor = find_ancestor({AST::AST_WIRE, AST::AST_MEMORY, AST::AST_PARAMETER, AST::AST_LOCALPARAM});
         if (!ancestor) {
-            log_error("Couldn't find ancestor for tagged pattern!\n");
+            const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+            const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
+            report_error("%.*s:%d: Couldn't find ancestor for tagged pattern!\n", (int)object->VpiFile().length(), object->VpiFile().data(),
+                         object->VpiLineNo());
         }
         lhs_node->str = ancestor->str;
     }
