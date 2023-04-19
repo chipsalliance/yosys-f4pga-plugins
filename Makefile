@@ -14,6 +14,16 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+# Version number of Plugins. For simplicity, based on date when we choose to
+# release. We can get more sophisticated later (but then need bump Major >= 2).
+# Version number has a Major and Minor version number, git-tags are free to
+# append a patchlevel (which is number of commits since last X.Y update).
+#
+# The CI will automatically tag the release with v${PLLUGIN_VERSION}
+#
+# TODO: pass as -D to gcc so that modules can provide e.g. --version flags.
+PLUGIN_VERSION = 1.20230419
+
 PLUGIN_LIST := fasm xdc params sdc ql-iob design_introspection integrateinv ql-qlf systemverilog uhdm dsp-ff
 PLUGINS := $(foreach plugin,$(PLUGIN_LIST),$(plugin).so)
 PLUGINS_INSTALL := $(foreach plugin,$(PLUGIN_LIST),install_$(plugin))
