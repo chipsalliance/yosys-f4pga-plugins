@@ -36,6 +36,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "simplify.h"
+
 YOSYS_NAMESPACE_BEGIN
 namespace VERILOG_FRONTEND
 {
@@ -48,8 +50,6 @@ namespace systemverilog_plugin
 
 using namespace ::Yosys;
 using namespace ::Yosys::AST_INTERNAL;
-
-bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool in_lvalue, int stage, int width_hint, bool sign_hint, bool in_param);
 
 void annotateTypedEnums(Yosys::AST::AstNode *ast_node, Yosys::AST::AstNode *template_node)
 {
@@ -3794,7 +3794,7 @@ replace_fcall_later:;
 	{
 		bool string_op;
 		std::vector<RTLIL::State> tmp_bits;
-		RTLIL::Const (*const_func)(const RTLIL::Const&, const RTLIL::Const&, bool, bool, int);
+		RTLIL::Const (*const_func)(const RTLIL::Const&, const RTLIL::Const&, bool, bool, ys_size_type);
 		RTLIL::Const dummy_arg;
 
 		switch (ast_node->type)
