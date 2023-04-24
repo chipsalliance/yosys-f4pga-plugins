@@ -47,6 +47,7 @@ enum AstNodeTypeExtended {
 
 namespace attr_id
 {
+static bool already_initialized = false;
 static IdString partial;
 static IdString packed_ranges;
 static IdString unpacked_ranges;
@@ -69,10 +70,9 @@ static IdString is_type_parameter;
 void attr_id_init()
 {
     // Initialize only once
-    static bool already_initialized = false;
-    if (already_initialized)
+    if (attr_id::already_initialized)
         return;
-    already_initialized = true;
+    attr_id::already_initialized = true;
 
     // Actual initialization
 
@@ -99,6 +99,7 @@ void attr_id_cleanup()
     attr_id::packed_ranges = IdString();
     attr_id::partial = IdString();
     attr_id::is_type_parameter = IdString();
+    attr_id::already_initialized = false;
 }
 
 static AST::AstNode *get_attribute(AST::AstNode *node, const IdString &attribute)
@@ -2042,8 +2043,7 @@ void UhdmAst::process_module()
                         delete node;
                         return;
                     }
-                    if ((node->type == AST::AST_ASSIGN && node->children.size() < 2) ||
-                        (node->type == AST::AST_PARAMETER && get_attribute(node, attr_id::is_type_parameter))) {
+                    if ((node->type == AST::AST_ASSIGN && node->children.size() < 2)) {
                         delete node;
                         return;
                     }
