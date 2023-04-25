@@ -95,7 +95,7 @@ jobs:
     - name: Tag with Makefile version if not already.
       run: |
         git config --local user.name "Development Bot"
-        git config --local user.email f4pga-dev@chipsalliance.org"
+        git config --local user.email "f4pga-dev@chipsalliance.org"
 
         # We want to tag whenever the version in the Makefile changes.
         # So extract the hash of when the current version was entered.
