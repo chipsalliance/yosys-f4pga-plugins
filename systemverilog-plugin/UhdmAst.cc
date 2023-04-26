@@ -1650,6 +1650,37 @@ void UhdmAst::apply_name_from_current_obj(AST::AstNode &target_node, bool prefer
         target_node.str = it->second;
 }
 
+AstNodeBuilder UhdmAst::make_node(AST::AstNodeType type) const
+{
+    auto node = std::make_unique<AST::AstNode>(type);
+    apply_location_from_current_obj(*node);
+    return AstNodeBuilder(std::move(node));
+};
+
+AstNodeBuilder UhdmAst::make_named_node(AST::AstNodeType type, bool prefer_full_name) const
+{
+    auto node = std::make_unique<AST::AstNode>(type);
+    apply_location_from_current_obj(*node);
+    apply_name_from_current_obj(*node, prefer_full_name);
+    return AstNodeBuilder(std::move(node));
+};
+
+AstNodeBuilder UhdmAst::make_ident(std::string id) const { return make_node(::Yosys::AST::AST_IDENTIFIER).str(std::move(id)); };
+
+AstNodeBuilder UhdmAst::make_const(int32_t value, uint8_t width) const
+{
+    // Limited to width of the `value` argument.
+    log_assert(width <= 32);
+    return make_node(AST::AST_CONSTANT).value(value, true, width);
+};
+
+AstNodeBuilder UhdmAst::make_const(uint32_t value, uint8_t width) const
+{
+    // Limited to width of the `value` argument.
+    log_assert(width <= 32);
+    return make_node(AST::AST_CONSTANT).value(value, false, width);
+};
+
 AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::AstNode *> children, bool prefer_full_name)
 {
     auto node = new AST::AstNode(type);
