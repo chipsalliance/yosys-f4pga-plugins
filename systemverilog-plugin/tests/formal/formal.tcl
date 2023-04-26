@@ -7,6 +7,6 @@ if { [info exists ::env(TMPDIR) ] } {
   set TMP_DIR $::env(TMPDIR)
 }
 
-read_systemverilog -formal $::env(DESIGN_TOP).v
+read_systemverilog -o $TMP_DIR/formal-test -formal $::env(DESIGN_TOP).v
 hierarchy
 write_verilog
