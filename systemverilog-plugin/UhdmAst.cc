@@ -3477,120 +3477,171 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
 
 void UhdmAst::process_stream_op()
 {
-    // Create a for loop that does what a streaming operator would do
-    auto block_node = find_ancestor({AST::AST_BLOCK, AST::AST_ALWAYS, AST::AST_INITIAL});
-    auto process_node = find_ancestor({AST::AST_ALWAYS, AST::AST_INITIAL});
-    auto module_node = find_ancestor({AST::AST_MODULE, AST::AST_FUNCTION, AST::AST_PACKAGE});
-    log_assert(module_node);
-    if (!process_node) {
-        if (module_node->type != AST::AST_FUNCTION) {
-            // Create a @* always block
-            process_node = make_ast_node(AST::AST_ALWAYS);
-            module_node->children.push_back(process_node);
-            block_node = make_ast_node(AST::AST_BLOCK);
-            process_node->children.push_back(block_node);
-        } else {
-            // Create only block
-            block_node = make_ast_node(AST::AST_BLOCK);
-            module_node->children.push_back(block_node);
-        }
-    }
-
-    auto loop_id = shared.next_loop_id();
-    auto loop_counter =
-      make_ast_node(AST::AST_WIRE, {make_ast_node(AST::AST_RANGE, {AST::AstNode::mkconst_int(31, false), AST::AstNode::mkconst_int(0, false)})});
-    loop_counter->is_reg = true;
-    loop_counter->is_signed = true;
-    loop_counter->str = "\\loop" + std::to_string(loop_id) + "::i";
-    module_node->children.insert(module_node->children.end() - 1, loop_counter);
-    auto loop_counter_ident = make_ast_node(AST::AST_IDENTIFIER);
-    loop_counter_ident->str = loop_counter->str;
-
-    auto lhs_node = find_ancestor({AST::AST_ASSIGN, AST::AST_ASSIGN_EQ, AST::AST_ASSIGN_LE})->children[0];
-    // Temp var to allow concatenation
-    AST::AstNode *temp_var = nullptr;
-    AST::AstNode *bits_call = nullptr;
-    if (lhs_node->type == AST::AST_WIRE) {
-        module_node->children.insert(module_node->children.begin(), lhs_node->clone());
-        temp_var = lhs_node->clone(); // if we already have wire as lhs, we want to create the same wire for temp_var
-        lhs_node->delete_children();
-        lhs_node->type = AST::AST_IDENTIFIER;
-        bits_call = make_ast_node(AST::AST_FCALL, {lhs_node->clone()});
-        bits_call->str = "\\$bits";
-    } else {
-        // otherwise, we need to calculate size using bits fcall
-        bits_call = make_ast_node(AST::AST_FCALL, {lhs_node->clone()});
-        bits_call->str = "\\$bits";
-        temp_var =
-          make_ast_node(AST::AST_WIRE, {make_ast_node(AST::AST_RANGE, {make_ast_node(AST::AST_SUB, {bits_call, AST::AstNode::mkconst_int(1, false)}),
-                                                                       AST::AstNode::mkconst_int(0, false)})});
-    }
-
-    temp_var->str = "\\loop" + std::to_string(loop_id) + "::temp";
-    module_node->children.insert(module_node->children.end() - 1, temp_var);
-    auto temp_var_ident = make_ast_node(AST::AST_IDENTIFIER);
-    temp_var_ident->str = temp_var->str;
-    auto temp_assign = make_ast_node(AST::AST_ASSIGN_EQ, {temp_var_ident});
-    block_node->children.push_back(temp_assign);
-
-    // Assignment in the loop's block
-    auto assign_node = make_ast_node(AST::AST_ASSIGN_EQ, {lhs_node->clone(), temp_var_ident->clone()});
-    AST::AstNode *slice_size = nullptr; // First argument in streaming op
-    visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
-        if (!slice_size && node->type == AST::AST_CONSTANT) {
-            slice_size = node;
-        } else {
-            temp_assign->children.push_back(node);
-        }
+    // Closest ancestor where new statements can be inserted.
+    AST::AstNode *stmt_list_node = find_ancestor({
+      AST::AST_MODULE,
+      AST::AST_PACKAGE,
+      AST::AST_BLOCK,
+      AST::AST_INITIAL,
+      AST::AST_ALWAYS,
+      AST::AST_FUNCTION,
     });
-    if (!slice_size) {
-        slice_size = AST::AstNode::mkconst_int(1, true);
+    log_assert(stmt_list_node != nullptr);
+
+    // Detect whether we're in a procedural context. If yes, `for` loop will be generated, and `generate for` otherwise.
+    const AST::AstNode *const proc_ctx = find_ancestor({AST::AST_ALWAYS, AST::AST_INITIAL, AST::AST_FUNCTION});
+    const bool is_proc_ctx = (proc_ctx != nullptr);
+
+    // Get a prefix for internal identifiers.
+    const auto stream_op_id = shared.next_loop_id();
+    const auto make_id_str = [stream_op_id](const char *suffix) {
+        return std::string("$systemverilog_plugin$stream_op_") + std::to_string(stream_op_id) + "_" + suffix;
+    };
+
+    if (is_proc_ctx) {
+        // Put logic inside a sub-block to avoid issues with declarations not being at the beginning of a block.
+        AST::AstNode *block = make_node(Yosys::AST::AST_BLOCK).str(make_id_str("impl"));
+        stmt_list_node->children.push_back(block);
+        stmt_list_node = block;
     }
 
-    // Initialization of the loop counter to 0
-    auto init_stmt = make_ast_node(AST::AST_ASSIGN_EQ, {loop_counter_ident, AST::AstNode::mkconst_int(0, true)});
+    // TODO (mglb): Only concat expression's size factors are supported as a slice size. Add support for other slice sizes as well.
+    AST::AstNode *slice_size_arg = nullptr;
+    AST::AstNode *stream_concat_arg = nullptr;
+    {
+        std::vector<AST::AstNode *> operands;
+        // Expected operands: [slice_size] stream_concatenation
+        visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
+            log_assert(node != nullptr);
+            log_assert(operands.size() < 2);
+            operands.push_back(node);
+        });
+        log_assert(operands.size() > 0);
+        log_assert(operands.size() <= 2);
 
-    // Loop condition (loop counter < $bits(RHS))
-    auto cond_stmt =
-      make_ast_node(AST::AST_LE, {loop_counter_ident->clone(), make_ast_node(AST::AST_SUB, {bits_call->clone(), slice_size->clone()})});
+        if (operands.size() == 2) {
+            slice_size_arg = operands.at(0);
+            // SV spec says slice_size can be a constant or a type. However, Surelog converts type to its width, so we always expect a const.
+            log_assert(slice_size_arg->type == AST::AST_CONSTANT);
+        } else {
+            slice_size_arg = make_const(1u);
+        }
+        stream_concat_arg = operands.back();
+    }
 
-    // Increment loop counter
-    auto inc_stmt =
-      make_ast_node(AST::AST_ASSIGN_EQ, {loop_counter_ident->clone(), make_ast_node(AST::AST_ADD, {loop_counter_ident->clone(), slice_size})});
+    AST::AstNode *const stream_concat_width_lp = //
+      (make_node(AST::AST_LOCALPARAM).str(make_id_str("width")))({
+        (make_node(AST::AST_FCALL).str("\\$bits"))({
+          (stream_concat_arg->clone()),
+        }),
+        (make_range(31, 0, true)),
+      });
 
-    // Range on the LHS of the assignment
-    auto lhs_range = make_ast_node(AST::AST_RANGE);
-    auto lhs_selfsz = make_ast_node(
-      AST::AST_SELFSZ, {make_ast_node(AST::AST_SUB, {make_ast_node(AST::AST_SUB, {bits_call->clone(), AST::AstNode::mkconst_int(1, true)}),
-                                                     loop_counter_ident->clone()})});
-    lhs_range->children.push_back(make_ast_node(AST::AST_ADD, {lhs_selfsz, AST::AstNode::mkconst_int(0, true)}));
-    lhs_range->children.push_back(
-      make_ast_node(AST::AST_SUB, {make_ast_node(AST::AST_ADD, {lhs_selfsz->clone(), AST::AstNode::mkconst_int(1, true)}), slice_size->clone()}));
+    // TODO (mglb): src_wire and dst_wire should probably take argument signedness and logicness into account.
+    AST::AstNode *const src_wire = //
+      (make_node(AST::AST_WIRE).str(make_id_str("src")).is_reg(is_proc_ctx))({
+        (make_node(AST::AST_RANGE))({
+          (make_const(0)),
+          (make_node(AST::AST_SUB))({
+            (make_ident(stream_concat_width_lp->str)),
+            (make_const(1)),
+          }),
+        }),
+      });
 
-    // Range on the RHS of the assignment
-    auto rhs_range = make_ast_node(AST::AST_RANGE);
-    auto rhs_selfsz = make_ast_node(AST::AST_SELFSZ, {loop_counter_ident->clone()});
-    rhs_range->children.push_back(
-      make_ast_node(AST::AST_SUB, {make_ast_node(AST::AST_ADD, {rhs_selfsz, slice_size->clone()}), AST::AstNode::mkconst_int(1, true)}));
-    rhs_range->children.push_back(make_ast_node(AST::AST_ADD, {rhs_selfsz->clone(), AST::AstNode::mkconst_int(0, true)}));
+    AST::AstNode *const dst_wire = //
+      (make_node(AST::AST_WIRE).str(make_id_str("dst")).is_reg(is_proc_ctx))({
+        (make_node(AST::AST_RANGE))({
+          (make_node(AST::AST_SUB))({
+            (make_ident(stream_concat_width_lp->str)),
+            (make_const(1)),
+          }),
+          (make_const(0)),
+        }),
+      });
 
-    // Put ranges on the sides of the assignment
-    assign_node->children[0]->children.push_back(lhs_range);
-    assign_node->children[1]->children.push_back(rhs_range);
+    AST::AstNode *const assign_stream_concat_to_src_wire = //
+      (make_node(is_proc_ctx ? AST::AST_ASSIGN_EQ : AST::AST_ASSIGN))({
+        (make_ident(src_wire->str)),
+        (stream_concat_arg),
+      });
 
-    // Putting the loop together
-    auto loop_node = make_ast_node(AST::AST_FOR);
-    loop_node->str = "$loop" + std::to_string(loop_id);
-    loop_node->children.push_back(init_stmt);
-    loop_node->children.push_back(cond_stmt);
-    loop_node->children.push_back(inc_stmt);
-    loop_node->children.push_back(make_ast_node(AST::AST_BLOCK, {assign_node}));
-    loop_node->children[3]->str = "\\stream_op_block" + std::to_string(loop_id);
+    AST::AstNode *const loop_counter = //
+      (make_node(is_proc_ctx ? AST::AST_WIRE : AST::AST_GENVAR).str(make_id_str("counter")).is_reg(true))({
+        (make_range(31, 0, true)),
+      });
 
-    block_node->children.push_back(make_ast_node(AST::AST_BLOCK, {loop_node}));
+    AST::AstNode *const for_loop = //
+      (make_node(is_proc_ctx ? AST::AST_FOR : AST::AST_GENFOR))({
+        (make_node(AST::AST_ASSIGN_EQ))({
+          (make_ident(loop_counter->str)),
+          (make_const(0)),
+        }),
+        (make_node(AST::AST_LT))({
+          (make_ident(loop_counter->str)),
+          (make_ident(stream_concat_width_lp->str)),
+        }),
+        (make_node(AST::AST_ASSIGN_EQ))({
+          (make_ident(loop_counter->str)),
+          (make_node(Yosys::AST::AST_ADD))({
+            (make_ident(loop_counter->str)),
+            (slice_size_arg->clone()),
+          }),
+        }),
+        (make_node(is_proc_ctx ? AST::AST_BLOCK : AST::AST_GENBLOCK).str(make_id_str("loop_body")))({
+          (make_node(is_proc_ctx ? AST::AST_ASSIGN_EQ : AST::AST_ASSIGN))({
+            (make_ident(dst_wire->str))({
+              (make_node(AST::AST_RANGE))({
+                (make_node(Yosys::AST::AST_SUB))({
+                  (make_node(Yosys::AST::AST_ADD))({
+                    (make_node(Yosys::AST::AST_SELFSZ))({
+                      (make_ident(loop_counter->str)),
+                    }),
+                    (slice_size_arg->clone()),
+                  }),
+                  (make_const(1)),
+                }),
+                (make_node(Yosys::AST::AST_ADD))({
+                  (make_node(Yosys::AST::AST_SELFSZ))({
+                    (make_ident(loop_counter->str)),
+                  }),
+                  (make_const(0)),
+                }),
+              }),
+            }),
+            (make_ident(src_wire->str))({
+              (make_node(AST::AST_RANGE))({
+                (make_node(Yosys::AST::AST_SUB))({
+                  (make_node(Yosys::AST::AST_ADD))({
+                    (make_node(Yosys::AST::AST_SELFSZ))({
+                      (make_ident(loop_counter->str)),
+                    }),
+                    (slice_size_arg),
+                  }),
+                  (make_const(1)),
+                }),
+                (make_node(Yosys::AST::AST_ADD))({
+                  (make_node(Yosys::AST::AST_SELFSZ))({
+                    (make_ident(loop_counter->str)),
+                  }),
+                  (make_const(0)),
+                }),
+              }),
+            }),
+          }),
+        }),
+      });
 
-    // Do not create a node
-    shared.report.mark_handled(obj_h);
+    stmt_list_node->children.insert(stmt_list_node->children.end(), {
+                                                                      stream_concat_width_lp,
+                                                                      src_wire,
+                                                                      dst_wire,
+                                                                      assign_stream_concat_to_src_wire,
+                                                                      loop_counter,
+                                                                      for_loop,
+                                                                    });
+
+    current_node = make_ident(is_proc_ctx ? (stmt_list_node->str + '.' + dst_wire->str) : dst_wire->str);
 }
 
 void UhdmAst::process_list_op()
