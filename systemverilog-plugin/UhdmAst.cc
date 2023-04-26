@@ -3077,16 +3077,29 @@ void UhdmAst::process_always()
     current_node = make_ast_node(AST::AST_ALWAYS);
     visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
         if (node) {
-            AST::AstNode *block = nullptr;
             if (node->type != AST::AST_BLOCK) {
-                block = new AST::AstNode(AST::AST_BLOCK, node);
+                // Create implicit block.
+                AST::AstNode *block = make_ast_node(AST::AST_BLOCK);
+                // There are (at least) two cases where something could have been inserted into AST_ALWAYS node when `node` is not an AST_BLOCK:
+                // - stream_op inserts a block.
+                // - event_control inserts a non-block statement.
+                // Move the block inserted by a stream_op into an implicit group. Everything else stays where it is.
+                if (!current_node->children.empty() && current_node->children.back()->type == AST::AST_BLOCK) {
+                    block->children.push_back(current_node->children.back());
+                    current_node->children.pop_back();
+                }
+                block->children.push_back(node);
+                current_node->children.push_back(block);
             } else {
-                block = node;
+                // Child is an explicit block.
+                current_node->children.push_back(node);
             }
-            current_node->children.push_back(block);
         } else {
-            // create empty block
-            current_node->children.push_back(new AST::AstNode(AST::AST_BLOCK));
+            // TODO (mglb): This branch is probably unreachable? Is it possible to have empty `always`?
+            // No children, so nothing should have been inserted into the always node during visitation.
+            log_assert(current_node->children.empty());
+            // Create implicit empty block.
+            current_node->children.push_back(make_ast_node(AST::AST_BLOCK));
         }
     });
     switch (vpi_get(vpiAlwaysType, obj_h)) {
@@ -3128,15 +3141,30 @@ void UhdmAst::process_event_control(const UHDM::BaseClass *object)
 void UhdmAst::process_initial()
 {
     current_node = make_ast_node(AST::AST_INITIAL);
+    // TODO (mglb): handler below is identical as in `process_always`. Extract it to avoid duplication.
     visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
         if (node) {
             if (node->type != AST::AST_BLOCK) {
-                auto block_node = make_ast_node(AST::AST_BLOCK);
-                block_node->children.push_back(node);
-                node = block_node;
+                // Create an implicit block.
+                AST::AstNode *block = make_ast_node(AST::AST_BLOCK);
+                // There is (at least) one case where something could have been inserted into AST_INITIAL node when `node` is not an AST_BLOCK:
+                // - stream_op inserts a block.
+                // Move the block inserted by a stream_op into an implicit group.
+                if (!current_node->children.empty() && current_node->children.back()->type == AST::AST_BLOCK) {
+                    block->children.push_back(current_node->children.back());
+                    current_node->children.pop_back();
+                }
+                block->children.push_back(node);
+                current_node->children.push_back(block);
+            } else {
+                // Child is an explicit block.
+                current_node->children.push_back(node);
             }
-            current_node->children.push_back(node);
         } else {
+            // TODO (mglb): This branch is probably unreachable? Is it possible to have empty `initial`?
+            // No children, so nothing should have been inserted into the always node during visitation.
+            log_assert(current_node->children.empty());
+            // Create implicit empty block.
             current_node->children.push_back(make_ast_node(AST::AST_BLOCK));
         }
     });
