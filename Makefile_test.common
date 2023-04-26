@@ -19,6 +19,8 @@ SHELL := /usr/bin/env bash
 # Either find yosys in system and use its path or use the given path
 YOSYS_PATH ?= $(realpath $(dir $(shell command -v yosys))/..)
 
+YOSYS=$(YOSYS_PATH)/bin/yosys
+
 # Find yosys-config, throw an error if not found
 YOSYS_CONFIG = $(YOSYS_PATH)/bin/yosys-config
 ifeq (,$(wildcard $(YOSYS_CONFIG)))
@@ -26,9 +28,15 @@ $(error "Didn't find 'yosys-config' under '$(YOSYS_PATH)'")
 endif
 
 GTEST_DIR ?= $(abspath ../../third_party/googletest)
+
+# Googletest include and libdir can be supplied to not require googletest
+# in third_party/
+GTEST_INCLUDE ?= $(GTEST_DIR)/googletest/include
+GTEST_LIBDIR ?= $(GTEST_DIR)/build/lib
+
 CXX ?= $(shell $(YOSYS_CONFIG) --cxx)
-CXXFLAGS ?= $(shell $(YOSYS_CONFIG) --cxxflags) -I.. -I$(GTEST_DIR)/googletest/include
-LDLIBS ?= $(shell $(YOSYS_CONFIG) --ldlibs) -L$(GTEST_DIR)/build/lib -lgtest -lgtest_main -lpthread
+CXXFLAGS ?= $(shell $(YOSYS_CONFIG) --cxxflags) -I.. -I$(GTEST_INCLUDE)
+LDLIBS ?= $(shell $(YOSYS_CONFIG) --ldlibs) -L$(GTEST_LIBDIR) -lgtest -lgtest_main -lpthread
 LDFLAGS ?= $(shell $(YOSYS_CONFIG) --ldflags)
 TEST_UTILS ?= $(abspath ../../test-utils/test-utils.tcl)
 
@@ -51,7 +59,7 @@ $(1)/ok: $(1)/$$(notdir $(1).v)
 	echo "source $(TEST_UTILS)" > run-$$(notdir $(1)).tcl ;\
 	echo "source $$(notdir $(1)).tcl" >> run-$$(notdir $(1)).tcl ;\
 	DESIGN_TOP=$$(notdir $(1)) TEST_OUTPUT_PREFIX=./ \
-	yosys -c "run-$$(notdir $(1)).tcl" -q -q -l $$(notdir $(1)).log; \
+	$(YOSYS) -c "run-$$(notdir $(1)).tcl" -q -q -l $$(notdir $(1)).log; \
 	RETVAL=$$$$?; \
 	rm -f run-$$(notdir $(1)).tcl; \
 	if [ ! -z "$$($(1)_negative)" ] && [ $$($(1)_negative) -eq 1 ]; then \
@@ -117,7 +125,7 @@ $(1)/synth: $(1)/$$(notdir $(1).v)
 	echo "source $(TEST_UTILS)" > run-$$(notdir $(1)).tcl ;\
 	echo "source $$(notdir $(1)).tcl" >> run-$$(notdir $(1)).tcl ;\
 	DESIGN_TOP=$$(notdir $(1)) TEST_OUTPUT_PREFIX=./ \
-	yosys -c "run-$$(notdir $(1)).tcl" -q -q -l $$(notdir $(1)).log; \
+	$(YOSYS) -c "run-$$(notdir $(1)).tcl" -q -q -l $$(notdir $(1)).log; \
 	RETVAL=$$$$?; \
 	rm -f run-$$(notdir $(1)).tcl; \
 	if [ ! -z "$$($(1)_negative)" ] && [ $$($(1)_negative) -eq 1 ]; then \
@@ -142,7 +150,7 @@ define unit_test_tpl =
 $(1): $(1)/$(1).test
 	@$$<
 
-$(1)/$(1).test: $(1)/$(1).test.o $$(GTEST_DIR)/build/lib/libgtest.a
+$(1)/$(1).test: $(1)/$(1).test.o $$(GTEST_LIBDIR)
 	@$(CXX) $(LDFLAGS) -o $$@ $$< $(LDLIBS)
 
 $(1)/$(1).test.o: $(1)/$(1).test.cc
@@ -154,10 +162,12 @@ diff_test = diff $(1)/$(1).golden.$(2) $(1)/$(1).$(2)
 
 all: $(TESTS) $(SIM_TESTS) $(POST_SYNTH_SIM_TESTS) $(UNIT_TESTS)
 
-$(GTEST_DIR)/build/lib/libgtest.a $(GTEST_DIR)/build/lib/libgtest_main.a:
-	@mkdir -p $(GTEST_DIR)/build
-	@cd $(GTEST_DIR)/build; \
-	cmake ..; \
+# In case we depend on third_party/ googletest: create dir and build
+# the libraries there.
+$(GTEST_DIR)/build/lib:
+	mkdir -p $(GTEST_DIR)/build
+	cd $(GTEST_DIR)/build; \
+	cmake ../; \
 	make
 
 .PHONY: all clean $(TESTS) $(SIM_TESTS) $(UNIT_TESTS)
