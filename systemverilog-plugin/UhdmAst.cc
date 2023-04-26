@@ -1649,10 +1649,10 @@ AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::Ast
     return node;
 }
 
-AST::AstNode *UhdmAst::make_identifier(const std::string &name)
+AST::AstNode *UhdmAst::make_identifier(std::string name)
 {
     auto *node = make_ast_node(AST::AST_IDENTIFIER);
-    node->str = name;
+    node->str = std::move(name);
     return node;
 }
 

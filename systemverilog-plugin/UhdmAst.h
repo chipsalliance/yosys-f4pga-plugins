@@ -36,7 +36,7 @@ class UhdmAst
                                          bool prefer_full_name = false);
 
     // Create an identifier AstNode
-    ::Yosys::AST::AstNode *make_identifier(const std::string &name);
+    ::Yosys::AST::AstNode *make_identifier(std::string name);
 
     // Makes the passed node a cell node of the specified type
     void make_cell(vpiHandle obj_h, ::Yosys::AST::AstNode *node, ::Yosys::AST::AstNode *type);
