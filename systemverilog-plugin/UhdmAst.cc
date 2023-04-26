@@ -1619,32 +1619,42 @@ void UhdmAst::transform_breaks_continues(AST::AstNode *loop, AST::AstNode *decl_
     }
 }
 
+void UhdmAst::apply_location_from_current_obj(AST::AstNode &target_node) const
+{
+    if (auto filename = vpi_get_str(vpiFile, obj_h)) {
+        target_node.filename = filename;
+    }
+    if (unsigned int first_line = vpi_get(vpiLineNo, obj_h)) {
+        target_node.location.first_line = first_line;
+    }
+    if (unsigned int last_line = vpi_get(vpiEndLineNo, obj_h)) {
+        target_node.location.last_line = last_line;
+    } else {
+        target_node.location.last_line = target_node.location.first_line;
+    }
+    if (unsigned int first_col = vpi_get(vpiColumnNo, obj_h)) {
+        target_node.location.first_column = first_col;
+    }
+    if (unsigned int last_col = vpi_get(vpiEndColumnNo, obj_h)) {
+        target_node.location.last_column = last_col;
+    } else {
+        target_node.location.last_column = target_node.location.first_column;
+    }
+}
+
+void UhdmAst::apply_name_from_current_obj(AST::AstNode &target_node, bool prefer_full_name) const
+{
+    target_node.str = get_name(obj_h, prefer_full_name);
+    auto it = node_renames.find(target_node.str);
+    if (it != node_renames.end())
+        target_node.str = it->second;
+}
+
 AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::AstNode *> children, bool prefer_full_name)
 {
     auto node = new AST::AstNode(type);
-    node->str = get_name(obj_h, prefer_full_name);
-    auto it = node_renames.find(node->str);
-    if (it != node_renames.end())
-        node->str = it->second;
-    if (auto filename = vpi_get_str(vpiFile, obj_h)) {
-        node->filename = filename;
-    }
-    if (unsigned int first_line = vpi_get(vpiLineNo, obj_h)) {
-        node->location.first_line = first_line;
-    }
-    if (unsigned int last_line = vpi_get(vpiEndLineNo, obj_h)) {
-        node->location.last_line = last_line;
-    } else {
-        node->location.last_line = node->location.first_line;
-    }
-    if (unsigned int first_col = vpi_get(vpiColumnNo, obj_h)) {
-        node->location.first_column = first_col;
-    }
-    if (unsigned int last_col = vpi_get(vpiEndColumnNo, obj_h)) {
-        node->location.last_column = last_col;
-    } else {
-        node->location.last_column = node->location.first_column;
-    }
+    apply_name_from_current_obj(*node, prefer_full_name);
+    apply_location_from_current_obj(*node);
     node->children = children;
     return node;
 }

@@ -30,6 +30,11 @@ class UhdmAst
     // Visit the default expression assigned to a variable.
     void visit_default_expr(vpiHandle obj_h);
 
+
+    // Reads location info (start/end line/column numbers, file name) from `obj_h` and sets them on `target_node`.
+    void apply_location_from_current_obj(::Yosys::AST::AstNode &target_node) const;
+    // Reads object name from `obj_h` and assigns it to `target_node`.
+    void apply_name_from_current_obj(::Yosys::AST::AstNode &target_node, bool prefer_full_name = false) const;
     // Create an AstNode of the specified type with metadata extracted from
     // the given vpiHandle.
     ::Yosys::AST::AstNode *make_ast_node(::Yosys::AST::AstNodeType type, std::vector<::Yosys::AST::AstNode *> children = {},
