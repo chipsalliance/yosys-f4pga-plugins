@@ -10,4 +10,4 @@ if { [info exists ::env(TMPDIR) ] } {
 # Testing simple round-trip
 read_systemverilog -o $TMP_DIR/break-continue-test $::env(DESIGN_TOP).v
 prep
-write_table $::env(DESIGN_TOP).out
+write_table [test_output_path $::env(DESIGN_TOP).out]
