@@ -3533,7 +3533,7 @@ void UhdmAst::process_stream_op()
       AST::AST_ALWAYS,
       AST::AST_FUNCTION,
     });
-    log_assert(stmt_list_node != nullptr);
+    uhdmast_assert(stmt_list_node != nullptr);
 
     // Detect whether we're in a procedural context. If yes, `for` loop will be generated, and `generate for` otherwise.
     const AST::AstNode *const proc_ctx = find_ancestor({AST::AST_ALWAYS, AST::AST_INITIAL, AST::AST_FUNCTION});
@@ -3559,17 +3559,16 @@ void UhdmAst::process_stream_op()
         std::vector<AST::AstNode *> operands;
         // Expected operands: [slice_size] stream_concatenation
         visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
-            log_assert(node != nullptr);
-            log_assert(operands.size() < 2);
+            uhdmast_assert(node != nullptr);
+            uhdmast_assert(operands.size() < 2);
             operands.push_back(node);
         });
-        log_assert(operands.size() > 0);
-        log_assert(operands.size() <= 2);
+        uhdmast_assert(operands.size() > 0);
 
         if (operands.size() == 2) {
             slice_size_arg = operands.at(0);
             // SV spec says slice_size can be a constant or a type. However, Surelog converts type to its width, so we always expect a const.
-            log_assert(slice_size_arg->type == AST::AST_CONSTANT);
+            uhdmast_assert(slice_size_arg->type == AST::AST_CONSTANT);
         } else {
             slice_size_arg = make_const(1u);
         }
