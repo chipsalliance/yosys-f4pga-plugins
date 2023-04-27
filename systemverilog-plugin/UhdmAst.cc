@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <iostream>
 #include <limits>
 #include <regex>
 #include <string>
@@ -687,6 +689,51 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
 
     // Insert new range
     wire_node->children.insert(wire_node->children.end(), ranges.begin(), ranges.end());
+}
+
+// Assert macro that prints location in C++ code and location of currently processed UHDM object.
+// Use only inside UhdmAst methods.
+#ifndef NDEBUG
+#if __GNUC__
+// gcc/clang's __builtin_trap() makes gdb stop on the line containing an assertion.
+#define uhdmast_assert(expr)                                                                                                                         \
+    if ((expr)) {                                                                                                                                    \
+    } else {                                                                                                                                         \
+        this->uhdmast_assert_log(#expr, __PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                    \
+        __builtin_trap();                                                                                                                            \
+    }
+#else // #if __GNUC__
+// Just abort when using compiler other than gcc/clang.
+#define uhdmast_assert(expr)                                                                                                                         \
+    if ((expr)) {                                                                                                                                    \
+    } else {                                                                                                                                         \
+        this->uhdmast_assert_log(#expr, __func__, __FILE__, __LINE__);                                                                               \
+        std::abort();                                                                                                                                \
+    }
+#endif // #if __GNUC__
+#else  // #ifndef NDEBUG
+#define uhdmast_assert(expr)                                                                                                                         \
+    if ((expr)) {                                                                                                                                    \
+    } else {                                                                                                                                         \
+    }
+#endif // #ifndef NDEBUG
+
+void UhdmAst::uhdmast_assert_log(const char *expr_str, const char *func, const char *file, int line) const
+{
+    std::cerr << file << ':' << line << ": error: Assertion failed: " << expr_str << std::endl;
+    std::cerr << file << ':' << line << ": note: In function: " << func << std::endl;
+    if (obj_h != 0) {
+        const char *const svfile = vpi_get_str(vpiFile, obj_h);
+        int svline = vpi_get(vpiLineNo, obj_h);
+        int svcolumn = vpi_get(vpiColumnNo, obj_h);
+        std::string obj_type_name = UHDM::VpiTypeName(obj_h);
+        const char *obj_name = vpi_get_str(vpiName, obj_h);
+        std::cerr << svfile << ':' << svline << svcolumn << ": note: When processing object of type '" << obj_type_name << '\'';
+        if (obj_name && obj_name[0] != '\0') {
+            std::cerr << " named '" << obj_name << '\'';
+        }
+        std::cerr << '.' << std::endl;
+    }
 }
 
 static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::AstNode *search_node)

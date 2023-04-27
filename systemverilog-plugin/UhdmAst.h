@@ -17,6 +17,9 @@ class AstNodeBuilder;
 class UhdmAst
 {
   private:
+    // Logging method for exclusive use of `uhdmast_assert` macro.
+    void uhdmast_assert_log(const char *expr_str, const char *func, const char *file, int line) const;
+
     // Walks through one-to-many relationships from given parent
     // node through the VPI interface, visiting child nodes belonging to
     // ChildrenNodeTypes that are present in the given object.
