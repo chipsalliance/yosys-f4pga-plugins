@@ -26,7 +26,9 @@ module top (
     output tx_n,
     output tx_p,
     input ibufds_gte2_i,
-    input ibufds_gte2_ib
+    input ibufds_gte2_ib,
+    output tri_top,
+    output tri_bottom
 );
 
   wire LD6, LD7, LD8, LD9;
@@ -77,7 +79,10 @@ module top (
   bottom bottom_inst (
       .I (LD8),
       .O (led[2]),
-      .OB(out_b)
+      .OB(out_b),
+      .in_tri(LD7),
+      .t_tri(LD8),
+      .out_tri(tri_bottom)
   );
 
   bottom_intermediate bottom_intermediate_inst (
@@ -96,6 +101,12 @@ module top (
   IBUFDS_GTE2 IBUFDS_GTE2 (
       .I (ibufds_gte2_i),
       .IB(ibufds_gte2_ib)
+  );
+
+  OBUFT OBUFT_1 (
+      .I(LD6),
+      .T(LD7),
+      .O(tri_top)
   );
 endmodule
 
@@ -119,7 +130,10 @@ endmodule
 module bottom (
     input I,
     output [1:0] OB,
-    output O
+    output O,
+    input in_tri,
+    input t_tri,
+    output out_tri
 );
 
   OBUF #(
@@ -144,5 +158,11 @@ module bottom (
   ) OBUF_11 (
       .I(I),
       .O(OB[1])
+  );
+
+  OBUFT OBUFT_2 (
+      .I(in_tri),
+      .T(t_tri),
+      .O(out_tri)
   );
 endmodule
