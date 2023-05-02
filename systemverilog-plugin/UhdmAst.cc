@@ -3586,13 +3586,22 @@ void UhdmAst::process_assignment_pattern_op()
         std::map<size_t, AST::AstNode *> ordered_children;
         visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
             if (node->type == AST::AST_ASSIGN || node->type == AST::AST_ASSIGN_EQ || node->type == AST::AST_ASSIGN_LE) {
-                // Find at what position in the concat should we place this node
-                auto key = node->children[0]->str;
-                key = key.substr(key.find('.') + 1);
+                // Get the name of the parameter or it's child, to which the pattern is assigned.
+                std::string key;
+                if (!node->children.empty() && !node->children[0]->children.empty() &&
+                    node->children[0]->children[0]->type == static_cast<AST::AstNodeType>(AST::Extended::AST_DOT)) {
+                    key = node->children[0]->children[0]->str;
+                } else if (!node->children.empty()) {
+                    key = node->children[0]->str;
+                } else {
+                    log_file_error(node->filename, node->location.first_line, "Couldn't find `key` in assignment pattern.\n");
+                }
                 auto param_type = shared.param_types[param_node->str];
                 if (!param_type) {
                     log_error("Couldn't find parameter type for node: %s\n", param_node->str.c_str());
                 }
+                // Place the child node holding the value assigned in the pattern, in the right order,
+                // so the overall value of the param_node is correct.
                 size_t pos =
                   std::find_if(param_type->children.begin(), param_type->children.end(), [key](AST::AstNode *child) { return child->str == key; }) -
                   param_type->children.begin();
@@ -3780,14 +3789,10 @@ void UhdmAst::process_gen_scope()
     });
 
     visit_one_to_many(
-      {vpiParamAssign, vpiParameter, vpiNet, vpiArrayNet, vpiVariables, vpiContAssign, vpiProcess, vpiModule, vpiGenScopeArray, vpiTaskFunc}, obj_h,
+      {vpiParameter, vpiParamAssign, vpiNet, vpiArrayNet, vpiVariables, vpiContAssign, vpiProcess, vpiModule, vpiGenScopeArray, vpiTaskFunc}, obj_h,
       [&](AST::AstNode *node) {
           if (node) {
-              if ((node->type == AST::AST_PARAMETER || node->type == AST::AST_LOCALPARAM) && node->children.empty()) {
-                  delete node; // skip parameters without any children
-              } else {
-                  current_node->children.push_back(node);
-              }
+              add_or_replace_child(current_node, node);
           }
       });
 }
