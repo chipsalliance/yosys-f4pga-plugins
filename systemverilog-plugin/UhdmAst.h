@@ -6,14 +6,20 @@
 #undef cover
 
 #include "uhdmastshared.h"
+#include <memory>
 #include <uhdm/uhdm.h>
 
 namespace systemverilog_plugin
 {
 
+class AstNodeBuilder;
+
 class UhdmAst
 {
   private:
+    // Logging method for exclusive use of `uhdmast_assert` macro.
+    void uhdmast_assert_log(const char *expr_str, const char *func, const char *file, int line) const;
+
     // Walks through one-to-many relationships from given parent
     // node through the VPI interface, visiting child nodes belonging to
     // ChildrenNodeTypes that are present in the given object.
@@ -30,13 +36,31 @@ class UhdmAst
     // Visit the default expression assigned to a variable.
     void visit_default_expr(vpiHandle obj_h);
 
+    // Reads location info (start/end line/column numbers, file name) from `obj_h` and sets them on `target_node`.
+    void apply_location_from_current_obj(::Yosys::AST::AstNode &target_node) const;
+    // Reads object name from `obj_h` and assigns it to `target_node`.
+    void apply_name_from_current_obj(::Yosys::AST::AstNode &target_node, bool prefer_full_name = false) const;
+
+    // Creates node of specified `type` with location properties read from `obj_h`.
+    AstNodeBuilder make_node(::Yosys::AST::AstNodeType type) const;
+    // Creates node of specified `type` with location properties and name read from `obj_h`.
+    AstNodeBuilder make_named_node(::Yosys::AST::AstNodeType type, bool prefer_full_name = false) const;
+    // Creates AST_IDENTIFIER node with specified `id` and location properties read from `obj_h`.
+    AstNodeBuilder make_ident(std::string id) const;
+    // Creates signed AST_CONSTANT node with specified `value` and location properties read from `obj_h`.
+    AstNodeBuilder make_const(int32_t value, uint8_t width = 32) const;
+    // Creates unsigned AST_CONSTANT node with specified `value` and location properties read from `obj_h`.
+    AstNodeBuilder make_const(uint32_t value, uint8_t width = 32) const;
+
     // Create an AstNode of the specified type with metadata extracted from
     // the given vpiHandle.
+    // OBSOLETE: use `make_node` or `make_named_node` instead.
     ::Yosys::AST::AstNode *make_ast_node(::Yosys::AST::AstNodeType type, std::vector<::Yosys::AST::AstNode *> children = {},
                                          bool prefer_full_name = false);
 
     // Create an identifier AstNode
-    ::Yosys::AST::AstNode *make_identifier(const std::string &name);
+    // OBSOLETE: use `make_ident` instead.
+    ::Yosys::AST::AstNode *make_identifier(std::string name);
 
     // Makes the passed node a cell node of the specified type
     void make_cell(vpiHandle obj_h, ::Yosys::AST::AstNode *node, ::Yosys::AST::AstNode *type);
@@ -177,6 +201,125 @@ class UhdmAst
     static const ::Yosys::IdString &is_imported();
     static const ::Yosys::IdString &is_simplified_wire();
     static const ::Yosys::IdString &low_high_bound();
+};
+
+// Utility for building AstNode trees.
+//
+// The object members that set AstNode properties return rvalue reference to *this (i.e. to the builder object), so they can be chained.
+// The children list is set using call operator (`builder_object({child0, child1, ...})`).
+// Build finalization is done through cast operator to either `AstNode*` or `std::unique_ptr<AstNode>`.
+//
+// Usage example:
+//
+// 1. Define one or more factory functions for creating base AstNode object:
+//
+//     const auto make_node = [](AST::AstNodeType type) {
+//         auto node = std::make_unique<AST::AstNode>(type);
+//         // ...initialize the node if needed...
+//         return AstNodeBuilder(std::move(node));
+//     };
+//
+// 2. Use the factories to create a tree:
+//
+//     // AST::AstNode *const variable_node = ...
+//     // AST::AstNode *const value_node = ...
+//     AST::AstNode *const assign = //
+//       (make_node(AST::AST_ASSIGN_EQ))({
+//         (make_node(AST::AST_IDENTIFIER).str(variable_node->str)),
+//         (make_node(Yosys::AST::AST_ADD))({
+//           (make_node(AST::AST_IDENTIFIER).str(value_node->str)),
+//           (make_node(AST::AST_CONSTANT).value(4)),
+//         }),
+//       });
+//
+// In the real code instead of custom factories illustrated in point 1 above, you probably should use predefined methods from `UhdmAst` class.
+// The syntax above puts the factory call and all its method calls (but not the function call operator with the children list) in `()`. This is done
+// to make `clang-format` format the code as presented. Otherwise it is heavily wrapped and a lot less readable. `()` are technically not required
+// in leafs to make them format as expected, but its nice to use them for consistency.
+class AstNodeBuilder
+{
+    using AstNode = ::Yosys::AST::AstNode;
+    using AstNodeType = ::Yosys::AST::AstNodeType;
+
+    std::unique_ptr<AstNode> node;
+
+  public:
+    explicit AstNodeBuilder(AstNodeType node_type) : node(new AstNode(node_type)) {}
+    explicit AstNodeBuilder(std::unique_ptr<AstNode> node) : node(std::move(node)) {}
+    ~AstNodeBuilder() { log_assert(node == nullptr); }
+
+    AstNodeBuilder(AstNodeBuilder &&) = default;
+
+    AstNodeBuilder() = delete;
+    AstNodeBuilder(const AstNodeBuilder &) = delete;
+    AstNodeBuilder &operator=(const AstNodeBuilder &) = delete;
+    AstNodeBuilder &operator=(AstNodeBuilder &&) = delete;
+
+    // Property setters
+
+    // Sets `AstNode::children` vector
+    AstNodeBuilder &&operator()(std::vector<AstNode *> children) { return node->children = std::move(children), std::move(*this); }
+
+    // Sets `AstNode::str` value.
+    AstNodeBuilder &&str(std::string s) { return node->str = std::move(s), std::move(*this); }
+
+    // Sets `AstNode::integer` value.
+    AstNodeBuilder &&integer(uint32_t v) { return node->integer = v, std::move(*this); }
+
+    // Sets `AstNode::is_signed` value.
+    AstNodeBuilder &&is_signed(bool v) { return node->is_signed = v, std::move(*this); }
+
+    // Sets `AstNode::is_reg` value.
+    AstNodeBuilder &&is_reg(bool v) { return node->is_reg = v, std::move(*this); }
+
+    // Sets `AstNode::range_valid`.
+    AstNodeBuilder &&range_valid(bool v) { return node->range_valid = v, std::move(*this); }
+
+    // Convenience range setters
+
+    // Sets `AstNode::range_left`, `AstNode::range_right`, `AstNode::range_valid`.
+    AstNodeBuilder &&range(bool v, int left = -1, int right = 0)
+    {
+        node->range_valid = v;
+        node->range_left = left;
+        node->range_right = right;
+        return std::move(*this);
+    }
+
+    // Sets `AstNode::range_left`, `AstNode::range_right`, `AstNode::range_valid = true`.
+    AstNodeBuilder &&range(int left, int right) { return range(true, left, right); }
+
+    // Convenience value setters, mainly for constants.
+
+    // Sets node's value.
+    // Sets: `AstNode::integer`, `AstNode::is_signed`, `AstNode::bits`.
+    AstNodeBuilder &&value(uint32_t v, bool is_signed, int width = 32)
+    {
+        log_assert(width >= 0);
+        node->integer = v;
+        node->is_signed = is_signed;
+        // `AstNode::mkconst_int` does this too.
+        for (int i = 0; i < width; i++) {
+            node->bits.push_back((v & 1) ? Yosys::RTLIL::State::S1 : Yosys::RTLIL::State::S0);
+            v = v >> 1;
+        }
+        range(width - 1, 0);
+        return std::move(*this);
+    }
+
+    // Sets node's value to signed 32 bit integer.
+    // Sets: `AstNode::integer`, `AstNode::is_signed`, `AstNode::bits`.
+    AstNodeBuilder &&value(int32_t v) { return value(v, true); }
+
+    // Sets node's value to unsigned 32 bit integer.
+    // Sets: `AstNode::integer`, `AstNode::is_signed`, `AstNode::bits`.
+    AstNodeBuilder &&value(uint32_t v) { return value(v, false); }
+
+    // Type-cast operators used for building.
+
+    operator AstNode *() { return node.release(); }
+
+    operator std::unique_ptr<AstNode>() { return std::move(node); }
 };
 
 } // namespace systemverilog_plugin
