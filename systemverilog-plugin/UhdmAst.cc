@@ -1895,6 +1895,14 @@ void UhdmAst::process_design()
                               shared.top_nodes[node->str] = node;
                           }
                       });
+    visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
+        if (get_attribute(node, attr_id::is_type_parameter)) {
+            // Don't process type parameters.
+            delete node;
+            return;
+        }
+        add_or_replace_child(current_node, node);
+    });
     visit_one_to_many({vpiTypedef}, obj_h, [&](AST::AstNode *node) {
         if (node)
             move_type_to_new_typedef(current_node, node);
