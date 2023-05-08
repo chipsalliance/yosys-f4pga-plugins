@@ -174,6 +174,43 @@ static void sanitize_symbol_name(std::string &name)
     }
 }
 
+static std::string get_parent_name(vpiHandle parent_h)
+{
+    std::string parent_name;
+    if (auto p = vpi_get_str(vpiFullName, parent_h)) {
+        parent_name = p;
+    } else if (auto p = vpi_get_str(vpiName, parent_h)) {
+        parent_name = p;
+    } else if (auto p = vpi_get_str(vpiDefName, parent_h)) {
+        parent_name = p;
+    }
+    return parent_name;
+}
+
+// Warning: Takes ownership of `parent_h` and releases it.
+static void find_ancestor_name(vpiHandle parent_h, std::string &name, std::string &parent_name)
+{
+
+    while (!parent_name.empty()) {
+        parent_name = parent_name + ".";
+        if ((name.rfind(parent_name) != std::string::npos)) {
+            name = name.substr(name.rfind(parent_name) + parent_name.size());
+            break;
+        } else {
+            auto old_parent_h = parent_h;
+            parent_h = vpi_handle(vpiParent, parent_h);
+            vpi_release_handle(old_parent_h);
+
+            if (parent_h) {
+                parent_name = get_parent_name(parent_h);
+            } else {
+                parent_name.clear();
+            }
+        }
+    }
+    vpi_release_handle(parent_h);
+}
+
 static std::string get_name(vpiHandle obj_h, bool prefer_full_name = false)
 {
     auto first_check = prefer_full_name ? vpiFullName : vpiName;
@@ -186,8 +223,29 @@ static std::string get_name(vpiHandle obj_h, bool prefer_full_name = false)
     } else if (auto s = vpi_get_str(last_check, obj_h)) {
         name = s;
     }
-    if (name.rfind('.') != std::string::npos) {
-        name = name.substr(name.rfind('.') + 1);
+    // We are looking for the ancestor name to use it as a delimeter
+    // when stripping the name of the current node.
+    // We used to strip the name by searching for "." in it, but this
+    // approach didn't work for the names whith "." as an escaped
+    // character.
+    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
+
+    if (parent_h) {
+        std::string parent_name;
+        parent_name = get_parent_name(parent_h);
+
+        if (parent_name.empty()) {
+            // Nodes of certain types, like param_assign, don't have
+            // a name, so we need to look further for the ancestor.
+            auto old_parent_h = parent_h;
+            parent_h = vpi_handle(vpiParent, parent_h);
+            vpi_release_handle(old_parent_h);
+
+            if (parent_h) {
+                parent_name = get_parent_name(parent_h);
+            }
+        }
+        find_ancestor_name(parent_h, name, parent_name);
     }
     sanitize_symbol_name(name);
     return name;
