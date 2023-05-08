@@ -3619,14 +3619,17 @@ void UhdmAst::process_stream_op()
 
     AST::AstNode *const for_loop = //
       (make_node(is_proc_ctx ? AST::AST_FOR : AST::AST_GENFOR))({
+        // init statement
         (make_node(AST::AST_ASSIGN_EQ))({
           (make_ident(loop_counter->str)),
           (make_const(0)),
         }),
+        // condition
         (make_node(AST::AST_LT))({
           (make_ident(loop_counter->str)),
           (make_ident(stream_concat_width_lp->str)),
         }),
+        // iteration expression
         (make_node(AST::AST_ASSIGN_EQ))({
           (make_ident(loop_counter->str)),
           (make_node(Yosys::AST::AST_ADD))({
@@ -3634,6 +3637,7 @@ void UhdmAst::process_stream_op()
             (slice_size_arg->clone()),
           }),
         }),
+        // loop body
         (make_node(is_proc_ctx ? AST::AST_BLOCK : AST::AST_GENBLOCK).str(make_id_str("loop_body")))({
           (make_node(is_proc_ctx ? AST::AST_ASSIGN_EQ : AST::AST_ASSIGN))({
             (make_ident(dst_wire->str))({
