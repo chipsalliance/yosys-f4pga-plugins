@@ -47,6 +47,7 @@ enum AstNodeTypeExtended {
 
 namespace attr_id
 {
+static bool already_initialized = false;
 static IdString partial;
 static IdString packed_ranges;
 static IdString unpacked_ranges;
@@ -69,10 +70,9 @@ static IdString is_type_parameter;
 void attr_id_init()
 {
     // Initialize only once
-    static bool already_initialized = false;
-    if (already_initialized)
+    if (attr_id::already_initialized)
         return;
-    already_initialized = true;
+    attr_id::already_initialized = true;
 
     // Actual initialization
 
@@ -99,6 +99,7 @@ void attr_id_cleanup()
     attr_id::packed_ranges = IdString();
     attr_id::partial = IdString();
     attr_id::is_type_parameter = IdString();
+    attr_id::already_initialized = false;
 }
 
 static AST::AstNode *get_attribute(AST::AstNode *node, const IdString &attribute)
@@ -1894,7 +1895,14 @@ void UhdmAst::process_design()
                               shared.top_nodes[node->str] = node;
                           }
                       });
-    visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {});
+    visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
+        if (get_attribute(node, attr_id::is_type_parameter)) {
+            // Don't process type parameters.
+            delete node;
+            return;
+        }
+        add_or_replace_child(current_node, node);
+    });
     visit_one_to_many({vpiTypedef}, obj_h, [&](AST::AstNode *node) {
         if (node)
             move_type_to_new_typedef(current_node, node);
@@ -2007,6 +2015,11 @@ void UhdmAst::process_module()
                                vpiContAssign, vpiVariables},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
+                                      if (get_attribute(node, attr_id::is_type_parameter)) {
+                                          // Don't process type parameters.
+                                          delete node;
+                                          return;
+                                      }
                                       add_or_replace_child(current_node, node);
                                   }
                               });
@@ -2033,8 +2046,12 @@ void UhdmAst::process_module()
             });
             visit_one_to_many({vpiModule, vpiParameter, vpiParamAssign, vpiNet, vpiArrayNet, vpiProcess}, obj_h, [&](AST::AstNode *node) {
                 if (node) {
-                    if ((node->type == AST::AST_ASSIGN && node->children.size() < 2) ||
-                        (node->type == AST::AST_PARAMETER && get_attribute(node, attr_id::is_type_parameter))) {
+                    if (get_attribute(node, attr_id::is_type_parameter)) {
+                        // Don't process type parameters.
+                        delete node;
+                        return;
+                    }
+                    if ((node->type == AST::AST_ASSIGN && node->children.size() < 2)) {
                         delete node;
                         return;
                     }
@@ -2916,6 +2933,11 @@ void UhdmAst::process_package()
     });
     visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
         if (node) {
+            if (get_attribute(node, attr_id::is_type_parameter)) {
+                // Don't process type parameters.
+                delete node;
+                return;
+            }
             node->str = strip_package_name(node->str);
             for (auto c : node->children) {
                 c->str = strip_package_name(c->str);
@@ -3792,6 +3814,11 @@ void UhdmAst::process_gen_scope()
       {vpiParameter, vpiParamAssign, vpiNet, vpiArrayNet, vpiVariables, vpiContAssign, vpiProcess, vpiModule, vpiGenScopeArray, vpiTaskFunc}, obj_h,
       [&](AST::AstNode *node) {
           if (node) {
+              if (get_attribute(node, attr_id::is_type_parameter)) {
+                  // Don't process type parameters.
+                  delete node;
+                  return;
+              }
               add_or_replace_child(current_node, node);
           }
       });
@@ -3921,6 +3948,11 @@ void UhdmAst::process_function()
     });
     visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
         if (node) {
+            if (get_attribute(node, attr_id::is_type_parameter)) {
+                // Don't process type parameters.
+                delete node;
+                return;
+            }
             add_or_replace_child(current_node, node);
         }
     });
