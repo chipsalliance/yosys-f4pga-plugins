@@ -17,13 +17,9 @@
  *
  */
 
+#include "uhdm/uhdm-version.h" // UHDM_VERSION define
+#include "uhdm/vpi_visitor.h"  // visit_object
 #include "uhdmcommonfrontend.h"
-
-namespace UHDM
-{
-extern void visit_object(vpiHandle obj_h, int indent, const char *relation, std::set<const BaseClass *> *visited, std::ostream &out,
-                         bool shallowVisit = false);
-}
 
 namespace systemverilog_plugin
 {
@@ -54,7 +50,11 @@ struct UhdmAstFrontend : public UhdmCommonFrontend {
         if (this->shared.debug_flag || !this->report_directory.empty()) {
             for (auto design : restoredDesigns) {
                 std::ofstream null_stream;
+#if UHDM_VERSION > 1057
+                UHDM::visit_object(design, this->shared.debug_flag ? std::cout : null_stream);
+#else
                 UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : null_stream);
+#endif
             }
         }
         UhdmAst uhdm_ast(this->shared);
