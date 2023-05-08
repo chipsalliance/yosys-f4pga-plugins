@@ -3127,6 +3127,12 @@ skip_dynamic_range_lvalue_expansion:;
 
 				// Is this needed?
 				//while (simplify(buf, true, false, false, stage, width_hint, sign_hint, false)) { }
+
+				if (buf->type == Yosys::AST::AST_IDENTIFIER && buf->id2ast && buf->id2ast->type == Yosys::AST::AST_TYPEDEF) {
+					// If the identifier points to a typedef, use the type that is stored inside the typedef (children[0]).
+					log_assert(buf->id2ast->children.size());
+					buf->id2ast = buf->id2ast->children[0];
+				}
 				buf->detectSignWidth(width_hint, sign_hint);
 
 				if (buf->type == Yosys::AST::AST_IDENTIFIER) {
