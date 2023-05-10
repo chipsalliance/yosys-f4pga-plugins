@@ -35,3 +35,9 @@ defaults_verify = true
 defines_verify = true
 formal_verify = true
 translate_off_verify = true
+
+.PHONY: systemverilog_tests_clean
+systemverilog_tests_clean:
+	@rm -rf $(foreach test,$(TESTS),$(test)/tmp)
+
+clean: systemverilog_tests_clean
