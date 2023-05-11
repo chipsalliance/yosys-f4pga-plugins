@@ -1,6 +1,8 @@
 #include <algorithm>
+#include <cstdlib>
 #include <cstring>
 #include <functional>
+#include <iostream>
 #include <limits>
 #include <regex>
 #include <string>
@@ -47,6 +49,7 @@ enum AstNodeTypeExtended {
 
 namespace attr_id
 {
+static bool already_initialized = false;
 static IdString partial;
 static IdString packed_ranges;
 static IdString unpacked_ranges;
@@ -69,10 +72,9 @@ static IdString is_type_parameter;
 void attr_id_init()
 {
     // Initialize only once
-    static bool already_initialized = false;
-    if (already_initialized)
+    if (attr_id::already_initialized)
         return;
-    already_initialized = true;
+    attr_id::already_initialized = true;
 
     // Actual initialization
 
@@ -99,6 +101,7 @@ void attr_id_cleanup()
     attr_id::packed_ranges = IdString();
     attr_id::partial = IdString();
     attr_id::is_type_parameter = IdString();
+    attr_id::already_initialized = false;
 }
 
 static AST::AstNode *get_attribute(AST::AstNode *node, const IdString &attribute)
@@ -687,6 +690,51 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
 
     // Insert new range
     wire_node->children.insert(wire_node->children.end(), ranges.begin(), ranges.end());
+}
+
+// Assert macro that prints location in C++ code and location of currently processed UHDM object.
+// Use only inside UhdmAst methods.
+#ifndef NDEBUG
+#if __GNUC__
+// gcc/clang's __builtin_trap() makes gdb stop on the line containing an assertion.
+#define uhdmast_assert(expr)                                                                                                                         \
+    if ((expr)) {                                                                                                                                    \
+    } else {                                                                                                                                         \
+        this->uhdmast_assert_log(#expr, __PRETTY_FUNCTION__, __FILE__, __LINE__);                                                                    \
+        __builtin_trap();                                                                                                                            \
+    }
+#else // #if __GNUC__
+// Just abort when using compiler other than gcc/clang.
+#define uhdmast_assert(expr)                                                                                                                         \
+    if ((expr)) {                                                                                                                                    \
+    } else {                                                                                                                                         \
+        this->uhdmast_assert_log(#expr, __func__, __FILE__, __LINE__);                                                                               \
+        std::abort();                                                                                                                                \
+    }
+#endif // #if __GNUC__
+#else  // #ifndef NDEBUG
+#define uhdmast_assert(expr)                                                                                                                         \
+    if ((expr)) {                                                                                                                                    \
+    } else {                                                                                                                                         \
+    }
+#endif // #ifndef NDEBUG
+
+void UhdmAst::uhdmast_assert_log(const char *expr_str, const char *func, const char *file, int line) const
+{
+    std::cerr << file << ':' << line << ": error: Assertion failed: " << expr_str << std::endl;
+    std::cerr << file << ':' << line << ": note: In function: " << func << std::endl;
+    if (obj_h != 0) {
+        const char *const svfile = vpi_get_str(vpiFile, obj_h);
+        int svline = vpi_get(vpiLineNo, obj_h);
+        int svcolumn = vpi_get(vpiColumnNo, obj_h);
+        std::string obj_type_name = UHDM::VpiTypeName(obj_h);
+        const char *obj_name = vpi_get_str(vpiName, obj_h);
+        std::cerr << svfile << ':' << svline << svcolumn << ": note: When processing object of type '" << obj_type_name << '\'';
+        if (obj_name && obj_name[0] != '\0') {
+            std::cerr << " named '" << obj_name << '\'';
+        }
+        std::cerr << '.' << std::endl;
+    }
 }
 
 static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::AstNode *search_node)
@@ -1619,40 +1667,81 @@ void UhdmAst::transform_breaks_continues(AST::AstNode *loop, AST::AstNode *decl_
     }
 }
 
+void UhdmAst::apply_location_from_current_obj(AST::AstNode &target_node) const
+{
+    if (auto filename = vpi_get_str(vpiFile, obj_h)) {
+        target_node.filename = filename;
+    }
+    if (unsigned int first_line = vpi_get(vpiLineNo, obj_h)) {
+        target_node.location.first_line = first_line;
+    }
+    if (unsigned int last_line = vpi_get(vpiEndLineNo, obj_h)) {
+        target_node.location.last_line = last_line;
+    } else {
+        target_node.location.last_line = target_node.location.first_line;
+    }
+    if (unsigned int first_col = vpi_get(vpiColumnNo, obj_h)) {
+        target_node.location.first_column = first_col;
+    }
+    if (unsigned int last_col = vpi_get(vpiEndColumnNo, obj_h)) {
+        target_node.location.last_column = last_col;
+    } else {
+        target_node.location.last_column = target_node.location.first_column;
+    }
+}
+
+void UhdmAst::apply_name_from_current_obj(AST::AstNode &target_node, bool prefer_full_name) const
+{
+    target_node.str = get_name(obj_h, prefer_full_name);
+    auto it = node_renames.find(target_node.str);
+    if (it != node_renames.end())
+        target_node.str = it->second;
+}
+
+AstNodeBuilder UhdmAst::make_node(AST::AstNodeType type) const
+{
+    auto node = std::make_unique<AST::AstNode>(type);
+    apply_location_from_current_obj(*node);
+    return AstNodeBuilder(std::move(node));
+};
+
+AstNodeBuilder UhdmAst::make_named_node(AST::AstNodeType type, bool prefer_full_name) const
+{
+    auto node = std::make_unique<AST::AstNode>(type);
+    apply_location_from_current_obj(*node);
+    apply_name_from_current_obj(*node, prefer_full_name);
+    return AstNodeBuilder(std::move(node));
+};
+
+AstNodeBuilder UhdmAst::make_ident(std::string id) const { return make_node(::Yosys::AST::AST_IDENTIFIER).str(std::move(id)); };
+
+AstNodeBuilder UhdmAst::make_const(int32_t value, uint8_t width) const
+{
+    // Limited to width of the `value` argument.
+    log_assert(width <= 32);
+    return make_node(AST::AST_CONSTANT).value(value, true, width);
+};
+
+AstNodeBuilder UhdmAst::make_const(uint32_t value, uint8_t width) const
+{
+    // Limited to width of the `value` argument.
+    log_assert(width <= 32);
+    return make_node(AST::AST_CONSTANT).value(value, false, width);
+};
+
 AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::AstNode *> children, bool prefer_full_name)
 {
     auto node = new AST::AstNode(type);
-    node->str = get_name(obj_h, prefer_full_name);
-    auto it = node_renames.find(node->str);
-    if (it != node_renames.end())
-        node->str = it->second;
-    if (auto filename = vpi_get_str(vpiFile, obj_h)) {
-        node->filename = filename;
-    }
-    if (unsigned int first_line = vpi_get(vpiLineNo, obj_h)) {
-        node->location.first_line = first_line;
-    }
-    if (unsigned int last_line = vpi_get(vpiEndLineNo, obj_h)) {
-        node->location.last_line = last_line;
-    } else {
-        node->location.last_line = node->location.first_line;
-    }
-    if (unsigned int first_col = vpi_get(vpiColumnNo, obj_h)) {
-        node->location.first_column = first_col;
-    }
-    if (unsigned int last_col = vpi_get(vpiEndColumnNo, obj_h)) {
-        node->location.last_column = last_col;
-    } else {
-        node->location.last_column = node->location.first_column;
-    }
+    apply_name_from_current_obj(*node, prefer_full_name);
+    apply_location_from_current_obj(*node);
     node->children = children;
     return node;
 }
 
-AST::AstNode *UhdmAst::make_identifier(const std::string &name)
+AST::AstNode *UhdmAst::make_identifier(std::string name)
 {
     auto *node = make_ast_node(AST::AST_IDENTIFIER);
-    node->str = name;
+    node->str = std::move(name);
     return node;
 }
 
@@ -1894,7 +1983,14 @@ void UhdmAst::process_design()
                               shared.top_nodes[node->str] = node;
                           }
                       });
-    visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {});
+    visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
+        if (get_attribute(node, attr_id::is_type_parameter)) {
+            // Don't process type parameters.
+            delete node;
+            return;
+        }
+        add_or_replace_child(current_node, node);
+    });
     visit_one_to_many({vpiTypedef}, obj_h, [&](AST::AstNode *node) {
         if (node)
             move_type_to_new_typedef(current_node, node);
@@ -2007,6 +2103,11 @@ void UhdmAst::process_module()
                                vpiContAssign, vpiVariables},
                               obj_h, [&](AST::AstNode *node) {
                                   if (node) {
+                                      if (get_attribute(node, attr_id::is_type_parameter)) {
+                                          // Don't process type parameters.
+                                          delete node;
+                                          return;
+                                      }
                                       add_or_replace_child(current_node, node);
                                   }
                               });
@@ -2033,8 +2134,12 @@ void UhdmAst::process_module()
             });
             visit_one_to_many({vpiModule, vpiParameter, vpiParamAssign, vpiNet, vpiArrayNet, vpiProcess}, obj_h, [&](AST::AstNode *node) {
                 if (node) {
-                    if ((node->type == AST::AST_ASSIGN && node->children.size() < 2) ||
-                        (node->type == AST::AST_PARAMETER && get_attribute(node, attr_id::is_type_parameter))) {
+                    if (get_attribute(node, attr_id::is_type_parameter)) {
+                        // Don't process type parameters.
+                        delete node;
+                        return;
+                    }
+                    if ((node->type == AST::AST_ASSIGN && node->children.size() < 2)) {
                         delete node;
                         return;
                     }
@@ -2916,6 +3021,11 @@ void UhdmAst::process_package()
     });
     visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
         if (node) {
+            if (get_attribute(node, attr_id::is_type_parameter)) {
+                // Don't process type parameters.
+                delete node;
+                return;
+            }
             node->str = strip_package_name(node->str);
             for (auto c : node->children) {
                 c->str = strip_package_name(c->str);
@@ -3036,16 +3146,29 @@ void UhdmAst::process_always()
     current_node = make_ast_node(AST::AST_ALWAYS);
     visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
         if (node) {
-            AST::AstNode *block = nullptr;
             if (node->type != AST::AST_BLOCK) {
-                block = new AST::AstNode(AST::AST_BLOCK, node);
+                // Create implicit block.
+                AST::AstNode *block = make_ast_node(AST::AST_BLOCK);
+                // There are (at least) two cases where something could have been inserted into AST_ALWAYS node when `node` is not an AST_BLOCK:
+                // - stream_op inserts a block.
+                // - event_control inserts a non-block statement.
+                // Move the block inserted by a stream_op into an implicit group. Everything else stays where it is.
+                if (!current_node->children.empty() && current_node->children.back()->type == AST::AST_BLOCK) {
+                    block->children.push_back(current_node->children.back());
+                    current_node->children.pop_back();
+                }
+                block->children.push_back(node);
+                current_node->children.push_back(block);
             } else {
-                block = node;
+                // Child is an explicit block.
+                current_node->children.push_back(node);
             }
-            current_node->children.push_back(block);
         } else {
-            // create empty block
-            current_node->children.push_back(new AST::AstNode(AST::AST_BLOCK));
+            // TODO (mglb): This branch is probably unreachable? Is it possible to have empty `always`?
+            // No children, so nothing should have been inserted into the always node during visitation.
+            log_assert(current_node->children.empty());
+            // Create implicit empty block.
+            current_node->children.push_back(make_ast_node(AST::AST_BLOCK));
         }
     });
     switch (vpi_get(vpiAlwaysType, obj_h)) {
@@ -3087,15 +3210,30 @@ void UhdmAst::process_event_control(const UHDM::BaseClass *object)
 void UhdmAst::process_initial()
 {
     current_node = make_ast_node(AST::AST_INITIAL);
+    // TODO (mglb): handler below is identical as in `process_always`. Extract it to avoid duplication.
     visit_one_to_one({vpiStmt}, obj_h, [&](AST::AstNode *node) {
         if (node) {
             if (node->type != AST::AST_BLOCK) {
-                auto block_node = make_ast_node(AST::AST_BLOCK);
-                block_node->children.push_back(node);
-                node = block_node;
+                // Create an implicit block.
+                AST::AstNode *block = make_ast_node(AST::AST_BLOCK);
+                // There is (at least) one case where something could have been inserted into AST_INITIAL node when `node` is not an AST_BLOCK:
+                // - stream_op inserts a block.
+                // Move the block inserted by a stream_op into an implicit group.
+                if (!current_node->children.empty() && current_node->children.back()->type == AST::AST_BLOCK) {
+                    block->children.push_back(current_node->children.back());
+                    current_node->children.pop_back();
+                }
+                block->children.push_back(node);
+                current_node->children.push_back(block);
+            } else {
+                // Child is an explicit block.
+                current_node->children.push_back(node);
             }
-            current_node->children.push_back(node);
         } else {
+            // TODO (mglb): This branch is probably unreachable? Is it possible to have empty `initial`?
+            // No children, so nothing should have been inserted into the always node during visitation.
+            log_assert(current_node->children.empty());
+            // Create implicit empty block.
             current_node->children.push_back(make_ast_node(AST::AST_BLOCK));
         }
     });
@@ -3408,120 +3546,174 @@ void UhdmAst::process_operation(const UHDM::BaseClass *object)
 
 void UhdmAst::process_stream_op()
 {
-    // Create a for loop that does what a streaming operator would do
-    auto block_node = find_ancestor({AST::AST_BLOCK, AST::AST_ALWAYS, AST::AST_INITIAL});
-    auto process_node = find_ancestor({AST::AST_ALWAYS, AST::AST_INITIAL});
-    auto module_node = find_ancestor({AST::AST_MODULE, AST::AST_FUNCTION, AST::AST_PACKAGE});
-    log_assert(module_node);
-    if (!process_node) {
-        if (module_node->type != AST::AST_FUNCTION) {
-            // Create a @* always block
-            process_node = make_ast_node(AST::AST_ALWAYS);
-            module_node->children.push_back(process_node);
-            block_node = make_ast_node(AST::AST_BLOCK);
-            process_node->children.push_back(block_node);
-        } else {
-            // Create only block
-            block_node = make_ast_node(AST::AST_BLOCK);
-            module_node->children.push_back(block_node);
-        }
-    }
-
-    auto loop_id = shared.next_loop_id();
-    auto loop_counter =
-      make_ast_node(AST::AST_WIRE, {make_ast_node(AST::AST_RANGE, {AST::AstNode::mkconst_int(31, false), AST::AstNode::mkconst_int(0, false)})});
-    loop_counter->is_reg = true;
-    loop_counter->is_signed = true;
-    loop_counter->str = "\\loop" + std::to_string(loop_id) + "::i";
-    module_node->children.insert(module_node->children.end() - 1, loop_counter);
-    auto loop_counter_ident = make_ast_node(AST::AST_IDENTIFIER);
-    loop_counter_ident->str = loop_counter->str;
-
-    auto lhs_node = find_ancestor({AST::AST_ASSIGN, AST::AST_ASSIGN_EQ, AST::AST_ASSIGN_LE})->children[0];
-    // Temp var to allow concatenation
-    AST::AstNode *temp_var = nullptr;
-    AST::AstNode *bits_call = nullptr;
-    if (lhs_node->type == AST::AST_WIRE) {
-        module_node->children.insert(module_node->children.begin(), lhs_node->clone());
-        temp_var = lhs_node->clone(); // if we already have wire as lhs, we want to create the same wire for temp_var
-        lhs_node->delete_children();
-        lhs_node->type = AST::AST_IDENTIFIER;
-        bits_call = make_ast_node(AST::AST_FCALL, {lhs_node->clone()});
-        bits_call->str = "\\$bits";
-    } else {
-        // otherwise, we need to calculate size using bits fcall
-        bits_call = make_ast_node(AST::AST_FCALL, {lhs_node->clone()});
-        bits_call->str = "\\$bits";
-        temp_var =
-          make_ast_node(AST::AST_WIRE, {make_ast_node(AST::AST_RANGE, {make_ast_node(AST::AST_SUB, {bits_call, AST::AstNode::mkconst_int(1, false)}),
-                                                                       AST::AstNode::mkconst_int(0, false)})});
-    }
-
-    temp_var->str = "\\loop" + std::to_string(loop_id) + "::temp";
-    module_node->children.insert(module_node->children.end() - 1, temp_var);
-    auto temp_var_ident = make_ast_node(AST::AST_IDENTIFIER);
-    temp_var_ident->str = temp_var->str;
-    auto temp_assign = make_ast_node(AST::AST_ASSIGN_EQ, {temp_var_ident});
-    block_node->children.push_back(temp_assign);
-
-    // Assignment in the loop's block
-    auto assign_node = make_ast_node(AST::AST_ASSIGN_EQ, {lhs_node->clone(), temp_var_ident->clone()});
-    AST::AstNode *slice_size = nullptr; // First argument in streaming op
-    visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
-        if (!slice_size && node->type == AST::AST_CONSTANT) {
-            slice_size = node;
-        } else {
-            temp_assign->children.push_back(node);
-        }
+    // Closest ancestor where new statements can be inserted.
+    AST::AstNode *stmt_list_node = find_ancestor({
+      AST::AST_MODULE,
+      AST::AST_PACKAGE,
+      AST::AST_BLOCK,
+      AST::AST_INITIAL,
+      AST::AST_ALWAYS,
+      AST::AST_FUNCTION,
     });
-    if (!slice_size) {
-        slice_size = AST::AstNode::mkconst_int(1, true);
+    uhdmast_assert(stmt_list_node != nullptr);
+
+    // Detect whether we're in a procedural context. If yes, `for` loop will be generated, and `generate for` otherwise.
+    const AST::AstNode *const proc_ctx = find_ancestor({AST::AST_ALWAYS, AST::AST_INITIAL, AST::AST_FUNCTION});
+    const bool is_proc_ctx = (proc_ctx != nullptr);
+
+    // Get a prefix for internal identifiers.
+    const auto stream_op_id = shared.next_loop_id();
+    const auto make_id_str = [stream_op_id](const char *suffix) {
+        return std::string("$systemverilog_plugin$stream_op_") + std::to_string(stream_op_id) + "_" + suffix;
+    };
+
+    if (is_proc_ctx) {
+        // Put logic inside a sub-block to avoid issues with declarations not being at the beginning of a block.
+        AST::AstNode *block = make_node(Yosys::AST::AST_BLOCK).str(make_id_str("impl"));
+        stmt_list_node->children.push_back(block);
+        stmt_list_node = block;
     }
 
-    // Initialization of the loop counter to 0
-    auto init_stmt = make_ast_node(AST::AST_ASSIGN_EQ, {loop_counter_ident, AST::AstNode::mkconst_int(0, true)});
+    // TODO (mglb): Only concat expression's size factors are supported as a slice size. Add support for other slice sizes as well.
+    AST::AstNode *slice_size_arg = nullptr;
+    AST::AstNode *stream_concat_arg = nullptr;
+    {
+        std::vector<AST::AstNode *> operands;
+        // Expected operands: [slice_size] stream_concatenation
+        visit_one_to_many({vpiOperand}, obj_h, [&](AST::AstNode *node) {
+            uhdmast_assert(node != nullptr);
+            uhdmast_assert(operands.size() < 2);
+            operands.push_back(node);
+        });
+        uhdmast_assert(operands.size() > 0);
 
-    // Loop condition (loop counter < $bits(RHS))
-    auto cond_stmt =
-      make_ast_node(AST::AST_LE, {loop_counter_ident->clone(), make_ast_node(AST::AST_SUB, {bits_call->clone(), slice_size->clone()})});
+        if (operands.size() == 2) {
+            slice_size_arg = operands.at(0);
+            // SV spec says slice_size can be a constant or a type. However, Surelog converts type to its width, so we always expect a const.
+            uhdmast_assert(slice_size_arg->type == AST::AST_CONSTANT);
+        } else {
+            slice_size_arg = make_const(1u);
+        }
+        stream_concat_arg = operands.back();
+    }
 
-    // Increment loop counter
-    auto inc_stmt =
-      make_ast_node(AST::AST_ASSIGN_EQ, {loop_counter_ident->clone(), make_ast_node(AST::AST_ADD, {loop_counter_ident->clone(), slice_size})});
+    AST::AstNode *const stream_concat_width_lp = //
+      (make_node(AST::AST_LOCALPARAM).str(make_id_str("width")))({
+        (make_node(AST::AST_FCALL).str("\\$bits"))({
+          (stream_concat_arg->clone()),
+        }),
+        (make_range(31, 0, true)),
+      });
 
-    // Range on the LHS of the assignment
-    auto lhs_range = make_ast_node(AST::AST_RANGE);
-    auto lhs_selfsz = make_ast_node(
-      AST::AST_SELFSZ, {make_ast_node(AST::AST_SUB, {make_ast_node(AST::AST_SUB, {bits_call->clone(), AST::AstNode::mkconst_int(1, true)}),
-                                                     loop_counter_ident->clone()})});
-    lhs_range->children.push_back(make_ast_node(AST::AST_ADD, {lhs_selfsz, AST::AstNode::mkconst_int(0, true)}));
-    lhs_range->children.push_back(
-      make_ast_node(AST::AST_SUB, {make_ast_node(AST::AST_ADD, {lhs_selfsz->clone(), AST::AstNode::mkconst_int(1, true)}), slice_size->clone()}));
+    // TODO (mglb): src_wire and dst_wire should probably take argument signedness and logicness into account.
+    AST::AstNode *const src_wire = //
+      (make_node(AST::AST_WIRE).str(make_id_str("src")).is_reg(is_proc_ctx))({
+        (make_node(AST::AST_RANGE))({
+          (make_const(0)),
+          (make_node(AST::AST_SUB))({
+            (make_ident(stream_concat_width_lp->str)),
+            (make_const(1)),
+          }),
+        }),
+      });
 
-    // Range on the RHS of the assignment
-    auto rhs_range = make_ast_node(AST::AST_RANGE);
-    auto rhs_selfsz = make_ast_node(AST::AST_SELFSZ, {loop_counter_ident->clone()});
-    rhs_range->children.push_back(
-      make_ast_node(AST::AST_SUB, {make_ast_node(AST::AST_ADD, {rhs_selfsz, slice_size->clone()}), AST::AstNode::mkconst_int(1, true)}));
-    rhs_range->children.push_back(make_ast_node(AST::AST_ADD, {rhs_selfsz->clone(), AST::AstNode::mkconst_int(0, true)}));
+    AST::AstNode *const dst_wire = //
+      (make_node(AST::AST_WIRE).str(make_id_str("dst")).is_reg(is_proc_ctx))({
+        (make_node(AST::AST_RANGE))({
+          (make_node(AST::AST_SUB))({
+            (make_ident(stream_concat_width_lp->str)),
+            (make_const(1)),
+          }),
+          (make_const(0)),
+        }),
+      });
 
-    // Put ranges on the sides of the assignment
-    assign_node->children[0]->children.push_back(lhs_range);
-    assign_node->children[1]->children.push_back(rhs_range);
+    AST::AstNode *const assign_stream_concat_to_src_wire = //
+      (make_node(is_proc_ctx ? AST::AST_ASSIGN_EQ : AST::AST_ASSIGN))({
+        (make_ident(src_wire->str)),
+        (stream_concat_arg),
+      });
 
-    // Putting the loop together
-    auto loop_node = make_ast_node(AST::AST_FOR);
-    loop_node->str = "$loop" + std::to_string(loop_id);
-    loop_node->children.push_back(init_stmt);
-    loop_node->children.push_back(cond_stmt);
-    loop_node->children.push_back(inc_stmt);
-    loop_node->children.push_back(make_ast_node(AST::AST_BLOCK, {assign_node}));
-    loop_node->children[3]->str = "\\stream_op_block" + std::to_string(loop_id);
+    AST::AstNode *const loop_counter = //
+      (make_node(is_proc_ctx ? AST::AST_WIRE : AST::AST_GENVAR).str(make_id_str("counter")).is_reg(true))({
+        (make_range(31, 0, true)),
+      });
 
-    block_node->children.push_back(make_ast_node(AST::AST_BLOCK, {loop_node}));
+    AST::AstNode *const for_loop = //
+      (make_node(is_proc_ctx ? AST::AST_FOR : AST::AST_GENFOR))({
+        // init statement
+        (make_node(AST::AST_ASSIGN_EQ))({
+          (make_ident(loop_counter->str)),
+          (make_const(0)),
+        }),
+        // condition
+        (make_node(AST::AST_LT))({
+          (make_ident(loop_counter->str)),
+          (make_ident(stream_concat_width_lp->str)),
+        }),
+        // iteration expression
+        (make_node(AST::AST_ASSIGN_EQ))({
+          (make_ident(loop_counter->str)),
+          (make_node(Yosys::AST::AST_ADD))({
+            (make_ident(loop_counter->str)),
+            (slice_size_arg->clone()),
+          }),
+        }),
+        // loop body
+        (make_node(is_proc_ctx ? AST::AST_BLOCK : AST::AST_GENBLOCK).str(make_id_str("loop_body")))({
+          (make_node(is_proc_ctx ? AST::AST_ASSIGN_EQ : AST::AST_ASSIGN))({
+            (make_ident(dst_wire->str))({
+              (make_node(AST::AST_RANGE))({
+                (make_node(Yosys::AST::AST_SUB))({
+                  (make_node(Yosys::AST::AST_ADD))({
+                    (make_node(Yosys::AST::AST_SELFSZ))({
+                      (make_ident(loop_counter->str)),
+                    }),
+                    (slice_size_arg->clone()),
+                  }),
+                  (make_const(1)),
+                }),
+                (make_node(Yosys::AST::AST_ADD))({
+                  (make_node(Yosys::AST::AST_SELFSZ))({
+                    (make_ident(loop_counter->str)),
+                  }),
+                  (make_const(0)),
+                }),
+              }),
+            }),
+            (make_ident(src_wire->str))({
+              (make_node(AST::AST_RANGE))({
+                (make_node(Yosys::AST::AST_SUB))({
+                  (make_node(Yosys::AST::AST_ADD))({
+                    (make_node(Yosys::AST::AST_SELFSZ))({
+                      (make_ident(loop_counter->str)),
+                    }),
+                    (slice_size_arg),
+                  }),
+                  (make_const(1)),
+                }),
+                (make_node(Yosys::AST::AST_ADD))({
+                  (make_node(Yosys::AST::AST_SELFSZ))({
+                    (make_ident(loop_counter->str)),
+                  }),
+                  (make_const(0)),
+                }),
+              }),
+            }),
+          }),
+        }),
+      });
 
-    // Do not create a node
-    shared.report.mark_handled(obj_h);
+    stmt_list_node->children.insert(stmt_list_node->children.end(), {
+                                                                      stream_concat_width_lp,
+                                                                      src_wire,
+                                                                      dst_wire,
+                                                                      assign_stream_concat_to_src_wire,
+                                                                      loop_counter,
+                                                                      for_loop,
+                                                                    });
+
+    current_node = make_ident(is_proc_ctx ? (stmt_list_node->str + '.' + dst_wire->str) : dst_wire->str);
 }
 
 void UhdmAst::process_list_op()
@@ -3792,6 +3984,11 @@ void UhdmAst::process_gen_scope()
       {vpiParameter, vpiParamAssign, vpiNet, vpiArrayNet, vpiVariables, vpiContAssign, vpiProcess, vpiModule, vpiGenScopeArray, vpiTaskFunc}, obj_h,
       [&](AST::AstNode *node) {
           if (node) {
+              if (get_attribute(node, attr_id::is_type_parameter)) {
+                  // Don't process type parameters.
+                  delete node;
+                  return;
+              }
               add_or_replace_child(current_node, node);
           }
       });
@@ -3921,6 +4118,11 @@ void UhdmAst::process_function()
     });
     visit_one_to_many({vpiParameter, vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
         if (node) {
+            if (get_attribute(node, attr_id::is_type_parameter)) {
+                // Don't process type parameters.
+                delete node;
+                return;
+            }
             add_or_replace_child(current_node, node);
         }
     });
