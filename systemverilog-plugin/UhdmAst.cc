@@ -1470,19 +1470,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 break;
             }
 
-            int size = -1;
-            // Surelog sometimes report size as part of vpiTypespec (e.g. int_typespec)
-            // if it is the case, we need to set size to the left_range of first packed range
-            visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
-                if (node && node->attributes.count(UhdmAst::packed_ranges()) && node->attributes[UhdmAst::packed_ranges()]->children.size() &&
-                    node->attributes[UhdmAst::packed_ranges()]->children[0]->children.size()) {
-                    size = node->attributes[UhdmAst::packed_ranges()]->children[0]->children[0]->integer + 1;
-                }
-                delete node;
-            });
-            if (size == -1) {
-                size = vpi_get(vpiSize, obj_h);
-            }
+            auto size = vpi_get(vpiSize, obj_h);
             // Surelog by default returns 64 bit numbers and stardard says that they shall be at least 32bits
             // yosys is assuming that int/uint is 32 bit, so we are setting here correct size
             // NOTE: it *shouldn't* break on explicite 64 bit const values, as they *should* be handled
