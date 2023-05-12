@@ -2396,6 +2396,7 @@ void UhdmAst::process_typespec_member()
         break;
     }
     case vpiPackedArrayTypespec:
+    case vpiArrayTypespec:
         visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
             if (node && node->type == AST::AST_STRUCT) {
                 auto str = current_node->str;
