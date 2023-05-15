@@ -2474,6 +2474,17 @@ void UhdmAst::process_enum_typespec()
     const auto *enum_object = (const UHDM::enum_typespec *)handle->object;
     const auto *typespec = enum_object->Base_typespec();
 
+    if (current_node->str.empty()) {
+        // anonymous typespec, check if not already created
+        if (const auto enum_iter = shared.anonymous_enums.find(enum_object); enum_iter != shared.anonymous_enums.end()) {
+            // we already created typedef for this.
+            delete current_node;
+            current_node = make_node(AST::AST_WIRETYPE);
+            current_node->str = enum_iter->second;
+            return;
+        }
+    }
+
     if (typespec && typespec->UhdmType() == UHDM::uhdmlogic_typespec) {
         // If it's a logic_typespec, try to reduce expressions inside of it.
         // The `reduceExpr` function needs the whole context of the enum typespec
@@ -2561,6 +2572,17 @@ void UhdmAst::process_enum_typespec()
     });
     if (range) {
         delete range;
+    }
+    if (current_node->str.empty()) {
+        // anonymous typespec
+        std::string typedef_name = "$systemverilog_plugin$anonymous_enum" + std::to_string(shared.next_anonymous_enum_typedef_id());
+        current_node->str = typedef_name;
+        auto current_scope = find_ancestor({AST::AST_PACKAGE, AST::AST_MODULE, AST::AST_BLOCK, AST::AST_GENBLOCK});
+        uhdmast_assert(current_scope != nullptr);
+        move_type_to_new_typedef(current_scope, current_node);
+        current_node = make_node(AST::AST_WIRETYPE);
+        current_node->str = typedef_name;
+        shared.anonymous_enums[enum_object] = std::move(typedef_name);
     }
 }
 
