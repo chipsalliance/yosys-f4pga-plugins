@@ -1742,6 +1742,9 @@ void UhdmAst::process_packed_array_typespec()
     visit_one_to_one({vpiElemTypespec}, obj_h, [&](AST::AstNode *node) {
         if (node && node->type == AST::AST_STRUCT) {
             auto str = current_node->str;
+            // unnamed array of named (struct) array
+            if (str.empty() && !node->str.empty())
+                str = node->str;
             node->cloneInto(current_node);
             current_node->str = str;
             delete node;
