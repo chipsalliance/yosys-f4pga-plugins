@@ -2012,7 +2012,7 @@ void UhdmAst::process_design()
                 current_node->children.push_back(pair.second);
             }
         } else {
-            log_warning("Removing unused module: %s from the design.\n", pair.second->str.c_str());
+            log_warning("Removing unelaborated module: %s from the design.\n", pair.second->str.c_str());
             // TODO: This should be properly erased from the module, but it seems that it's
             // needed to resolve scope
             delete pair.second;
