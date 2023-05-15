@@ -54,7 +54,6 @@ using namespace ::Yosys::AST_INTERNAL;
 
 void detect_sign_width_proxy(Yosys::AST::AstNode * node, int& width, bool& sign, bool *found_real = NULL) {
     if (node->type == Yosys::AST::AST_IDENTIFIER && node->id2ast && node->id2ast->type == Yosys::AST::AST_TYPEDEF) {
-        node->id2ast->dumpAst(nullptr, "---------");
         node->id2ast = node->id2ast->children[0];
     }
     node->detectSignWidth(width, sign, found_real);

@@ -1282,6 +1282,10 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         if (current_node->str == "$display" || current_node->str == "$write")
             simplify_format_string(current_node);
         break;
+    case AST::AST_FCALL:
+        while (simplify(current_node, true, false, false, 1, -1, false, false)) {
+        };
+        break;
     case AST::AST_COND:
     case AST::AST_CONDX:
     case AST::AST_CONDZ:
