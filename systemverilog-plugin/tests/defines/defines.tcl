@@ -2,7 +2,7 @@ yosys -import
 if { [info procs read_uhdm] == {} } { plugin -i systemverilog }
 yosys -import  ;# ingest plugin commands
 
-set TMP_DIR ::env(TEST_OUTPUT_PREFIX)/tmp
+set TMP_DIR $::env(TEST_OUTPUT_PREFIX)/tmp
 file mkdir $TMP_DIR
 
 systemverilog_defines -DPONA
