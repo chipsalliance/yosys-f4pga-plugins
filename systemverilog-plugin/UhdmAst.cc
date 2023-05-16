@@ -2027,6 +2027,7 @@ void UhdmAst::process_design()
             pair.second = nullptr;
         }
     }
+    //simplify_sv(current_node, nullptr);
 }
 
 void UhdmAst::simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_node)
@@ -4301,16 +4302,23 @@ void UhdmAst::process_sys_func_call()
     const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
     const auto *tfcall = (const UHDM::tf_call *)handle->object;
 
-    std::cout << "tfcall:\n";
+    std::cout << "\ntfcall:\n";
     UHDM::visit_object(NewVpiHandle(tfcall), std::cout);
-    std::cout << "parent:\n";
-    UHDM::visit_object(NewVpiHandle(tfcall->VpiParent()), std::cout);
 
     UHDM::expr * result = reduce_expression(tfcall, tfcall, tfcall->VpiParent());
-    std::cout << "after redeuce_expr:\n";
-    UHDM::visit_object(NewVpiHandle(result), std::cout);
+    std::cout << "\nafter reduce_expr:\n";
+
+    vpi_release_handle(obj_h);
+    obj_h = NewVpiHandle(result);
+    UHDM::visit_object(obj_h, std::cout);
+
+    if(result->VpiType() != vpiSysFuncCall) {
+        current_node = process_object(obj_h);
+        return;
+    }
 
     current_node = make_ast_node(AST::AST_FCALL);
+    current_node->dumpAst(nullptr, "++++");
 
     std::string task_calls[] = {"\\$display", "\\$monitor", "\\$write", "\\$time", "\\$readmemh", "\\$readmemb", "\\$finish", "\\$stop"};
 
@@ -5160,9 +5168,12 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiLogicVar:
         process_logic_var();
         break;
-    case vpiSysFuncCall:
+    case vpiSysFuncCall: {
         process_sys_func_call();
+        std::cout<< "func call processed:\n";
+        current_node->dumpAst(nullptr, "  ");
         break;
+    }
     case vpiFuncCall:
         process_tf_call(AST::AST_FCALL);
         break;
