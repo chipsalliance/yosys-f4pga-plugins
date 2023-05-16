@@ -1251,6 +1251,10 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
                 current_node->children.push_back(result);
             }
         }
+        if (current_node->id2ast && current_node->id2ast->type == AST::AST_TYPEDEF) {
+            log_assert(current_node->id2ast->children.size());
+            current_node->id2ast = current_node->id2ast->children[0];
+        }
         break;
     case AST::AST_STRUCT:
     case AST::AST_UNION:
@@ -1282,10 +1286,6 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
     case AST::AST_TCALL:
         if (current_node->str == "$display" || current_node->str == "$write")
             simplify_format_string(current_node);
-        break;
-    case AST::AST_FCALL:
-        while (simplify(current_node, true, false, false, 1, -1, false, false)) {
-        };
         break;
     case AST::AST_COND:
     case AST::AST_CONDX:
@@ -1337,14 +1337,6 @@ static void clear_current_scope()
     AST_INTERNAL::current_scope.clear();
     // unset current_ast_mod
     AST_INTERNAL::current_ast_mod = nullptr;
-}
-
-static void visit_uhdm_obj(const UHDM::any *object)
-{
-    UHDM::VisitedContainer visited = UHDM::VisitedContainer();
-    vpiHandle handle = NewVpiHandle(object);
-    UHDM::visit_object(handle, 1, "", &visited, std::cout);
-    vpi_release_handle(handle);
 }
 
 void UhdmAst::visit_one_to_many(const std::vector<int> child_node_types, vpiHandle parent_handle, const std::function<void(AST::AstNode *)> &f)
@@ -4306,6 +4298,18 @@ void UhdmAst::process_logic_var()
 
 void UhdmAst::process_sys_func_call()
 {
+    const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+    const auto *tfcall = (const UHDM::tf_call *)handle->object;
+
+    std::cout << "tfcall:\n";
+    UHDM::visit_object(NewVpiHandle(tfcall), std::cout);
+    std::cout << "parent:\n";
+    UHDM::visit_object(NewVpiHandle(tfcall->VpiParent()), std::cout);
+
+    UHDM::expr * result = reduce_expression(tfcall, tfcall, tfcall->VpiParent());
+    std::cout << "after redeuce_expr:\n";
+    UHDM::visit_object(NewVpiHandle(result), std::cout);
+
     current_node = make_ast_node(AST::AST_FCALL);
 
     std::string task_calls[] = {"\\$display", "\\$monitor", "\\$write", "\\$time", "\\$readmemh", "\\$readmemb", "\\$finish", "\\$stop"};
