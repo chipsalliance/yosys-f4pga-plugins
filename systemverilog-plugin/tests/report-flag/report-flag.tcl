@@ -2,15 +2,13 @@ yosys -import
 if { [info procs read_uhdm] == {} } { plugin -i systemverilog }
 yosys -import  ;# ingest plugin commands
 
-set TMP_DIR /tmp
-if { [info exists ::env(TMPDIR) ] } {
-  set TMP_DIR $::env(TMPDIR)
-}
+set TMP_DIR ::env(TEST_OUTPUT_PREFIX)/tmp
+file mkdir $TMP_DIR
 
 # Testing simple round-trip
-read_systemverilog -report $TMP_DIR/report-flag-test -odir $TMP_DIR/report-flag-test -defer $::env(DESIGN_TOP)-pkg.sv
-read_systemverilog -report $TMP_DIR/report-flag-test -odir $TMP_DIR/report-flag-test -defer $::env(DESIGN_TOP)-buf.sv
-read_systemverilog -report $TMP_DIR/report-flag-test -odir $TMP_DIR/report-flag-test -defer $::env(DESIGN_TOP).v
-read_systemverilog -report $TMP_DIR/report-flag-test -odir $TMP_DIR/report-flag-test -link
+read_systemverilog -report $TMP_DIR -odir $TMP_DIR -defer $::env(DESIGN_TOP)-pkg.sv
+read_systemverilog -report $TMP_DIR -odir $TMP_DIR -defer $::env(DESIGN_TOP)-buf.sv
+read_systemverilog -report $TMP_DIR -odir $TMP_DIR -defer $::env(DESIGN_TOP).v
+read_systemverilog -report $TMP_DIR -odir $TMP_DIR -link
 hierarchy
 write_verilog
