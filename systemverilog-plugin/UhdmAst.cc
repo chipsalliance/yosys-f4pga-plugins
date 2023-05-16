@@ -17,6 +17,7 @@
 #include <uhdm/ExprEval.h>
 #include <uhdm/uhdm.h>
 #include <uhdm/vpi_user.h>
+#include "uhdm/vpi_visitor.h"  // visit_object
 
 #include "third_party/yosys/const2ast.h"
 #include "third_party/yosys/simplify.h"
@@ -1336,6 +1337,14 @@ static void clear_current_scope()
     AST_INTERNAL::current_scope.clear();
     // unset current_ast_mod
     AST_INTERNAL::current_ast_mod = nullptr;
+}
+
+static void visit_uhdm_obj(const UHDM::any *object)
+{
+    UHDM::VisitedContainer visited = UHDM::VisitedContainer();
+    vpiHandle handle = NewVpiHandle(object);
+    UHDM::visit_object(handle, 1, "", &visited, std::cout);
+    vpi_release_handle(handle);
 }
 
 void UhdmAst::visit_one_to_many(const std::vector<int> child_node_types, vpiHandle parent_handle, const std::function<void(AST::AstNode *)> &f)
