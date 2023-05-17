@@ -1289,7 +1289,7 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         break;
     case AST::AST_FCALL:
         std::cout << "simplifying fcall\n";
-        //simplify(current_node, true, false, false, 1, -1, false, false);
+        simplify(current_node, true, false, false, 1, -1, false, false);
         break;
     case AST::AST_COND:
     case AST::AST_CONDX:
