@@ -543,17 +543,17 @@ static void check_auto_nosync(Yosys::AST::AstNode *node)
 }
 
 static inline std::string encode_filename(const std::string &filename)
-{    
-    std::stringstream val; 
-    if (!std::any_of(filename.begin(), filename.end(), [](char c) { 
-        return static_cast<unsigned char>(c) < 33 || static_cast<unsigned char>(c) > 126; 
+{
+    std::stringstream val;
+    if (!std::any_of(filename.begin(), filename.end(), [](char c) {
+        return static_cast<unsigned char>(c) < 33 || static_cast<unsigned char>(c) > 126;
     })) return filename;
     for (unsigned char const c : filename) {
-        if (c < 33 || c > 126) 
+        if (c < 33 || c > 126)
             val << stringf("$%02x", c);
-        else 
+        else
             val << c;
-    }    
+    }
     return val.str();
 }
 
@@ -1872,6 +1872,11 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 				current_scope[ast_node->str] = auto_wire;
 				did_something = true;
 			} else {
+				ast_node->dumpAst(nullptr, "----");
+				if (ast_node->id2ast)
+					ast_node->id2ast->dumpAst(nullptr, "____");
+				else
+					std::cout << "has no id2ast\n";
 				log_file_error(ast_node->filename, ast_node->location.first_line, "Identifier `%s' is implicitly declared and `default_nettype is set to none.\n", ast_node->str.c_str());
 			}
 		}

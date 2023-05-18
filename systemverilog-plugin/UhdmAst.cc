@@ -1251,10 +1251,10 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
                 current_node->children.push_back(result);
             }
         }
-        if (current_node->id2ast && current_node->id2ast->type == AST::AST_TYPEDEF) {
-            log_assert(current_node->id2ast->children.size());
-            current_node->id2ast = current_node->id2ast->children[0];
-        }
+        //if (current_node->id2ast && current_node->id2ast->type == AST::AST_TYPEDEF) {
+        //    log_assert(current_node->id2ast->children.size());
+        //    current_node->id2ast = current_node->id2ast->children[0];
+        //}
         break;
     case AST::AST_STRUCT:
     case AST::AST_UNION:
@@ -1287,10 +1287,23 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         if (current_node->str == "$display" || current_node->str == "$write")
             simplify_format_string(current_node);
         break;
-    case AST::AST_FCALL:
-        std::cout << "simplifying fcall\n";
-        simplify(current_node, true, false, false, 1, -1, false, false);
+    case AST::AST_FCALL: {
+	    AST::AstNode *arg = current_node->children[0];
+	    if (arg->type == AST::AST_IDENTIFIER) {
+		    //current_node->dumpAst(nullptr, "->");
+		    if (!arg->id2ast) {
+				std::cout << "id2ast is null!\n";
+				simplify_sv(arg, current_node);
+		    }
+		    if (!arg->id2ast) {
+				std::cout << "id2ast is null again!\n";
+		    }
+		    //&& arg->id2ast && arg->id2ast->type == Yosys::AST::AST_TYPEDEF)
+		    simplify(current_node, true, false, false, 1, -1, false, false);
+	    }
+
         break;
+    }
     case AST::AST_COND:
     case AST::AST_CONDX:
     case AST::AST_CONDZ:
@@ -2059,8 +2072,6 @@ void UhdmAst::process_design()
             pair.second = nullptr;
         }
     }
-    std::cout << "tree after plugins job is done:\n";
-    current_node->dumpAst(nullptr, "    ");
 }
 
 void UhdmAst::simplify_parameter(AST::AstNode *parameter, AST::AstNode *module_node)
