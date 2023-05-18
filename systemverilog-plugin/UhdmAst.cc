@@ -1524,13 +1524,25 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             return ::systemverilog_plugin::const2ast(val.value.str, caseType, false);
         } else {
             auto size = vpi_get(vpiSize, obj_h);
-            if (size == 0) {
-                auto c = AST::AstNode::mkconst_int(atoi(val.value.str), true, 32);
-                c->is_unsized = true;
-                return c;
-            } else {
-                return ::systemverilog_plugin::const2ast(std::to_string(size) + strValType + val.value.str, caseType, false);
+            std::string size_str;
+            if (size > 0) {
+                size_str = std::to_string(size);
+            } else if (strValType == "\'b") {
+                // probably unsized unbased const
+                // but to make sure parse vpiDecompile
+                auto decompile = vpi_get_str(vpiDecompile, obj_h);
+                if (decompile && !std::strchr(decompile, 'b')) {
+                    // unsized unbased
+                    // we can't left size_str empty, as then yosys parses this const as 32bit value
+                    size_str = "1";
+                }
             }
+            auto c = ::systemverilog_plugin::const2ast(size_str + strValType + val.value.str, caseType, false);
+            if (size <= 0) {
+                // unsized unbased const
+                c->is_unsized = true;
+            }
+            return c;
         }
     }
     return nullptr;
