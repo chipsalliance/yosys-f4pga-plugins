@@ -21,7 +21,8 @@ TESTS = counter \
 		report-flag \
 		defines \
 		defaults \
-		formal
+		formal \
+		translate_off
 
 include $(shell pwd)/../../Makefile_test.common
 
@@ -33,3 +34,10 @@ report-flag_verify = true
 defaults_verify = true
 defines_verify = true
 formal_verify = true
+translate_off_verify = true
+
+.PHONY: systemverilog_tests_clean
+systemverilog_tests_clean:
+	@rm -rf $(foreach test,$(TESTS),$(test)/tmp)
+
+clean: systemverilog_tests_clean

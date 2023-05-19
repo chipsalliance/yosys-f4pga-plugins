@@ -729,7 +729,7 @@ void UhdmAst::uhdmast_assert_log(const char *expr_str, const char *func, const c
         int svcolumn = vpi_get(vpiColumnNo, obj_h);
         std::string obj_type_name = UHDM::VpiTypeName(obj_h);
         const char *obj_name = vpi_get_str(vpiName, obj_h);
-        std::cerr << svfile << ':' << svline << svcolumn << ": note: When processing object of type '" << obj_type_name << '\'';
+        std::cerr << svfile << ':' << svline << ':' << svcolumn << ": note: When processing object of type '" << obj_type_name << '\'';
         if (obj_name && obj_name[0] != '\0') {
             std::cerr << " named '" << obj_name << '\'';
         }
@@ -1470,19 +1470,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                 break;
             }
 
-            int size = -1;
-            // Surelog sometimes report size as part of vpiTypespec (e.g. int_typespec)
-            // if it is the case, we need to set size to the left_range of first packed range
-            visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
-                if (node && node->attributes.count(UhdmAst::packed_ranges()) && node->attributes[UhdmAst::packed_ranges()]->children.size() &&
-                    node->attributes[UhdmAst::packed_ranges()]->children[0]->children.size()) {
-                    size = node->attributes[UhdmAst::packed_ranges()]->children[0]->children[0]->integer + 1;
-                }
-                delete node;
-            });
-            if (size == -1) {
-                size = vpi_get(vpiSize, obj_h);
-            }
+            auto size = vpi_get(vpiSize, obj_h);
             // Surelog by default returns 64 bit numbers and stardard says that they shall be at least 32bits
             // yosys is assuming that int/uint is 32 bit, so we are setting here correct size
             // NOTE: it *shouldn't* break on explicite 64 bit const values, as they *should* be handled
@@ -1536,13 +1524,25 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             return ::systemverilog_plugin::const2ast(val.value.str, caseType, false);
         } else {
             auto size = vpi_get(vpiSize, obj_h);
-            if (size == 0) {
-                auto c = AST::AstNode::mkconst_int(atoi(val.value.str), true, 32);
-                c->is_unsized = true;
-                return c;
-            } else {
-                return ::systemverilog_plugin::const2ast(std::to_string(size) + strValType + val.value.str, caseType, false);
+            std::string size_str;
+            if (size > 0) {
+                size_str = std::to_string(size);
+            } else if (strValType == "\'b") {
+                // probably unsized unbased const
+                // but to make sure parse vpiDecompile
+                auto decompile = vpi_get_str(vpiDecompile, obj_h);
+                if (decompile && !std::strchr(decompile, 'b')) {
+                    // unsized unbased
+                    // we can't left size_str empty, as then yosys parses this const as 32bit value
+                    size_str = "1";
+                }
             }
+            auto c = ::systemverilog_plugin::const2ast(size_str + strValType + val.value.str, caseType, false);
+            if (size <= 0) {
+                // unsized unbased const
+                c->is_unsized = true;
+            }
+            return c;
         }
     }
     return nullptr;
@@ -1754,6 +1754,9 @@ void UhdmAst::process_packed_array_typespec()
     visit_one_to_one({vpiElemTypespec}, obj_h, [&](AST::AstNode *node) {
         if (node && node->type == AST::AST_STRUCT) {
             auto str = current_node->str;
+            // unnamed array of named (struct) array
+            if (str.empty() && !node->str.empty())
+                str = node->str;
             node->cloneInto(current_node);
             current_node->str = str;
             delete node;
@@ -2024,7 +2027,7 @@ void UhdmAst::process_design()
                 current_node->children.push_back(pair.second);
             }
         } else {
-            log_warning("Removing unused module: %s from the design.\n", pair.second->str.c_str());
+            log_warning("Removing unelaborated module: %s from the design.\n", pair.second->str.c_str());
             // TODO: This should be properly erased from the module, but it seems that it's
             // needed to resolve scope
             delete pair.second;
@@ -2486,6 +2489,17 @@ void UhdmAst::process_enum_typespec()
     const auto *enum_object = (const UHDM::enum_typespec *)handle->object;
     const auto *typespec = enum_object->Base_typespec();
 
+    if (current_node->str.empty()) {
+        // anonymous typespec, check if not already created
+        if (const auto enum_iter = shared.anonymous_enums.find(enum_object); enum_iter != shared.anonymous_enums.end()) {
+            // we already created typedef for this.
+            delete current_node;
+            current_node = make_node(AST::AST_WIRETYPE);
+            current_node->str = enum_iter->second;
+            return;
+        }
+    }
+
     if (typespec && typespec->UhdmType() == UHDM::uhdmlogic_typespec) {
         // If it's a logic_typespec, try to reduce expressions inside of it.
         // The `reduceExpr` function needs the whole context of the enum typespec
@@ -2573,6 +2587,17 @@ void UhdmAst::process_enum_typespec()
     });
     if (range) {
         delete range;
+    }
+    if (current_node->str.empty()) {
+        // anonymous typespec
+        std::string typedef_name = "$systemverilog_plugin$anonymous_enum" + std::to_string(shared.next_anonymous_enum_typedef_id());
+        current_node->str = typedef_name;
+        auto current_scope = find_ancestor({AST::AST_PACKAGE, AST::AST_MODULE, AST::AST_BLOCK, AST::AST_GENBLOCK});
+        uhdmast_assert(current_scope != nullptr);
+        move_type_to_new_typedef(current_scope, current_node);
+        current_node = make_node(AST::AST_WIRETYPE);
+        current_node->str = typedef_name;
+        shared.anonymous_enums[enum_object] = std::move(typedef_name);
     }
 }
 
