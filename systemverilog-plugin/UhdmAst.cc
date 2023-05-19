@@ -729,7 +729,7 @@ void UhdmAst::uhdmast_assert_log(const char *expr_str, const char *func, const c
         int svcolumn = vpi_get(vpiColumnNo, obj_h);
         std::string obj_type_name = UHDM::VpiTypeName(obj_h);
         const char *obj_name = vpi_get_str(vpiName, obj_h);
-        std::cerr << svfile << ':' << svline << svcolumn << ": note: When processing object of type '" << obj_type_name << '\'';
+        std::cerr << svfile << ':' << svline << ':' << svcolumn << ": note: When processing object of type '" << obj_type_name << '\'';
         if (obj_name && obj_name[0] != '\0') {
             std::cerr << " named '" << obj_name << '\'';
         }
