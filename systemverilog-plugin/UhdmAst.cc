@@ -295,6 +295,11 @@ static void add_multirange_wire(AST::AstNode *node, std::vector<AST::AstNode *> 
 
 static size_t add_multirange_attribute(AST::AstNode *wire_node, const std::vector<AST::AstNode *> ranges)
 {
+    // node->multirange_dimensions stores dimensions' offsets and widths.
+    // It shall have even number of elements.
+    // For a range of [A:B] it should be appended with {min(A,B)} and {max(A,B)-min(A,B)+1}
+    // For a range of [A] it should be appended with {0} and {A}
+
     size_t size = 1;
     for (size_t i = 0; i < ranges.size(); i++) {
         log_assert(AST_INTERNAL::current_ast_mod);
@@ -320,17 +325,15 @@ static size_t add_multirange_attribute(AST::AstNode *wire_node, const std::vecto
         }
         log_assert(ranges[i]->children[0]->type == AST::AST_CONSTANT);
         log_assert(ranges[i]->children[1]->type == AST::AST_CONSTANT);
-        if (wire_node->type != AST::AST_STRUCT_ITEM) {
-            wire_node->multirange_dimensions.push_back(min(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer));
-            wire_node->multirange_swapped.push_back(ranges[i]->range_swapped);
-        }
         auto elem_size = max(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer) -
                          min(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer) + 1;
-        if (wire_node->type != AST::AST_STRUCT_ITEM || (wire_node->type == AST::AST_STRUCT_ITEM && i == 0)) {
-            wire_node->multirange_dimensions.push_back(elem_size);
-        }
+        wire_node->multirange_dimensions.push_back(min(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer));
+        wire_node->multirange_dimensions.push_back(elem_size);
+        wire_node->multirange_swapped.push_back(ranges[i]->range_swapped);
         size *= elem_size;
     }
+    log_assert(wire_node->multirange_dimensions.size() % 2 == 0);
+
     return size;
 }
 
