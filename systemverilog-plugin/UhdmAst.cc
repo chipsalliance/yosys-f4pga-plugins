@@ -295,6 +295,11 @@ static void add_multirange_wire(AST::AstNode *node, std::vector<AST::AstNode *> 
 
 static size_t add_multirange_attribute(AST::AstNode *wire_node, const std::vector<AST::AstNode *> ranges)
 {
+    // node->multirange_dimensions stores dimensions' offsets and widths.
+    // It shall have even number of elements.
+    // For a range of [A:B] it should be appended with {min(A,B)} and {max(A,B)-min(A,B)+1}
+    // For a range of [A] it should be appended with {0} and {A}
+
     size_t size = 1;
     for (size_t i = 0; i < ranges.size(); i++) {
         log_assert(AST_INTERNAL::current_ast_mod);
@@ -320,17 +325,18 @@ static size_t add_multirange_attribute(AST::AstNode *wire_node, const std::vecto
         }
         log_assert(ranges[i]->children[0]->type == AST::AST_CONSTANT);
         log_assert(ranges[i]->children[1]->type == AST::AST_CONSTANT);
-        if (wire_node->type != AST::AST_STRUCT_ITEM) {
-            wire_node->multirange_dimensions.push_back(min(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer));
-            wire_node->multirange_swapped.push_back(ranges[i]->range_swapped);
-        }
-        auto elem_size = max(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer) -
-                         min(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer) + 1;
-        if (wire_node->type != AST::AST_STRUCT_ITEM || (wire_node->type == AST::AST_STRUCT_ITEM && i == 0)) {
-            wire_node->multirange_dimensions.push_back(elem_size);
-        }
+
+        const auto low = min(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer);
+        const auto high = max(ranges[i]->children[0]->integer, ranges[i]->children[1]->integer);
+        const auto elem_size = high - low + 1;
+
+        wire_node->multirange_dimensions.push_back(low);
+        wire_node->multirange_dimensions.push_back(elem_size);
+        wire_node->multirange_swapped.push_back(ranges[i]->range_swapped);
         size *= elem_size;
     }
+    log_assert(wire_node->multirange_dimensions.size() % 2 == 0);
+
     return size;
 }
 
@@ -344,7 +350,8 @@ static AST::AstNode *convert_range(AST::AstNode *id, int packed_ranges_size, int
     std::vector<int> single_elem_size;
     single_elem_size.push_back(elem_size);
     for (size_t j = 0; (j + 1) < wire_node->multirange_dimensions.size(); j = j + 2) {
-        elem_size *= wire_node->multirange_dimensions[j + 1] - wire_node->multirange_dimensions[j];
+        // The ranges' widths are placed on odd indices of multirange_dimensions.
+        elem_size *= wire_node->multirange_dimensions[j + 1];
         single_elem_size.push_back(elem_size);
     }
     std::reverse(single_elem_size.begin(), single_elem_size.end());
@@ -739,18 +746,22 @@ void UhdmAst::uhdmast_assert_log(const char *expr_str, const char *func, const c
 
 static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::AstNode *search_node)
 {
-    AST::AstNode *current_struct_elem = nullptr;
+    const AST::AstNode *current_struct_elem;
     auto search_str = search_node->str.find("\\") == 0 ? search_node->str.substr(1) : search_node->str;
     auto struct_elem_it =
       std::find_if(current_struct->children.begin(), current_struct->children.end(), [&](AST::AstNode *node) { return node->str == search_str; });
-    if (struct_elem_it == current_struct->children.end()) {
+    if (struct_elem_it == current_struct->children.end() && current_struct->str == search_str) {
+        // Couldn't find the elem, but the search string matches the current struct.
+        current_struct_elem = current_struct;
+    } else if (struct_elem_it == current_struct->children.end()) {
         current_struct->dumpAst(NULL, "struct >");
         log_error("Couldn't find search elem: %s in struct\n", search_str.c_str());
+    } else {
+        current_struct_elem = *struct_elem_it;
     }
-    current_struct_elem = *struct_elem_it;
 
     AST::AstNode *sub_dot = nullptr;
-    AST::AstNode *struct_range = nullptr;
+    std::vector<AST::AstNode *> struct_ranges;
 
     for (auto c : search_node->children) {
         if (c->type == static_cast<int>(AST::Extended::AST_DOT)) {
@@ -759,12 +770,7 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
             sub_dot = expand_dot(current_struct_elem, c);
         }
         if (c->type == AST::AST_RANGE) {
-            // Currently supporting only 1 range
-            if (struct_range) {
-                log_file_error(struct_range->filename, struct_range->location.first_line,
-                               "Currently support for dot-access is limited to single range\n");
-            }
-            struct_range = c;
+            struct_ranges.push_back(c);
         }
     }
     AST::AstNode *left = nullptr, *right = nullptr;
@@ -780,7 +786,7 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
         // Currently support only special access to 2 dimensional packed element
         // when selecting single range
         log_assert(current_struct_elem->multirange_dimensions.size() % 2 == 0);
-        if (struct_range && (current_struct_elem->multirange_dimensions.size() / 2) == 2) {
+        if (!struct_ranges.empty() && (current_struct_elem->multirange_dimensions.size() / 2) == 2) {
             // get element size in number of bits
             const int single_elem_size = current_struct_elem->children.front()->range_left + 1;
             left = AST::AstNode::mkconst_int(single_elem_size * current_struct_elem->multirange_dimensions.back(), true);
@@ -806,29 +812,52 @@ static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::A
         std::swap(right, sub_dot->children[1]);
         delete sub_dot;
     }
-    if (struct_range) {
+
+    for (size_t i = 0; i < struct_ranges.size(); i++) {
+        const auto *struct_range = struct_ranges[i];
+        auto const range_width_idx = i * 2 + 1;
+        auto const range_offset_idx = i * 2;
+
+        int range_width = 0;
+        if (current_struct_elem->multirange_dimensions.empty()) {
+            range_width = 1;
+        } else if (current_struct_elem->multirange_dimensions.size() > range_width_idx) {
+            range_width = current_struct_elem->multirange_dimensions[range_width_idx];
+            const auto range_offset = current_struct_elem->multirange_dimensions[range_offset_idx];
+            if (range_offset != 0) {
+                log_file_error(struct_range->filename, struct_range->location.first_line,
+                               "Accessing ranges that do not start from 0 is not supported.");
+            }
+        } else {
+            struct_range->dumpAst(NULL, "range >");
+            log_file_error(struct_range->filename, struct_range->location.first_line, "Couldn't find range width.");
+        }
         // now we have correct element set,
         // but we still need to set correct struct
         log_assert(!struct_range->children.empty());
         if (current_struct_elem->type == AST::AST_STRUCT_ITEM) {
             // if we selecting range of struct item, just add this range
             // to our current select
+            if (current_struct_elem->multirange_dimensions.size() > 2 && struct_range->children.size() == 2) {
+                log_error("Selecting a range of positions from a multirange is not supported in the dot notation.\n");
+            }
             if (struct_range->children.size() == 2) {
                 auto range_size = new AST::AstNode(
                   AST::AST_ADD, new AST::AstNode(AST::AST_SUB, struct_range->children[0]->clone(), struct_range->children[1]->clone()),
                   AST::AstNode::mkconst_int(1, true));
                 right = new AST::AstNode(AST::AST_ADD, right, struct_range->children[1]->clone());
-                left = new AST::AstNode(
-                  AST::AST_ADD, left,
-                  new AST::AstNode(AST::AST_ADD, struct_range->children[1]->clone(), new AST::AstNode(AST::AST_SUB, range_size, elem_size->clone())));
+                delete left;
+                left = new AST::AstNode(AST::AST_ADD, right->clone(), new AST::AstNode(AST::AST_SUB, range_size, AST::AstNode::mkconst_int(1, true)));
+
             } else if (struct_range->children.size() == 1) {
-                if (!current_struct_elem->multirange_dimensions.empty()) {
-                    right = new AST::AstNode(AST::AST_ADD, right,
-                                             new AST::AstNode(AST::AST_MUL, struct_range->children[0]->clone(),
-                                                              AST::AstNode::mkconst_int(current_struct_elem->multirange_dimensions.back(), true)));
+                // Selected a single position, as in `foo.bar[i]`.
+                if (range_width > 1 && current_struct_elem->multirange_dimensions.size() > range_width_idx + 2) {
+                    // if it's not the last dimension.
+                    right = new AST::AstNode(
+                      AST::AST_ADD, right,
+                      new AST::AstNode(AST::AST_MUL, struct_range->children[0]->clone(), AST::AstNode::mkconst_int(range_width, true)));
                     delete left;
-                    left = new AST::AstNode(AST::AST_ADD, right->clone(),
-                                            AST::AstNode::mkconst_int(current_struct_elem->multirange_dimensions.back() - 1, true));
+                    left = new AST::AstNode(AST::AST_ADD, right->clone(), AST::AstNode::mkconst_int(range_width - 1, true));
                 } else {
                     right = new AST::AstNode(AST::AST_ADD, right, struct_range->children[0]->clone());
                     delete left;
