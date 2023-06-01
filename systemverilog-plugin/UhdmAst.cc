@@ -804,19 +804,15 @@ void UhdmAst::uhdmast_assert_log(const char *expr_str, const char *func, const c
 
 static AST::AstNode *expand_dot(const AST::AstNode *current_struct, const AST::AstNode *search_node)
 {
-    const AST::AstNode *current_struct_elem;
+    AST::AstNode *current_struct_elem = nullptr;
     auto search_str = search_node->str.find("\\") == 0 ? search_node->str.substr(1) : search_node->str;
     auto struct_elem_it =
       std::find_if(current_struct->children.begin(), current_struct->children.end(), [&](AST::AstNode *node) { return node->str == search_str; });
-    if (struct_elem_it == current_struct->children.end() && current_struct->str == search_str) {
-        // Couldn't find the elem, but the search string matches the current struct.
-        current_struct_elem = current_struct;
-    } else if (struct_elem_it == current_struct->children.end()) {
+    if (struct_elem_it == current_struct->children.end()) {
         current_struct->dumpAst(NULL, "struct >");
         log_error("Couldn't find search elem: %s in struct\n", search_str.c_str());
-    } else {
-        current_struct_elem = *struct_elem_it;
     }
+    current_struct_elem = *struct_elem_it;
 
     AST::AstNode *sub_dot = nullptr;
     std::vector<AST::AstNode *> struct_ranges;
