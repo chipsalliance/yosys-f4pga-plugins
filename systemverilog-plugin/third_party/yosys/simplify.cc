@@ -1485,7 +1485,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 	}
 
 	// resolve types of wires
-	if (ast_node->type == Yosys::AST::AST_WIRE || ast_node->type == Yosys::AST::AST_MEMORY) {
+	if (ast_node->type == Yosys::AST::AST_WIRE || ast_node->type == Yosys::AST::AST_MEMORY || ast_node->type == Yosys::AST::AST_STRUCT_ITEM) {
 		if (ast_node->is_custom_type) {
 			log_assert(ast_node->children.size() >= 1);
 			log_assert(ast_node->children[0]->type == Yosys::AST::AST_WIRETYPE);
