@@ -4288,8 +4288,7 @@ void UhdmAst::process_hier_path()
                 top_node = current_node;
                 delete node;
             } else {
-                if (node->str.empty()) {
-                    log_assert(!node->children.empty());
+                if (!node->children.empty() && node->children[0]->type == AST::AST_RANGE && (node->str == "\\" || node->str.empty())) {
                     top_node->children.push_back(node->children[0]);
                     node->children.erase(node->children.begin());
                     delete node;
