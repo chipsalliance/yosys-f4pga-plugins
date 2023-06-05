@@ -58,6 +58,7 @@ static IdString is_imported;
 static IdString is_simplified_wire;
 static IdString low_high_bound;
 static IdString is_type_parameter;
+static IdString is_elaborated_module;
 }; // namespace attr_id
 
 // TODO(mglb): use attr_id::* directly everywhere and remove those methods.
@@ -68,6 +69,7 @@ static IdString is_type_parameter;
 /*static*/ const IdString &UhdmAst::is_imported() { return attr_id::is_imported; }
 /*static*/ const IdString &UhdmAst::is_simplified_wire() { return attr_id::is_simplified_wire; }
 /*static*/ const IdString &UhdmAst::low_high_bound() { return attr_id::low_high_bound; }
+/*static*/ const IdString &UhdmAst::is_elaborated_module() { return attr_id::is_elaborated_module; }
 
 #define MAKE_INTERNAL_ID(X) IdString("$systemverilog_plugin$" #X)
 
@@ -90,6 +92,7 @@ void attr_id_init()
     attr_id::is_simplified_wire = MAKE_INTERNAL_ID(is_simplified_wire);
     attr_id::low_high_bound = MAKE_INTERNAL_ID(low_high_bound);
     attr_id::is_type_parameter = MAKE_INTERNAL_ID(is_type_parameter);
+    attr_id::is_elaborated_module = MAKE_INTERNAL_ID(is_elaborated_module);
 }
 
 void attr_id_cleanup()
@@ -103,6 +106,7 @@ void attr_id_cleanup()
     attr_id::packed_ranges = IdString();
     attr_id::partial = IdString();
     attr_id::is_type_parameter = IdString();
+    attr_id::is_elaborated_module = IdString();
     attr_id::already_initialized = false;
 }
 
@@ -145,7 +149,7 @@ static void delete_internal_attributes(AST::AstNode *node)
         return;
 
     for (auto &attr : {UhdmAst::partial(), UhdmAst::packed_ranges(), UhdmAst::unpacked_ranges(), UhdmAst::force_convert(), UhdmAst::is_imported(),
-                       UhdmAst::is_simplified_wire(), UhdmAst::low_high_bound(), attr_id::is_type_parameter}) {
+                       UhdmAst::is_simplified_wire(), UhdmAst::low_high_bound(), attr_id::is_type_parameter, attr_id::is_elaborated_module}) {
         delete_attribute(node, attr);
     }
 }
@@ -2187,6 +2191,8 @@ void UhdmAst::process_module()
                                            [](auto node) { return node->type == AST::AST_INITIAL || node->type == AST::AST_ALWAYS; });
             auto children_after_process = std::vector<AST::AstNode *>(process_it, current_node->children.end());
             current_node->children.erase(process_it, current_node->children.end());
+            auto old_top = shared.current_top_node;
+            shared.current_top_node = current_node;
             visit_one_to_many({vpiModule, vpiInterface, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiTaskFunc, vpiGenScopeArray,
                                vpiContAssign, vpiVariables},
                               obj_h, [&](AST::AstNode *node) {
@@ -2205,6 +2211,7 @@ void UhdmAst::process_module()
                     current_node->children.push_back(node);
                 }
             });
+            shared.current_top_node = old_top;
             current_node->children.insert(current_node->children.end(), children_after_process.begin(), children_after_process.end());
 
             delete_attribute(current_node, UhdmAst::partial());
@@ -2310,6 +2317,10 @@ void UhdmAst::process_module()
                 module_node = module_node->clone();
                 module_node->str = module_name;
             }
+        } else if (auto attribute = get_attribute(module_node, attr_id::is_elaborated_module); attribute && attribute->integer == 1) {
+            // we already processed module with this parameters, just create cell node
+            make_cell(obj_h, current_node, module_node);
+            return;
         }
         shared.top_nodes[module_node->str] = module_node;
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
@@ -2352,6 +2363,7 @@ void UhdmAst::process_module()
                           });
         make_cell(obj_h, current_node, module_node);
         shared.current_top_node = old_top;
+        set_attribute(module_node, attr_id::is_elaborated_module, AST::AstNode::mkconst_int(1, true));
     }
 }
 
@@ -2677,9 +2689,8 @@ void UhdmAst::process_enum_typespec()
         // anonymous typespec
         std::string typedef_name = "$systemverilog_plugin$anonymous_enum" + std::to_string(shared.next_anonymous_enum_typedef_id());
         current_node->str = typedef_name;
-        auto current_scope = find_ancestor({AST::AST_PACKAGE, AST::AST_MODULE, AST::AST_BLOCK, AST::AST_GENBLOCK});
-        uhdmast_assert(current_scope != nullptr);
-        move_type_to_new_typedef(current_scope, current_node);
+        uhdmast_assert(shared.current_top_node != nullptr);
+        move_type_to_new_typedef(shared.current_top_node, current_node);
         current_node = make_node(AST::AST_WIRETYPE);
         current_node->str = typedef_name;
         shared.anonymous_enums[enum_object] = std::move(typedef_name);
