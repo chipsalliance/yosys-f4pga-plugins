@@ -69,6 +69,8 @@ static IdString is_type_parameter;
 /*static*/ const IdString &UhdmAst::is_simplified_wire() { return attr_id::is_simplified_wire; }
 /*static*/ const IdString &UhdmAst::low_high_bound() { return attr_id::low_high_bound; }
 
+#define MAKE_INTERNAL_ID(X) IdString("$systemverilog_plugin$" #X)
+
 void attr_id_init()
 {
     // Initialize only once
@@ -80,14 +82,14 @@ void attr_id_init()
 
     // Register IdStrings. Can't be done statically, as the IdString class uses resources created during Yosys initialization which happens after
     // static initialization of the plugin when everything is statically linked.
-    attr_id::partial = IdString("$systemverilog_plugin$partial");
-    attr_id::packed_ranges = IdString("$systemverilog_plugin$packed_ranges");
-    attr_id::unpacked_ranges = IdString("$systemverilog_plugin$unpacked_ranges");
-    attr_id::force_convert = IdString("$systemverilog_plugin$force_convert");
-    attr_id::is_imported = IdString("$systemverilog_plugin$is_imported");
-    attr_id::is_simplified_wire = IdString("$systemverilog_plugin$is_simplified_wire");
-    attr_id::low_high_bound = IdString("$systemverilog_plugin$low_high_bound");
-    attr_id::is_type_parameter = IdString("$systemverilog_plugin$is_type_parameter");
+    attr_id::partial = MAKE_INTERNAL_ID(partial);
+    attr_id::packed_ranges = MAKE_INTERNAL_ID(packed_ranges);
+    attr_id::unpacked_ranges = MAKE_INTERNAL_ID(unpacked_ranges);
+    attr_id::force_convert = MAKE_INTERNAL_ID(force_convert);
+    attr_id::is_imported = MAKE_INTERNAL_ID(is_imported);
+    attr_id::is_simplified_wire = MAKE_INTERNAL_ID(is_simplified_wire);
+    attr_id::low_high_bound = MAKE_INTERNAL_ID(low_high_bound);
+    attr_id::is_type_parameter = MAKE_INTERNAL_ID(is_type_parameter);
 }
 
 void attr_id_cleanup()
