@@ -962,15 +962,19 @@ static AST::AstNode *convert_dot(AST::AstNode *wire_node, AST::AstNode *node, AS
     }
     log_assert(struct_node);
     auto expanded = expand_dot(struct_node, dot);
+    // Now expand ranges that are at instance part of dotted reference
+    // `expand_dot` returns AST_RANGE with 2 children that selects member pointed by dotted reference
+    // now we need to move this range to select correct struct
     std::vector<AST::AstNode *> struct_ranges;
     for (auto c : node->children) {
         if (c->type == AST::AST_RANGE) {
             struct_ranges.push_back(c);
         }
     }
+    log_assert(wire_node->attributes.count(UhdmAst::unpacked_ranges()));
+    log_assert(wire_node->attributes.count(UhdmAst::packed_ranges()));
+    log_assert(struct_ranges.size() <= (wire_node->multirange_dimensions.size() / 2));
     const auto wire_node_unpacked_ranges_size = wire_node->attributes[UhdmAst::unpacked_ranges()]->children.size();
-    // 'dot' notation can only be used on specific struct element
-    // '1' packed range is from wiretype and it is already expanded in 'expand_dot'
     // TODO(krak): wire ranges are sometimes under wiretype node (e.g. in case of typedef)
     // but wiretype ranges contains also struct range that is already expanded in 'expand_dot'
     // we need to find a way to calculate size of wire ranges without struct range here to enable this assert
@@ -980,27 +984,25 @@ static AST::AstNode *convert_dot(AST::AstNode *wire_node, AST::AstNode *node, AS
 
     // Get size of single structure
     int struct_size_int = get_max_offset_struct(struct_node) + 1;
-    // Get reverse iterator of wire dimensions
-    auto dimensions_it = wire_node->multirange_dimensions.rbegin();
+    auto wire_dimension_size_it = wire_node->multirange_dimensions.rbegin();
     unsigned long range_id = 0;
     for (auto it = struct_ranges.rbegin(); it != struct_ranges.rend(); it++) {
-        // in 'dot' context, we need to select specific struct
-        // element, so assert that there is only 1 child (range with single const) in struct
+        // in 'dot' context, we need to select specific struct element,
+        // so assert that there is only 1 child in struct range (range with single child)
         log_assert((*it)->children.size() == 1);
         bool is_unpacked_range = range_id < wire_node_unpacked_ranges_size;
-        // if unpacked range, select from back;
+        // if unpacked range, select from back
         auto elem = is_unpacked_range
-                      ? new AST::AstNode(AST::AST_SUB, AST::AstNode::mkconst_int(*dimensions_it - 1, true, 32), (*it)->children[0]->clone())
+                      ? new AST::AstNode(AST::AST_SUB, AST::AstNode::mkconst_int(*wire_dimension_size_it - 1, true, 32), (*it)->children[0]->clone())
                       : (*it)->children[0]->clone();
         // calculate which struct we selected
         auto move_offset = new AST::AstNode(AST::AST_MUL, AST::AstNode::mkconst_int(struct_size_int, true, 32), elem);
         // move our expanded dot to currently selected struct
         expanded->children[0] = new AST::AstNode(AST::AST_ADD, move_offset->clone(), expanded->children[0]);
         expanded->children[1] = new AST::AstNode(AST::AST_ADD, move_offset, expanded->children[1]);
-        // next range, multiply struct_size_int by whole dimension size
-        struct_size_int *= *dimensions_it;
-        // move iterator to next dimension width
-        dimensions_it += 2;
+        struct_size_int *= *wire_dimension_size_it;
+        // wire_dimension_size stores interleaved offset and size. Move to next dimension's size
+        wire_dimension_size_it += 2;
         range_id++;
     }
     return expanded;
