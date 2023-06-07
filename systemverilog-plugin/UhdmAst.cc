@@ -319,10 +319,11 @@ static size_t add_multirange_attribute(AST::AstNode *wire_node, const std::vecto
     size_t size = 1;
     for (size_t i = 0; i < ranges.size(); i++) {
         log_assert(AST_INTERNAL::current_ast_mod);
+        simplify_sv(ranges[i], wire_node);
+        // If it's a range of [A], make it [A:A].
         if (ranges[i]->children.size() == 1) {
             ranges[i]->children.push_back(ranges[i]->children[0]->clone());
         }
-        simplify_sv(ranges[i], wire_node);
         while (simplify(ranges[i], true, false, false, 1, -1, false, false)) {
         }
         // this workaround case, where yosys doesn't follow id2ast and simplifies it to resolve constant
