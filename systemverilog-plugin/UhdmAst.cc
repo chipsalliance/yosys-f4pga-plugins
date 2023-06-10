@@ -454,13 +454,17 @@ static AST::AstNode *convert_range(AST::AstNode *id, int packed_ranges_size, int
                   new AST::AstNode(AST::AST_SUB, range_right, AST::AstNode::mkconst_int(wire_node->multirange_dimensions[right_idx], false));
             }
         }
-        range_left = new AST::AstNode(AST::AST_SUB,
-                                      new AST::AstNode(AST::AST_MUL, new AST::AstNode(AST::AST_ADD, range_left, AST::AstNode::mkconst_int(1, false)),
-                                                       AST::AstNode::mkconst_int(single_elem_size[i + 1], false)),
-                                      AST::AstNode::mkconst_int(1, false));
+        if (!result) {
+            range_left =
+              new AST::AstNode(AST::AST_SUB,
+                               new AST::AstNode(AST::AST_MUL, new AST::AstNode(AST::AST_ADD, range_left, AST::AstNode::mkconst_int(1, false)),
+                                                AST::AstNode::mkconst_int(single_elem_size[i + 1], false)),
+                               AST::AstNode::mkconst_int(1, false));
+        }
         range_right = new AST::AstNode(AST::AST_MUL, range_right, AST::AstNode::mkconst_int(single_elem_size[i + 1], false));
         if (result) {
             range_right = new AST::AstNode(AST::AST_ADD, range_right, result->children[1]->clone());
+            delete range_left;
             range_left = new AST::AstNode(AST::AST_SUB, new AST::AstNode(AST::AST_ADD, range_right->clone(), result->children[0]->clone()),
                                           result->children[1]->clone());
             delete result;
