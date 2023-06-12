@@ -4201,8 +4201,7 @@ void UhdmAst::process_case_item()
                 current_node->children.push_back(node);
             }
         }
-        // FIXME: If we release the handle here, visiting vpiStmt fails for some reason
-        // vpi_release_handle(expr_h);
+        vpi_release_handle(expr_h);
     }
     vpi_release_handle(itr);
     if (current_node->children.empty()) {
