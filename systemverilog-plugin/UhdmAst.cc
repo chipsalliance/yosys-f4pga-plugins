@@ -1872,9 +1872,13 @@ void UhdmAst::process_packed_array_typespec()
                 wiretype_node->str = node->str;
                 current_node->children.push_back(wiretype_node);
                 current_node->is_custom_type = true;
-                auto it = shared.param_types.find(current_node->str);
+                auto it = shared.param_types.find(wiretype_node->str);
                 if (it == shared.param_types.end())
-                    shared.param_types.insert(std::make_pair(current_node->str, node->clone()));
+                    shared.param_types.insert(std::make_pair(wiretype_node->str, node));
+                else
+                    delete node;
+            } else {
+                delete node;
             }
         }
     });
