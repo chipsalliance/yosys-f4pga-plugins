@@ -529,7 +529,8 @@ static void resolve_wiretype(AST::AstNode *wire_node)
         log_assert(wiretype_ast->type == AST::AST_TYPEDEF);
         wire_node->attributes[ID::wiretype]->id2ast = wiretype_ast->children[0];
     }
-    if ((wire_node->children[0]->type == AST::AST_RANGE || (wire_node->children.size() > 1 && wire_node->children[1]->type == AST::AST_RANGE)) &&
+    if (((wire_node->children.size() > 0 && wire_node->children[0]->type == AST::AST_RANGE) ||
+         (wire_node->children.size() > 1 && wire_node->children[1]->type == AST::AST_RANGE)) &&
         wire_node->multirange_dimensions.empty()) {
         // We need to save order in which ranges appear in wiretype and add them before wire range
         // We need to copy this ranges, so create new vector for them
