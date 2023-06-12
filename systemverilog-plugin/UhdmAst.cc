@@ -1535,6 +1535,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         if (is_signed) {
             strValType += "s";
         }
+        vpi_release_handle(typespec_h);
     }
     if (val.format) { // Needed to handle parameter nodes without typespecs and constants
         switch (val.format) {
