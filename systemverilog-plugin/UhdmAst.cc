@@ -58,6 +58,7 @@ static IdString is_imported;
 static IdString is_simplified_wire;
 static IdString low_high_bound;
 static IdString is_type_parameter;
+static IdString is_elaborated_module;
 }; // namespace attr_id
 
 // TODO(mglb): use attr_id::* directly everywhere and remove those methods.
@@ -68,6 +69,9 @@ static IdString is_type_parameter;
 /*static*/ const IdString &UhdmAst::is_imported() { return attr_id::is_imported; }
 /*static*/ const IdString &UhdmAst::is_simplified_wire() { return attr_id::is_simplified_wire; }
 /*static*/ const IdString &UhdmAst::low_high_bound() { return attr_id::low_high_bound; }
+/*static*/ const IdString &UhdmAst::is_elaborated_module() { return attr_id::is_elaborated_module; }
+
+#define MAKE_INTERNAL_ID(X) IdString("$systemverilog_plugin$" #X)
 
 void attr_id_init()
 {
@@ -80,14 +84,15 @@ void attr_id_init()
 
     // Register IdStrings. Can't be done statically, as the IdString class uses resources created during Yosys initialization which happens after
     // static initialization of the plugin when everything is statically linked.
-    attr_id::partial = IdString("$systemverilog_plugin$partial");
-    attr_id::packed_ranges = IdString("$systemverilog_plugin$packed_ranges");
-    attr_id::unpacked_ranges = IdString("$systemverilog_plugin$unpacked_ranges");
-    attr_id::force_convert = IdString("$systemverilog_plugin$force_convert");
-    attr_id::is_imported = IdString("$systemverilog_plugin$is_imported");
-    attr_id::is_simplified_wire = IdString("$systemverilog_plugin$is_simplified_wire");
-    attr_id::low_high_bound = IdString("$systemverilog_plugin$low_high_bound");
-    attr_id::is_type_parameter = IdString("$systemverilog_plugin$is_type_parameter");
+    attr_id::partial = MAKE_INTERNAL_ID(partial);
+    attr_id::packed_ranges = MAKE_INTERNAL_ID(packed_ranges);
+    attr_id::unpacked_ranges = MAKE_INTERNAL_ID(unpacked_ranges);
+    attr_id::force_convert = MAKE_INTERNAL_ID(force_convert);
+    attr_id::is_imported = MAKE_INTERNAL_ID(is_imported);
+    attr_id::is_simplified_wire = MAKE_INTERNAL_ID(is_simplified_wire);
+    attr_id::low_high_bound = MAKE_INTERNAL_ID(low_high_bound);
+    attr_id::is_type_parameter = MAKE_INTERNAL_ID(is_type_parameter);
+    attr_id::is_elaborated_module = MAKE_INTERNAL_ID(is_elaborated_module);
 }
 
 void attr_id_cleanup()
@@ -101,6 +106,7 @@ void attr_id_cleanup()
     attr_id::packed_ranges = IdString();
     attr_id::partial = IdString();
     attr_id::is_type_parameter = IdString();
+    attr_id::is_elaborated_module = IdString();
     attr_id::already_initialized = false;
 }
 
@@ -143,7 +149,7 @@ static void delete_internal_attributes(AST::AstNode *node)
         return;
 
     for (auto &attr : {UhdmAst::partial(), UhdmAst::packed_ranges(), UhdmAst::unpacked_ranges(), UhdmAst::force_convert(), UhdmAst::is_imported(),
-                       UhdmAst::is_simplified_wire(), UhdmAst::low_high_bound(), attr_id::is_type_parameter}) {
+                       UhdmAst::is_simplified_wire(), UhdmAst::low_high_bound(), attr_id::is_type_parameter, attr_id::is_elaborated_module}) {
         delete_attribute(node, attr);
     }
 }
@@ -448,13 +454,17 @@ static AST::AstNode *convert_range(AST::AstNode *id, int packed_ranges_size, int
                   new AST::AstNode(AST::AST_SUB, range_right, AST::AstNode::mkconst_int(wire_node->multirange_dimensions[right_idx], false));
             }
         }
-        range_left = new AST::AstNode(AST::AST_SUB,
-                                      new AST::AstNode(AST::AST_MUL, new AST::AstNode(AST::AST_ADD, range_left, AST::AstNode::mkconst_int(1, false)),
-                                                       AST::AstNode::mkconst_int(single_elem_size[i + 1], false)),
-                                      AST::AstNode::mkconst_int(1, false));
+        if (!result) {
+            range_left =
+              new AST::AstNode(AST::AST_SUB,
+                               new AST::AstNode(AST::AST_MUL, new AST::AstNode(AST::AST_ADD, range_left, AST::AstNode::mkconst_int(1, false)),
+                                                AST::AstNode::mkconst_int(single_elem_size[i + 1], false)),
+                               AST::AstNode::mkconst_int(1, false));
+        }
         range_right = new AST::AstNode(AST::AST_MUL, range_right, AST::AstNode::mkconst_int(single_elem_size[i + 1], false));
         if (result) {
             range_right = new AST::AstNode(AST::AST_ADD, range_right, result->children[1]->clone());
+            delete range_left;
             range_left = new AST::AstNode(AST::AST_SUB, new AST::AstNode(AST::AST_ADD, range_right->clone(), result->children[0]->clone()),
                                           result->children[1]->clone());
             delete result;
@@ -496,6 +506,8 @@ static void resolve_wiretype(AST::AstNode *wire_node)
             unpacked_ranges.push_back(r->clone());
         }
     }
+    delete_attribute(wire_node, attr_id::packed_ranges);
+    delete_attribute(wire_node, attr_id::unpacked_ranges);
     AST::AstNode *wiretype_ast = nullptr;
     log_assert(AST_INTERNAL::current_scope.count(wiretype_node->str));
     wiretype_ast = AST_INTERNAL::current_scope[wiretype_node->str];
@@ -512,28 +524,41 @@ static void resolve_wiretype(AST::AstNode *wire_node)
         wire_node->children[0]->range_left = struct_width;
         wire_node->children[0]->children[0]->integer = struct_width;
     }
-    if (wiretype_ast && wire_node->attributes.count(ID::wiretype)) {
+    if (wiretype_ast) {
+        log_assert(wire_node->attributes.count(ID::wiretype));
         log_assert(wiretype_ast->type == AST::AST_TYPEDEF);
         wire_node->attributes[ID::wiretype]->id2ast = wiretype_ast->children[0];
     }
-    if ((wire_node->children[0]->type == AST::AST_RANGE || (wire_node->children.size() > 1 && wire_node->children[1]->type == AST::AST_RANGE)) &&
+    if (((wire_node->children.size() > 0 && wire_node->children[0]->type == AST::AST_RANGE) ||
+         (wire_node->children.size() > 1 && wire_node->children[1]->type == AST::AST_RANGE)) &&
         wire_node->multirange_dimensions.empty()) {
+        // We need to save order in which ranges appear in wiretype and add them before wire range
+        // We need to copy this ranges, so create new vector for them
+        std::vector<AST::AstNode *> packed_ranges_wiretype;
+        std::vector<AST::AstNode *> unpacked_ranges_wiretype;
         if (wiretype_ast && !wiretype_ast->children.empty() && wiretype_ast->children[0]->attributes.count(UhdmAst::packed_ranges()) &&
             wiretype_ast->children[0]->attributes.count(UhdmAst::unpacked_ranges())) {
             for (auto r : wiretype_ast->children[0]->attributes[UhdmAst::packed_ranges()]->children) {
-                packed_ranges.push_back(r->clone());
+                packed_ranges_wiretype.push_back(r->clone());
             }
             for (auto r : wiretype_ast->children[0]->attributes[UhdmAst::unpacked_ranges()]->children) {
-                unpacked_ranges.push_back(r->clone());
+                unpacked_ranges_wiretype.push_back(r->clone());
             }
         } else {
             if (wire_node->children[0]->type == AST::AST_RANGE)
-                packed_ranges.push_back(wire_node->children[0]->clone());
+                packed_ranges_wiretype.push_back(wire_node->children[0]->clone());
             else if (wire_node->children[1]->type == AST::AST_RANGE)
-                packed_ranges.push_back(wire_node->children[1]->clone());
+                packed_ranges_wiretype.push_back(wire_node->children[1]->clone());
             else
                 log_error("Unhandled case in resolve_wiretype!\n");
         }
+        // add wiretype range before current wire ranges
+        std::reverse(packed_ranges_wiretype.begin(), packed_ranges_wiretype.end());
+        std::reverse(unpacked_ranges_wiretype.begin(), unpacked_ranges_wiretype.end());
+        std::reverse(packed_ranges.begin(), packed_ranges.end());
+        std::reverse(unpacked_ranges.begin(), unpacked_ranges.end());
+        packed_ranges.insert(packed_ranges.begin(), packed_ranges_wiretype.begin(), packed_ranges_wiretype.end());
+        unpacked_ranges.insert(unpacked_ranges.begin(), unpacked_ranges_wiretype.begin(), unpacked_ranges_wiretype.end());
         AST::AstNode *value = nullptr;
         if (wire_node->children[0]->type != AST::AST_RANGE) {
             value = wire_node->children[0]->clone();
@@ -541,26 +566,7 @@ static void resolve_wiretype(AST::AstNode *wire_node)
         delete_children(wire_node);
         if (value)
             wire_node->children.push_back(value);
-        wire_node->attributes[UhdmAst::packed_ranges()] = AST::AstNode::mkconst_int(1, false, 1);
-        if (!packed_ranges.empty()) {
-            std::reverse(packed_ranges.begin(), packed_ranges.end());
-            wire_node->attributes[UhdmAst::packed_ranges()]->children.insert(wire_node->attributes[UhdmAst::packed_ranges()]->children.end(),
-                                                                             packed_ranges.begin(), packed_ranges.end());
-            packed_ranges.clear();
-        }
-
-        wire_node->attributes[UhdmAst::unpacked_ranges()] = AST::AstNode::mkconst_int(1, false, 1);
-        if (!unpacked_ranges.empty()) {
-            wire_node->attributes[UhdmAst::unpacked_ranges()]->children.insert(wire_node->attributes[UhdmAst::unpacked_ranges()]->children.end(),
-                                                                               unpacked_ranges.begin(), unpacked_ranges.end());
-            unpacked_ranges.clear();
-        }
-    }
-    for (auto *range : packed_ranges) {
-        delete range;
-    }
-    for (auto *range : unpacked_ranges) {
-        delete range;
+        add_multirange_wire(wire_node, packed_ranges, unpacked_ranges, false /* reverse */);
     }
 }
 
@@ -746,11 +752,6 @@ static void convert_packed_unpacked_range(AST::AstNode *wire_node)
             wire_node->type = AST::AST_MEMORY;
             wire_node->is_logic = true;
         }
-    }
-
-    if (wire_node->type == AST::AST_STRUCT_ITEM || wire_node->type == AST::AST_STRUCT) {
-        delete_attribute(wire_node, UhdmAst::packed_ranges());
-        delete_attribute(wire_node, UhdmAst::unpacked_ranges());
     }
 
     // Insert new range
@@ -962,28 +963,48 @@ static AST::AstNode *convert_dot(AST::AstNode *wire_node, AST::AstNode *node, AS
     }
     log_assert(struct_node);
     auto expanded = expand_dot(struct_node, dot);
-    if (node->children[0]->type == AST::AST_RANGE) {
-        int struct_size_int = get_max_offset_struct(struct_node) + 1;
-        log_assert(!wire_node->multirange_dimensions.empty());
-        int range = wire_node->multirange_dimensions.back() - 1;
-        if (!wire_node->attributes[UhdmAst::unpacked_ranges()]->children.empty() &&
-            wire_node->attributes[UhdmAst::unpacked_ranges()]->children.back()->range_left == range) {
-            expanded->children[1] = new AST::AstNode(
-              AST::AST_ADD, expanded->children[1],
-              new AST::AstNode(AST::AST_MUL, AST::AstNode::mkconst_int(struct_size_int, true, 32),
-                               new AST::AstNode(AST::AST_SUB, AST::AstNode::mkconst_int(range, true, 32), node->children[0]->children[0]->clone())));
-            expanded->children[0] = new AST::AstNode(
-              AST::AST_ADD, expanded->children[0],
-              new AST::AstNode(AST::AST_MUL, AST::AstNode::mkconst_int(struct_size_int, true, 32),
-                               new AST::AstNode(AST::AST_SUB, AST::AstNode::mkconst_int(range, true, 32), node->children[0]->children[0]->clone())));
-        } else {
-            expanded->children[1] = new AST::AstNode(
-              AST::AST_ADD, expanded->children[1],
-              new AST::AstNode(AST::AST_MUL, AST::AstNode::mkconst_int(struct_size_int, true, 32), node->children[0]->children[0]->clone()));
-            expanded->children[0] = new AST::AstNode(
-              AST::AST_ADD, expanded->children[0],
-              new AST::AstNode(AST::AST_MUL, AST::AstNode::mkconst_int(struct_size_int, true, 32), node->children[0]->children[0]->clone()));
+    // Now expand ranges that are at instance part of dotted reference
+    // `expand_dot` returns AST_RANGE with 2 children that selects member pointed by dotted reference
+    // now we need to move this range to select correct struct
+    std::vector<AST::AstNode *> struct_ranges;
+    for (auto c : node->children) {
+        if (c->type == AST::AST_RANGE) {
+            struct_ranges.push_back(c);
         }
+    }
+    log_assert(wire_node->attributes.count(UhdmAst::unpacked_ranges()));
+    log_assert(wire_node->attributes.count(UhdmAst::packed_ranges()));
+    log_assert(struct_ranges.size() <= (wire_node->multirange_dimensions.size() / 2));
+    const auto wire_node_unpacked_ranges_size = wire_node->attributes[UhdmAst::unpacked_ranges()]->children.size();
+    // TODO(krak): wire ranges are sometimes under wiretype node (e.g. in case of typedef)
+    // but wiretype ranges contains also struct range that is already expanded in 'expand_dot'
+    // we need to find a way to calculate size of wire ranges without struct range here to enable this assert
+    // const auto wire_node_packed_ranges_size = wire_node->attributes[UhdmAst::packed_ranges()]->children.size();
+    // const auto wire_node_ranges_size = wire_node_packed_ranges_size + wire_node_unpacked_ranges_size;
+    // log_assert(struct_ranges.size() == (wire_node_ranges_size - 1));
+
+    // Get size of single structure
+    int struct_size_int = get_max_offset_struct(struct_node) + 1;
+    auto wire_dimension_size_it = wire_node->multirange_dimensions.rbegin();
+    unsigned long range_id = 0;
+    for (auto it = struct_ranges.rbegin(); it != struct_ranges.rend(); it++) {
+        // in 'dot' context, we need to select specific struct element,
+        // so assert that there is only 1 child in struct range (range with single child)
+        log_assert((*it)->children.size() == 1);
+        bool is_unpacked_range = range_id < wire_node_unpacked_ranges_size;
+        // if unpacked range, select from back
+        auto elem = is_unpacked_range
+                      ? new AST::AstNode(AST::AST_SUB, AST::AstNode::mkconst_int(*wire_dimension_size_it - 1, true, 32), (*it)->children[0]->clone())
+                      : (*it)->children[0]->clone();
+        // calculate which struct we selected
+        auto move_offset = new AST::AstNode(AST::AST_MUL, AST::AstNode::mkconst_int(struct_size_int, true, 32), elem);
+        // move our expanded dot to currently selected struct
+        expanded->children[0] = new AST::AstNode(AST::AST_ADD, move_offset->clone(), expanded->children[0]);
+        expanded->children[1] = new AST::AstNode(AST::AST_ADD, move_offset, expanded->children[1]);
+        struct_size_int *= *wire_dimension_size_it;
+        // wire_dimension_size stores interleaved offset and size. Move to next dimension's size
+        wire_dimension_size_it += 2;
+        range_id++;
     }
     return expanded;
 }
@@ -1354,12 +1375,13 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         }
         break;
     case AST::AST_STRUCT_ITEM:
-        AST_INTERNAL::current_scope[current_node->str] = current_node;
-        if (current_node->attributes.count(UhdmAst::packed_ranges()) || current_node->attributes.count(UhdmAst::unpacked_ranges())) {
+        if (!current_node->attributes.count(UhdmAst::is_simplified_wire())) {
+            current_node->attributes[UhdmAst::is_simplified_wire()] = AST::AstNode::mkconst_int(1, true);
+            AST_INTERNAL::current_scope[current_node->str] = current_node;
             convert_packed_unpacked_range(current_node);
+            while (simplify(current_node, true, false, false, 1, -1, false, false)) {
+            };
         }
-        while (simplify(current_node, true, false, false, 1, -1, false, false)) {
-        };
         break;
     case AST::AST_TCALL:
         if (current_node->str == "$display" || current_node->str == "$write")
@@ -1513,25 +1535,31 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         if (is_signed) {
             strValType += "s";
         }
+        vpi_release_handle(typespec_h);
     }
+    std::string val_str;
     if (val.format) { // Needed to handle parameter nodes without typespecs and constants
         switch (val.format) {
         case vpiScalarVal:
             return AST::AstNode::mkconst_int(val.value.scalar, false, 1);
         case vpiBinStrVal: {
             strValType += "b";
+            val_str = val.value.str;
             break;
         }
         case vpiDecStrVal: {
             strValType += "d";
+            val_str = val.value.str;
             break;
         }
         case vpiHexStrVal: {
             strValType += "h";
+            val_str = val.value.str;
             break;
         }
         case vpiOctStrVal: {
             strValType += "o";
+            val_str = val.value.str;
             break;
         }
         // Surelog reports constant integers as a unsigned, but by default int is signed
@@ -1540,16 +1568,14 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             if (val.value.uint > std::numeric_limits<std::uint32_t>::max()) {
                 // an integer is by default signed, so use 'sd despite the variant vpiUIntVal
                 strValType = "'sd";
-                string str_value = std::to_string(val.value.uint);
-                val.value.str = strdup(str_value.c_str());
+                val_str = std::to_string(val.value.uint);
                 break;
             }
             [[fallthrough]];
         case vpiIntVal: {
             if (val.value.integer > std::numeric_limits<std::int32_t>::max()) {
                 strValType = "'sd";
-                string str_value = std::to_string(val.value.integer);
-                val.value.str = strdup(str_value.c_str());
+                val_str = std::to_string(val.value.integer);
                 break;
             }
 
@@ -1603,8 +1629,8 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             vpi_release_handle(caseItem_h);
         }
         // handle vpiBinStrVal, vpiDecStrVal and vpiHexStrVal
-        if (std::strchr(val.value.str, '\'')) {
-            return ::systemverilog_plugin::const2ast(val.value.str, caseType, false);
+        if (val_str.find('\'') != std::string::npos) {
+            return ::systemverilog_plugin::const2ast(std::move(val_str), caseType, false);
         } else {
             auto size = vpi_get(vpiSize, obj_h);
             std::string size_str;
@@ -1620,7 +1646,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                     size_str = "1";
                 }
             }
-            auto c = ::systemverilog_plugin::const2ast(size_str + strValType + val.value.str, caseType, false);
+            auto c = ::systemverilog_plugin::const2ast(size_str + strValType + val_str, caseType, false);
             if (size <= 0) {
                 // unsized unbased const
                 c->is_unsized = true;
@@ -1844,17 +1870,19 @@ void UhdmAst::process_packed_array_typespec()
             current_node->str = str;
             delete node;
         } else if (node) {
-            current_node->str = node->str;
-            if (node->type == AST::AST_ENUM && !node->children.empty()) {
-                for (auto *c : node->children[0]->children) {
-                    if (c->type == AST::AST_RANGE && c->str.empty())
-                        packed_ranges.push_back(c);
-                    else
-                        delete c;
-                }
-                node->children[0]->children.clear();
+            if (!node->str.empty()) {
+                AST::AstNode *const wiretype_node = make_named_node(AST::AST_WIRETYPE);
+                wiretype_node->str = node->str;
+                current_node->children.push_back(wiretype_node);
+                current_node->is_custom_type = true;
+                auto it = shared.param_types.find(wiretype_node->str);
+                if (it == shared.param_types.end())
+                    shared.param_types.insert(std::make_pair(wiretype_node->str, node));
+                else
+                    delete node;
+            } else {
+                delete node;
             }
-            delete node;
         }
     });
     add_multirange_wire(current_node, std::move(packed_ranges), std::move(unpacked_ranges));
@@ -2026,15 +2054,17 @@ void UhdmAst::move_type_to_new_typedef(AST::AstNode *current_node, AST::AstNode 
             delete type_node;
         } else {
             type_node->str = "$enum" + std::to_string(shared.next_enum_id());
+            std::vector<AST::AstNode *> packed_ranges;
             auto wire_node = new AST::AstNode(AST::AST_WIRE);
             wire_node->is_reg = true;
             wire_node->attributes["\\enum_type"] = AST::AstNode::mkconst_str(type_node->str);
             if (!type_node->children.empty() && type_node->children[0]->children.size() > 1) {
-                wire_node->children.push_back(type_node->children[0]->children[1]->clone());
+                packed_ranges.push_back(type_node->children[0]->children[1]->clone());
             } else {
                 // Add default range
-                wire_node->children.push_back(make_range(31, 0));
+                packed_ranges.push_back(make_range(31, 0));
             }
+            add_multirange_wire(wire_node, std::move(packed_ranges), {});
             typedef_node->children.push_back(wire_node);
             current_node->children.push_back(type_node);
             current_node->children.push_back(typedef_node);
@@ -2185,6 +2215,8 @@ void UhdmAst::process_module()
                                            [](auto node) { return node->type == AST::AST_INITIAL || node->type == AST::AST_ALWAYS; });
             auto children_after_process = std::vector<AST::AstNode *>(process_it, current_node->children.end());
             current_node->children.erase(process_it, current_node->children.end());
+            auto old_top = shared.current_top_node;
+            shared.current_top_node = current_node;
             visit_one_to_many({vpiModule, vpiInterface, vpiParameter, vpiParamAssign, vpiPort, vpiNet, vpiArrayNet, vpiTaskFunc, vpiGenScopeArray,
                                vpiContAssign, vpiVariables},
                               obj_h, [&](AST::AstNode *node) {
@@ -2203,6 +2235,7 @@ void UhdmAst::process_module()
                     current_node->children.push_back(node);
                 }
             });
+            shared.current_top_node = old_top;
             current_node->children.insert(current_node->children.end(), children_after_process.begin(), children_after_process.end());
 
             delete_attribute(current_node, UhdmAst::partial());
@@ -2308,6 +2341,10 @@ void UhdmAst::process_module()
                 module_node = module_node->clone();
                 module_node->str = module_name;
             }
+        } else if (auto attribute = get_attribute(module_node, attr_id::is_elaborated_module); attribute && attribute->integer == 1) {
+            // we already processed module with this parameters, just create cell node
+            make_cell(obj_h, current_node, module_node);
+            return;
         }
         shared.top_nodes[module_node->str] = module_node;
         visit_one_to_many({vpiParamAssign}, obj_h, [&](AST::AstNode *node) {
@@ -2350,6 +2387,7 @@ void UhdmAst::process_module()
                           });
         make_cell(obj_h, current_node, module_node);
         shared.current_top_node = old_top;
+        set_attribute(module_node, attr_id::is_elaborated_module, AST::AstNode::mkconst_int(1, true));
     }
 }
 
@@ -2675,9 +2713,8 @@ void UhdmAst::process_enum_typespec()
         // anonymous typespec
         std::string typedef_name = "$systemverilog_plugin$anonymous_enum" + std::to_string(shared.next_anonymous_enum_typedef_id());
         current_node->str = typedef_name;
-        auto current_scope = find_ancestor({AST::AST_PACKAGE, AST::AST_MODULE, AST::AST_BLOCK, AST::AST_GENBLOCK});
-        uhdmast_assert(current_scope != nullptr);
-        move_type_to_new_typedef(current_scope, current_node);
+        uhdmast_assert(shared.current_top_node != nullptr);
+        move_type_to_new_typedef(shared.current_top_node, current_node);
         current_node = make_node(AST::AST_WIRETYPE);
         current_node->str = typedef_name;
         shared.anonymous_enums[enum_object] = std::move(typedef_name);
@@ -4164,8 +4201,7 @@ void UhdmAst::process_case_item()
                 current_node->children.push_back(node);
             }
         }
-        // FIXME: If we release the handle here, visiting vpiStmt fails for some reason
-        // vpi_release_handle(expr_h);
+        vpi_release_handle(expr_h);
     }
     vpi_release_handle(itr);
     if (current_node->children.empty()) {
@@ -4264,8 +4300,7 @@ void UhdmAst::process_hier_path()
                 top_node = current_node;
                 delete node;
             } else {
-                if (node->str.empty()) {
-                    log_assert(!node->children.empty());
+                if (!node->children.empty() && node->children[0]->type == AST::AST_RANGE && (node->str == "\\" || node->str.empty())) {
                     top_node->children.push_back(node->children[0]);
                     node->children.erase(node->children.begin());
                     delete node;
@@ -4468,6 +4503,8 @@ void UhdmAst::process_logic_typespec()
         }
     }
     visit_one_to_many({vpiRange}, obj_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
+    if (packed_ranges.empty())
+        packed_ranges.push_back(make_range(0, 0));
     add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
     current_node->is_signed = vpi_get(vpiSigned, obj_h);
 }
