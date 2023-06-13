@@ -454,13 +454,17 @@ static AST::AstNode *convert_range(AST::AstNode *id, int packed_ranges_size, int
                   new AST::AstNode(AST::AST_SUB, range_right, AST::AstNode::mkconst_int(wire_node->multirange_dimensions[right_idx], false));
             }
         }
-        range_left = new AST::AstNode(AST::AST_SUB,
-                                      new AST::AstNode(AST::AST_MUL, new AST::AstNode(AST::AST_ADD, range_left, AST::AstNode::mkconst_int(1, false)),
-                                                       AST::AstNode::mkconst_int(single_elem_size[i + 1], false)),
-                                      AST::AstNode::mkconst_int(1, false));
+        if (!result) {
+            range_left =
+              new AST::AstNode(AST::AST_SUB,
+                               new AST::AstNode(AST::AST_MUL, new AST::AstNode(AST::AST_ADD, range_left, AST::AstNode::mkconst_int(1, false)),
+                                                AST::AstNode::mkconst_int(single_elem_size[i + 1], false)),
+                               AST::AstNode::mkconst_int(1, false));
+        }
         range_right = new AST::AstNode(AST::AST_MUL, range_right, AST::AstNode::mkconst_int(single_elem_size[i + 1], false));
         if (result) {
             range_right = new AST::AstNode(AST::AST_ADD, range_right, result->children[1]->clone());
+            delete range_left;
             range_left = new AST::AstNode(AST::AST_SUB, new AST::AstNode(AST::AST_ADD, range_right->clone(), result->children[0]->clone()),
                                           result->children[1]->clone());
             delete result;
@@ -525,7 +529,8 @@ static void resolve_wiretype(AST::AstNode *wire_node)
         log_assert(wiretype_ast->type == AST::AST_TYPEDEF);
         wire_node->attributes[ID::wiretype]->id2ast = wiretype_ast->children[0];
     }
-    if ((wire_node->children[0]->type == AST::AST_RANGE || (wire_node->children.size() > 1 && wire_node->children[1]->type == AST::AST_RANGE)) &&
+    if (((wire_node->children.size() > 0 && wire_node->children[0]->type == AST::AST_RANGE) ||
+         (wire_node->children.size() > 1 && wire_node->children[1]->type == AST::AST_RANGE)) &&
         wire_node->multirange_dimensions.empty()) {
         // We need to save order in which ranges appear in wiretype and add them before wire range
         // We need to copy this ranges, so create new vector for them
@@ -1530,25 +1535,31 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
         if (is_signed) {
             strValType += "s";
         }
+        vpi_release_handle(typespec_h);
     }
+    std::string val_str;
     if (val.format) { // Needed to handle parameter nodes without typespecs and constants
         switch (val.format) {
         case vpiScalarVal:
             return AST::AstNode::mkconst_int(val.value.scalar, false, 1);
         case vpiBinStrVal: {
             strValType += "b";
+            val_str = val.value.str;
             break;
         }
         case vpiDecStrVal: {
             strValType += "d";
+            val_str = val.value.str;
             break;
         }
         case vpiHexStrVal: {
             strValType += "h";
+            val_str = val.value.str;
             break;
         }
         case vpiOctStrVal: {
             strValType += "o";
+            val_str = val.value.str;
             break;
         }
         // Surelog reports constant integers as a unsigned, but by default int is signed
@@ -1557,16 +1568,14 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             if (val.value.uint > std::numeric_limits<std::uint32_t>::max()) {
                 // an integer is by default signed, so use 'sd despite the variant vpiUIntVal
                 strValType = "'sd";
-                string str_value = std::to_string(val.value.uint);
-                val.value.str = strdup(str_value.c_str());
+                val_str = std::to_string(val.value.uint);
                 break;
             }
             [[fallthrough]];
         case vpiIntVal: {
             if (val.value.integer > std::numeric_limits<std::int32_t>::max()) {
                 strValType = "'sd";
-                string str_value = std::to_string(val.value.integer);
-                val.value.str = strdup(str_value.c_str());
+                val_str = std::to_string(val.value.integer);
                 break;
             }
 
@@ -1620,8 +1629,8 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
             vpi_release_handle(caseItem_h);
         }
         // handle vpiBinStrVal, vpiDecStrVal and vpiHexStrVal
-        if (std::strchr(val.value.str, '\'')) {
-            return ::systemverilog_plugin::const2ast(val.value.str, caseType, false);
+        if (val_str.find('\'') != std::string::npos) {
+            return ::systemverilog_plugin::const2ast(std::move(val_str), caseType, false);
         } else {
             auto size = vpi_get(vpiSize, obj_h);
             std::string size_str;
@@ -1637,7 +1646,7 @@ AST::AstNode *UhdmAst::process_value(vpiHandle obj_h)
                     size_str = "1";
                 }
             }
-            auto c = ::systemverilog_plugin::const2ast(size_str + strValType + val.value.str, caseType, false);
+            auto c = ::systemverilog_plugin::const2ast(size_str + strValType + val_str, caseType, false);
             if (size <= 0) {
                 // unsized unbased const
                 c->is_unsized = true;
@@ -1866,9 +1875,13 @@ void UhdmAst::process_packed_array_typespec()
                 wiretype_node->str = node->str;
                 current_node->children.push_back(wiretype_node);
                 current_node->is_custom_type = true;
-                auto it = shared.param_types.find(current_node->str);
+                auto it = shared.param_types.find(wiretype_node->str);
                 if (it == shared.param_types.end())
-                    shared.param_types.insert(std::make_pair(current_node->str, node->clone()));
+                    shared.param_types.insert(std::make_pair(wiretype_node->str, node));
+                else
+                    delete node;
+            } else {
+                delete node;
             }
         }
     });
@@ -4188,8 +4201,7 @@ void UhdmAst::process_case_item()
                 current_node->children.push_back(node);
             }
         }
-        // FIXME: If we release the handle here, visiting vpiStmt fails for some reason
-        // vpi_release_handle(expr_h);
+        vpi_release_handle(expr_h);
     }
     vpi_release_handle(itr);
     if (current_node->children.empty()) {
