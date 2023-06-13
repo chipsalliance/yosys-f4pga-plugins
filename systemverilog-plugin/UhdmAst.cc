@@ -13,6 +13,8 @@
 #include "frontends/ast/ast.h"
 #include "libs/sha1/sha1.h"
 
+#include "utils/memory.h"
+
 // UHDM
 #include <uhdm/ExprEval.h>
 #include <uhdm/uhdm.h>
@@ -2271,7 +2273,7 @@ void UhdmAst::process_module()
         current_node = make_ast_node(AST::AST_CELL);
         std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
 
-        std::vector<AST::AstNode *> parameter_typedefs;
+        auto parameter_typedefs = make_unique_resource<std::vector<AST::AstNode *>>();
 
         visit_one_to_many({vpiParameter}, obj_h, [&](AST::AstNode *node) {
             log_assert(node);
@@ -2300,7 +2302,7 @@ void UhdmAst::process_module()
 
                 if (child->type == AST::AST_TYPEDEF || child->type == AST::AST_ENUM) {
                     // Copy definition of the type provided as parameter.
-                    parameter_typedefs.push_back(child->clone());
+                    parameter_typedefs->push_back(child->clone());
                 }
             }
             delete node;
@@ -2366,7 +2368,9 @@ void UhdmAst::process_module()
                 }
             }
         });
-        module_node->children.insert(std::end(module_node->children), std::begin(parameter_typedefs), std::end(parameter_typedefs));
+        module_node->children.insert(std::end(module_node->children), std::begin(*parameter_typedefs), std::end(*parameter_typedefs));
+        parameter_typedefs->clear();
+        parameter_typedefs.reset();
         if (module_node->attributes.count(UhdmAst::partial())) {
             AST::AstNode *attr = module_node->attributes.at(UhdmAst::partial());
             if (attr->type == AST::AST_CONSTANT)
