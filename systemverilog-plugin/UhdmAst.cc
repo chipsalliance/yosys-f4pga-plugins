@@ -3999,12 +3999,7 @@ void UhdmAst::process_bit_select()
 void UhdmAst::process_part_select()
 {
     current_node = make_ast_node(AST::AST_IDENTIFIER);
-    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
-    current_node->str = get_name(parent_h);
-    vpi_release_handle(parent_h);
-    auto range_node = new AST::AstNode(AST::AST_RANGE);
-    range_node->filename = current_node->filename;
-    range_node->location = current_node->location;
+    AST::AstNode *range_node = make_node(AST::AST_RANGE);
     visit_one_to_one({vpiLeftRange, vpiRightRange}, obj_h, [&](AST::AstNode *node) { range_node->children.push_back(node); });
     current_node->children.push_back(range_node);
 }
@@ -4012,24 +4007,18 @@ void UhdmAst::process_part_select()
 void UhdmAst::process_indexed_part_select()
 {
     current_node = make_ast_node(AST::AST_IDENTIFIER);
-    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
-    current_node->str = get_name(parent_h);
-    vpi_release_handle(parent_h);
     // TODO: check if there are other types, for now only handle 1 and 2 (+: and -:)
     auto indexed_part_select_type = vpi_get(vpiIndexedPartSelectType, obj_h) == 1 ? AST::AST_ADD : AST::AST_SUB;
-    auto range_node = new AST::AstNode(AST::AST_RANGE);
-    range_node->filename = current_node->filename;
-    range_node->location = current_node->location;
+    AST::AstNode *range_node = make_node(AST::AST_RANGE);
     visit_one_to_one({vpiBaseExpr}, obj_h, [&](AST::AstNode *node) { range_node->children.push_back(node); });
     visit_one_to_one({vpiWidthExpr}, obj_h, [&](AST::AstNode *node) {
-        auto right_range_node = new AST::AstNode(indexed_part_select_type);
+        AST::AstNode *right_range_node = make_node(indexed_part_select_type);
         right_range_node->children.push_back(range_node->children[0]->clone());
         right_range_node->children.push_back(node);
-        auto sub = new AST::AstNode(indexed_part_select_type == AST::AST_ADD ? AST::AST_SUB : AST::AST_ADD);
+        AST::AstNode *sub = make_node(indexed_part_select_type == AST::AST_ADD ? AST::AST_SUB : AST::AST_ADD);
         sub->children.push_back(right_range_node);
         sub->children.push_back(AST::AstNode::mkconst_int(1, false, 1));
         range_node->children.push_back(sub);
-        // range_node->children.push_back(right_range_node);
     });
     if (indexed_part_select_type == AST::AST_ADD) {
         std::reverse(range_node->children.begin(), range_node->children.end());
