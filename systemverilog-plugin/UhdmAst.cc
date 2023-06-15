@@ -3988,12 +3988,7 @@ void UhdmAst::process_assignment_pattern_op()
 void UhdmAst::process_bit_select()
 {
     current_node = make_ast_node(AST::AST_IDENTIFIER);
-    visit_one_to_one({vpiIndex}, obj_h, [&](AST::AstNode *node) {
-        auto range_node = new AST::AstNode(AST::AST_RANGE, node);
-        range_node->filename = current_node->filename;
-        range_node->location = current_node->location;
-        current_node->children.push_back(range_node);
-    });
+    visit_one_to_one({vpiIndex}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(make_node(AST::AST_RANGE)({node})); });
 }
 
 void UhdmAst::process_part_select()
@@ -4290,14 +4285,14 @@ void UhdmAst::process_hier_path()
                 top_node = current_node;
                 delete node;
             } else {
-                if (!node->children.empty() && node->children[0]->type == AST::AST_RANGE && (node->str == "\\" || node->str.empty())) {
-                    top_node->children.push_back(node->children[0]);
-                    node->children.erase(node->children.begin());
-                    delete node;
-                } else {
+                if (node->type == AST::AST_IDENTIFIER) {
                     node->type = static_cast<AST::AstNodeType>(AST::Extended::AST_DOT);
                     top_node->children.push_back(node);
                     top_node = node;
+                } else {
+                    top_node->children.push_back(node->children[0]);
+                    node->children.erase(node->children.begin());
+                    delete node;
                 }
             }
         }
