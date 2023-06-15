@@ -2611,11 +2611,36 @@ void UhdmAst::process_enum_typespec()
 
     if (current_node->str.empty()) {
         // anonymous typespec, check if not already created
-        if (const auto enum_iter = shared.anonymous_enums.find(enum_object); enum_iter != shared.anonymous_enums.end()) {
-            // we already created typedef for this.
-            delete current_node;
-            current_node = make_node(AST::AST_WIRETYPE);
-            current_node->str = enum_iter->second;
+        log_assert(shared.current_top_node);
+        auto check_created_anonymous_enums = [enum_object, this](std::string top_module_name) -> bool {
+            for (auto pair : shared.anonymous_enums[top_module_name]) {
+                UHDM::AnySet visited;
+                if (pair.first->Compare(enum_object, visited) == 0) {
+                    // we already created typedef for this.
+                    delete current_node;
+                    current_node = make_node(AST::AST_WIRETYPE);
+                    current_node->str = pair.second;
+                    return true;
+                }
+            }
+            return false;
+        };
+        std::string top_module_name = shared.current_top_node->str;
+        if (check_created_anonymous_enums(top_module_name)) {
+            return;
+        }
+        // in case of parametrized module, also check unparametrized top module
+        // as we could add this enum there and then copy it to parametrized
+        // version
+        if (top_module_name.find("$paramod") != std::string::npos) {
+            // possible names:
+            // $paramod\module_name\PARAM=VAL
+            // $paramod$81af6bf473845aee480c993b90a1ed0117ae9091\module_name
+            top_module_name = top_module_name.substr(top_module_name.find("\\"));
+            if (auto params = top_module_name.find("\\", 1 /* skip first \ */) != std::string::npos)
+                top_module_name = top_module_name.substr(0, params);
+        }
+        if (check_created_anonymous_enums(top_module_name)) {
             return;
         }
     }
@@ -2716,7 +2741,7 @@ void UhdmAst::process_enum_typespec()
         move_type_to_new_typedef(shared.current_top_node, current_node);
         current_node = make_node(AST::AST_WIRETYPE);
         current_node->str = typedef_name;
-        shared.anonymous_enums[enum_object] = std::move(typedef_name);
+        shared.anonymous_enums[shared.current_top_node->str][enum_object] = std::move(typedef_name);
     }
 }
 

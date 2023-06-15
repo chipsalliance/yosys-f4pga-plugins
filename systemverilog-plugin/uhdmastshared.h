@@ -92,7 +92,7 @@ class UhdmAstShared
     std::set<const UHDM::BaseClass *> nonSynthesizableObjects;
 
     // Map of anonymous enum types to generated typedefs
-    std::unordered_map<const UHDM::enum_typespec *, std::string> anonymous_enums;
+    std::unordered_map<std::string, std::unordered_map<const UHDM::enum_typespec *, std::string>> anonymous_enums;
 };
 
 } // namespace systemverilog_plugin
