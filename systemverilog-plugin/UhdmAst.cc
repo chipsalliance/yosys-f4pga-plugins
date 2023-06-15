@@ -4792,8 +4792,6 @@ void UhdmAst::process_port()
 void UhdmAst::process_net()
 {
     current_node = make_ast_node(AST::AST_WIRE);
-    std::vector<AST::AstNode *> packed_ranges;   // comes before wire name
-    std::vector<AST::AstNode *> unpacked_ranges; // comes after wire name
     auto net_type = vpi_get(vpiNetType, obj_h);
     current_node->is_reg = net_type == vpiReg;
     current_node->is_output = net_type == vpiOutput;
@@ -4806,14 +4804,13 @@ void UhdmAst::process_net()
             // wiretype needs to be 1st node
             current_node->children.insert(current_node->children.begin(), wiretype_node);
             current_node->is_custom_type = true;
+        } else {
+            // Ranges from the typespec are copied to the current node as attributes.
+            // So that multiranges can be replaced with a single range as a node later.
+            copy_packed_unpacked_attribute(node, current_node);
         }
         delete node;
     });
-    if (vpiHandle typespec_h = vpi_handle(vpiTypespec, obj_h)) {
-        visit_one_to_many({vpiRange}, typespec_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
-        vpi_release_handle(typespec_h);
-    }
-    add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
 }
 
 void UhdmAst::process_parameter()
