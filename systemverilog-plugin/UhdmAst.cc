@@ -182,93 +182,6 @@ static void sanitize_symbol_name(std::string &name)
     }
 }
 
-static std::string get_parent_name(vpiHandle parent_h)
-{
-    std::string parent_name;
-    if (auto p = vpi_get_str(vpiFullName, parent_h)) {
-        parent_name = p;
-    } else if (auto p = vpi_get_str(vpiName, parent_h)) {
-        parent_name = p;
-    } else if (auto p = vpi_get_str(vpiDefName, parent_h)) {
-        parent_name = p;
-    }
-    return parent_name;
-}
-
-// Warning: Takes ownership of `parent_h` and releases it.
-static void find_ancestor_name(vpiHandle parent_h, std::string &name, std::string &parent_name)
-{
-
-    while (!parent_name.empty()) {
-        parent_name = parent_name + ".";
-        if ((name.rfind(parent_name) != std::string::npos)) {
-            name = name.substr(name.rfind(parent_name) + parent_name.size());
-            break;
-        } else {
-            auto old_parent_h = parent_h;
-            parent_h = vpi_handle(vpiParent, parent_h);
-            vpi_release_handle(old_parent_h);
-
-            if (parent_h) {
-                parent_name = get_parent_name(parent_h);
-            } else {
-                parent_name.clear();
-            }
-        }
-    }
-    vpi_release_handle(parent_h);
-}
-
-static std::string get_name(vpiHandle obj_h, bool prefer_full_name = false)
-{
-    auto first_check = prefer_full_name ? vpiFullName : vpiName;
-    auto last_check = prefer_full_name ? vpiName : vpiFullName;
-    std::string name;
-    if (auto s = vpi_get_str(first_check, obj_h)) {
-        name = s;
-    } else if (auto s = vpi_get_str(vpiDefName, obj_h)) {
-        name = s;
-    } else if (auto s = vpi_get_str(last_check, obj_h)) {
-        name = s;
-    }
-    // We are looking for the ancestor name to use it as a delimeter
-    // when stripping the name of the current node.
-    // We used to strip the name by searching for "." in it, but this
-    // approach didn't work for the names whith "." as an escaped
-    // character.
-    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
-
-    if (parent_h) {
-        std::string parent_name;
-        parent_name = get_parent_name(parent_h);
-
-        if (parent_name.empty()) {
-            // Nodes of certain types, like param_assign, don't have
-            // a name, so we need to look further for the ancestor.
-            auto old_parent_h = parent_h;
-            parent_h = vpi_handle(vpiParent, parent_h);
-            vpi_release_handle(old_parent_h);
-
-            if (parent_h) {
-                parent_name = get_parent_name(parent_h);
-            }
-        }
-        find_ancestor_name(parent_h, name, parent_name);
-    }
-    sanitize_symbol_name(name);
-    return name;
-}
-
-static std::string strip_package_name(std::string name)
-{
-    auto sep_index = name.find("::");
-    if (sep_index != string::npos) {
-        name = name.substr(sep_index + 1);
-        name[0] = '\\';
-    }
-    return name;
-}
-
 static std::string get_object_name(vpiHandle obj_h, const std::vector<int> &name_fields = {vpiName})
 {
     std::string objectName;
@@ -280,6 +193,18 @@ static std::string get_object_name(vpiHandle obj_h, const std::vector<int> &name
         }
     }
     return objectName;
+}
+
+static std::string get_name(vpiHandle obj_h) { return get_object_name(obj_h, {vpiName, vpiDefName}); }
+
+static std::string strip_package_name(std::string name)
+{
+    auto sep_index = name.find("::");
+    if (sep_index != string::npos) {
+        name = name.substr(sep_index + 1);
+        name[0] = '\\';
+    }
+    return name;
 }
 
 static AST::AstNode *mkconst_real(double d)
@@ -1796,9 +1721,9 @@ void UhdmAst::apply_location_from_current_obj(AST::AstNode &target_node) const
     }
 }
 
-void UhdmAst::apply_name_from_current_obj(AST::AstNode &target_node, bool prefer_full_name) const
+void UhdmAst::apply_name_from_current_obj(AST::AstNode &target_node) const
 {
-    target_node.str = get_name(obj_h, prefer_full_name);
+    target_node.str = get_name(obj_h);
     auto it = node_renames.find(target_node.str);
     if (it != node_renames.end())
         target_node.str = it->second;
@@ -1811,11 +1736,11 @@ AstNodeBuilder UhdmAst::make_node(AST::AstNodeType type) const
     return AstNodeBuilder(std::move(node));
 };
 
-AstNodeBuilder UhdmAst::make_named_node(AST::AstNodeType type, bool prefer_full_name) const
+AstNodeBuilder UhdmAst::make_named_node(AST::AstNodeType type) const
 {
     auto node = std::make_unique<AST::AstNode>(type);
     apply_location_from_current_obj(*node);
-    apply_name_from_current_obj(*node, prefer_full_name);
+    apply_name_from_current_obj(*node);
     return AstNodeBuilder(std::move(node));
 };
 
@@ -1835,10 +1760,10 @@ AstNodeBuilder UhdmAst::make_const(uint32_t value, uint8_t width) const
     return make_node(AST::AST_CONSTANT).value(value, false, width);
 };
 
-AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::AstNode *> children, bool prefer_full_name)
+AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::AstNode *> children)
 {
     auto node = new AST::AstNode(type);
-    apply_name_from_current_obj(*node, prefer_full_name);
+    apply_name_from_current_obj(*node);
     apply_location_from_current_obj(*node);
     node->children = children;
     return node;
@@ -4295,8 +4220,6 @@ void UhdmAst::process_function()
 
 void UhdmAst::process_hier_path()
 {
-    current_node = make_ast_node(AST::AST_IDENTIFIER);
-    current_node->str = "\\";
     AST::AstNode *top_node = nullptr;
     visit_one_to_many({vpiActual}, obj_h, [&](AST::AstNode *node) {
         if (node) {
@@ -4304,13 +4227,10 @@ void UhdmAst::process_hier_path()
                 node->str = node->str.substr(0, node->str.find('['));
             // for first node, just set correct string and move any children
             if (!top_node) {
-                current_node->str += node->str.substr(1);
-                current_node->children = std::move(node->children);
-                node->children.clear();
+                current_node = node;
                 top_node = current_node;
-                delete node;
             } else {
-                if (node->type == AST::AST_IDENTIFIER) {
+                if (node->type == AST::AST_IDENTIFIER && !node->str.empty()) {
                     node->type = static_cast<AST::AstNodeType>(AST::Extended::AST_DOT);
                     top_node->children.push_back(node);
                     top_node = node;
@@ -4477,13 +4397,6 @@ void UhdmAst::process_tf_call(AST::AstNodeType type)
             current_node->children.push_back(node);
         }
     });
-    // Prefer fully qualified name of a function (prefixed with a scope).
-    // This is important when a single function which has been imported from a package
-    // calls another function that is not imported in the calling scope.
-    if (vpiHandle function_h = vpi_handle(vpiFunction, obj_h)) {
-        current_node->str = get_name(function_h, true);
-        vpi_release_handle(function_h);
-    }
 }
 
 void UhdmAst::process_immediate_assert()
@@ -4823,7 +4736,7 @@ void UhdmAst::process_net()
 void UhdmAst::process_parameter()
 {
     auto type = vpi_get(vpiLocalParam, obj_h) == 1 ? AST::AST_LOCALPARAM : AST::AST_PARAMETER;
-    current_node = make_ast_node(type, {}, true);
+    current_node = make_ast_node(type);
     std::vector<AST::AstNode *> packed_ranges;   // comes before wire name
     std::vector<AST::AstNode *> unpacked_ranges; // comes after wire name
     visit_one_to_many({vpiRange}, obj_h, [&](AST::AstNode *node) { unpacked_ranges.push_back(node); });
