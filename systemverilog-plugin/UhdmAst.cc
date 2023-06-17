@@ -3095,7 +3095,8 @@ void UhdmAst::process_assignment(const UHDM::BaseClass *object)
         auto top_node = find_ancestor({AST::AST_MODULE});
         if (!top_node)
             return;
-        top_node->children.push_back(current_node->children[0]->clone());
+        top_node->children.push_back(std::move(current_node->children[0]));
+        delete current_node;
         current_node = nullptr;
     }
 }
