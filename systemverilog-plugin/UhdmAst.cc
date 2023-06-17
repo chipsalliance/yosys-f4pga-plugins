@@ -3978,6 +3978,7 @@ void UhdmAst::process_assignment_pattern_op()
         if (current_node->children.empty()) {
             delete assign_node->children[0];
             assign_node->children[0] = assignments[0]->children[0];
+            delete current_node;
             current_node = assignments[0]->children[1];
             assignments[0]->children.clear();
             delete assignments[0];
