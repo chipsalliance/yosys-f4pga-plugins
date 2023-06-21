@@ -13,6 +13,8 @@
 #include "frontends/ast/ast.h"
 #include "libs/sha1/sha1.h"
 
+#include "utils/memory.h"
+
 // UHDM
 #include <uhdm/ExprEval.h>
 #include <uhdm/uhdm.h>
@@ -493,21 +495,16 @@ static void resolve_wiretype(AST::AstNode *wire_node)
     }
     if (wiretype_node == nullptr)
         return;
-    std::vector<AST::AstNode *> packed_ranges;
-    std::vector<AST::AstNode *> unpacked_ranges;
-    // First check if it has already defined ranges
-    if (wire_node->attributes.count(UhdmAst::packed_ranges())) {
-        for (auto r : wire_node->attributes[UhdmAst::packed_ranges()]->children) {
-            packed_ranges.push_back(r->clone());
-        }
-    }
-    if (wire_node->attributes.count(UhdmAst::unpacked_ranges())) {
-        for (auto r : wire_node->attributes[UhdmAst::unpacked_ranges()]->children) {
-            unpacked_ranges.push_back(r->clone());
-        }
-    }
+
+    unique_resource<std::vector<AST::AstNode *>> packed_ranges = wire_node->attributes.count(attr_id::packed_ranges)
+                                                                   ? std::move(wire_node->attributes[attr_id::packed_ranges]->children)
+                                                                   : std::vector<AST::AstNode *>{};
     delete_attribute(wire_node, attr_id::packed_ranges);
+    unique_resource<std::vector<AST::AstNode *>> unpacked_ranges = wire_node->attributes.count(attr_id::unpacked_ranges)
+                                                                     ? std::move(wire_node->attributes[attr_id::unpacked_ranges]->children)
+                                                                     : std::vector<AST::AstNode *>{};
     delete_attribute(wire_node, attr_id::unpacked_ranges);
+
     AST::AstNode *wiretype_ast = nullptr;
     log_assert(AST_INTERNAL::current_scope.count(wiretype_node->str));
     wiretype_ast = AST_INTERNAL::current_scope[wiretype_node->str];
@@ -555,10 +552,10 @@ static void resolve_wiretype(AST::AstNode *wire_node)
         // add wiretype range before current wire ranges
         std::reverse(packed_ranges_wiretype.begin(), packed_ranges_wiretype.end());
         std::reverse(unpacked_ranges_wiretype.begin(), unpacked_ranges_wiretype.end());
-        std::reverse(packed_ranges.begin(), packed_ranges.end());
-        std::reverse(unpacked_ranges.begin(), unpacked_ranges.end());
-        packed_ranges.insert(packed_ranges.begin(), packed_ranges_wiretype.begin(), packed_ranges_wiretype.end());
-        unpacked_ranges.insert(unpacked_ranges.begin(), unpacked_ranges_wiretype.begin(), unpacked_ranges_wiretype.end());
+        std::reverse(packed_ranges->begin(), packed_ranges->end());
+        std::reverse(unpacked_ranges->begin(), unpacked_ranges->end());
+        packed_ranges->insert(packed_ranges->begin(), packed_ranges_wiretype.begin(), packed_ranges_wiretype.end());
+        unpacked_ranges->insert(unpacked_ranges->begin(), unpacked_ranges_wiretype.begin(), unpacked_ranges_wiretype.end());
         AST::AstNode *value = nullptr;
         if (wire_node->children[0]->type != AST::AST_RANGE) {
             value = wire_node->children[0]->clone();
@@ -566,7 +563,7 @@ static void resolve_wiretype(AST::AstNode *wire_node)
         delete_children(wire_node);
         if (value)
             wire_node->children.push_back(value);
-        add_multirange_wire(wire_node, packed_ranges, unpacked_ranges, false /* reverse */);
+        add_multirange_wire(wire_node, packed_ranges.release(), unpacked_ranges.release(), false /* reverse */);
     }
 }
 
@@ -2271,7 +2268,7 @@ void UhdmAst::process_module()
         current_node = make_ast_node(AST::AST_CELL);
         std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
 
-        std::vector<AST::AstNode *> parameter_typedefs;
+        auto parameter_typedefs = make_unique_resource<std::vector<AST::AstNode *>>();
 
         visit_one_to_many({vpiParameter}, obj_h, [&](AST::AstNode *node) {
             log_assert(node);
@@ -2300,7 +2297,7 @@ void UhdmAst::process_module()
 
                 if (child->type == AST::AST_TYPEDEF || child->type == AST::AST_ENUM) {
                     // Copy definition of the type provided as parameter.
-                    parameter_typedefs.push_back(child->clone());
+                    parameter_typedefs->push_back(child->clone());
                 }
             }
             delete node;
@@ -2366,7 +2363,9 @@ void UhdmAst::process_module()
                 }
             }
         });
-        module_node->children.insert(std::end(module_node->children), std::begin(parameter_typedefs), std::end(parameter_typedefs));
+        module_node->children.insert(std::end(module_node->children), std::begin(*parameter_typedefs), std::end(*parameter_typedefs));
+        parameter_typedefs->clear();
+        parameter_typedefs.reset();
         if (module_node->attributes.count(UhdmAst::partial())) {
             AST::AstNode *attr = module_node->attributes.at(UhdmAst::partial());
             if (attr->type == AST::AST_CONSTANT)
@@ -3091,7 +3090,8 @@ void UhdmAst::process_assignment(const UHDM::BaseClass *object)
         auto top_node = find_ancestor({AST::AST_MODULE});
         if (!top_node)
             return;
-        top_node->children.push_back(current_node->children[0]->clone());
+        top_node->children.push_back(std::move(current_node->children[0]));
+        delete current_node;
         current_node = nullptr;
     }
 }
@@ -3974,6 +3974,7 @@ void UhdmAst::process_assignment_pattern_op()
         if (current_node->children.empty()) {
             delete assign_node->children[0];
             assign_node->children[0] = assignments[0]->children[0];
+            delete current_node;
             current_node = assignments[0]->children[1];
             assignments[0]->children.clear();
             delete assignments[0];
