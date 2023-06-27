@@ -2539,8 +2539,8 @@ void UhdmAst::process_enum_typespec()
         log_assert(shared.current_top_node);
         auto check_created_anonymous_enums = [enum_object, this](std::string top_module_name) -> bool {
             for (auto pair : shared.anonymous_enums[top_module_name]) {
-                UHDM::AnySet visited;
-                if (pair.first->Compare(enum_object, visited) == 0) {
+                UHDM::CompareContext ctx;
+                if (pair.first->Compare(enum_object, &ctx) == 0) {
                     // we already created typedef for this.
                     delete current_node;
                     current_node = make_node(AST::AST_WIRETYPE);
@@ -5014,7 +5014,8 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
     const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
     for (auto *obj : shared.nonSynthesizableObjects) {
-        if (!object->Compare(obj)) {
+        UHDM::CompareContext ctx;
+        if (!object->Compare(obj, &ctx)) {
             log_warning("%.*s:%d: Skipping non-synthesizable object of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
                         object->VpiLineNo(), UHDM::VpiTypeName(obj_h).c_str());
             return nullptr;
