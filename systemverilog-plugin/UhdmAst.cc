@@ -3999,9 +3999,6 @@ void UhdmAst::process_bit_select()
 void UhdmAst::process_part_select()
 {
     current_node = make_ast_node(AST::AST_IDENTIFIER);
-    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
-    current_node->str = get_name(parent_h);
-    vpi_release_handle(parent_h);
     auto range_node = new AST::AstNode(AST::AST_RANGE);
     range_node->filename = current_node->filename;
     range_node->location = current_node->location;
@@ -4012,9 +4009,6 @@ void UhdmAst::process_part_select()
 void UhdmAst::process_indexed_part_select()
 {
     current_node = make_ast_node(AST::AST_IDENTIFIER);
-    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
-    current_node->str = get_name(parent_h);
-    vpi_release_handle(parent_h);
     // TODO: check if there are other types, for now only handle 1 and 2 (+: and -:)
     auto indexed_part_select_type = vpi_get(vpiIndexedPartSelectType, obj_h) == 1 ? AST::AST_ADD : AST::AST_SUB;
     auto range_node = new AST::AstNode(AST::AST_RANGE);
