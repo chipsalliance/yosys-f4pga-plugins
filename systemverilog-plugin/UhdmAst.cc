@@ -156,6 +156,31 @@ static void delete_internal_attributes(AST::AstNode *node)
     }
 }
 
+template <typename T> class ScopedValueChanger
+{
+    T &ref;
+    const T prev_val;
+
+  public:
+    ScopedValueChanger() = delete;
+
+    explicit ScopedValueChanger(T &r) : ref(r), prev_val(ref) {}
+
+    ScopedValueChanger(T &r, const T &val) : ref(r), prev_val(ref) { ref = val; }
+
+    ScopedValueChanger(ScopedValueChanger &&) = delete;
+    ScopedValueChanger &operator=(ScopedValueChanger &&) = delete;
+
+    ScopedValueChanger(const ScopedValueChanger &) = delete;
+    ScopedValueChanger &operator=(const ScopedValueChanger &) = delete;
+
+    ~ScopedValueChanger() { ref = prev_val; }
+};
+
+template <typename T> ScopedValueChanger(T &)->ScopedValueChanger<T>;
+
+template <typename T> ScopedValueChanger(T &, const T &)->ScopedValueChanger<T>;
+
 // Delete all children nodes.
 // Does *not* delete attributes.
 // This function exists as Yosys's function node->delete_children() does remove all children and attributes.
