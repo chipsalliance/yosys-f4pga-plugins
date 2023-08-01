@@ -4431,6 +4431,25 @@ void UhdmAst::process_tf_call(AST::AstNodeType type)
             current_node->children.push_back(node);
         }
     });
+
+    // Calls to functions imported from packages do not contain package name in vpiName. A full function name, containing package name,
+    // is necessary e.g. when call to a function is used as a value assigned to a port of a module instantiated inside generate for loop.
+    // However, we can't use full function name when it refers to a module's local function.
+    // To make it work the called function name is used instead of vpiName from the call object only when it contains package name (detected here
+    // by presence of "::").
+    // TODO(mglb): This can fail when "::" is just a part of an escaped identifier. Handle such cases properly here and in other places.
+    const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+    if (handle->type == UHDM::uhdmfunc_call) {
+        const auto *const base_object = (const UHDM::BaseClass *)handle->object;
+        const auto *const fcall = base_object->Cast<const UHDM::func_call *>();
+        if (fcall->Function()) {
+            auto fname = fcall->Function()->VpiFullName();
+            if (fname.find("::") != std::string_view::npos) {
+                current_node->str = fname;
+                sanitize_symbol_name(current_node->str);
+            }
+        }
+    }
 }
 
 void UhdmAst::process_immediate_assert()
