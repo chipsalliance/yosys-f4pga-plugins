@@ -88,6 +88,10 @@ class UhdmAstShared
 
     ::Yosys::AST::AstNode *current_top_node = nullptr;
 
+    // Currently processed UHDM module instance.
+    // Used as a fallback when obj->Instance() and obj->vpiParent() are not available.
+    const UHDM::any *current_instance = nullptr;
+
     // Set of non-synthesizable objects to skip in current design;
     std::set<const UHDM::BaseClass *> nonSynthesizableObjects;
 

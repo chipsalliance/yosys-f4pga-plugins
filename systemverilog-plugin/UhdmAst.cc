@@ -2214,7 +2214,13 @@ void UhdmAst::process_module()
             });
         }
     } else {
-        // Not a top module, create instance
+        // A module instance inside another uhdmTopModules' module.
+        // Create standalone module instance AST and embed it in the instantiating module using AST_CELL.
+
+        const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+        const auto *const uhdm_obj = (const UHDM::any *)handle->object;
+        const auto current_instance_changer = ScopedValueChanger(shared.current_instance, uhdm_obj);
+
         current_node = make_ast_node(AST::AST_CELL);
         std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
 
@@ -2536,7 +2542,6 @@ static UHDM::expr *reduce_expression(const UHDM::any *expr, const UHDM::any *ins
 {
     log_assert(expr);
     log_assert(inst);
-    log_assert(pexpr);
 
     bool invalidvalue = false;
     UHDM::ExprEval eval;
@@ -2615,13 +2620,17 @@ void UhdmAst::process_enum_typespec()
 
             if (leftrange_obj->UhdmType() == UHDM::uhdmoperation) {
                 // Substitute the previous leftrange with the resolved operation result.
-                range_obj->Left_expr(reduce_expression(leftrange_obj, enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent(),
-                                                       enum_object->VpiParent()));
+                const UHDM::any *const instance =
+                  enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent() ? enum_object->VpiParent() : shared.current_instance;
+
+                range_obj->Left_expr(reduce_expression(leftrange_obj, instance, enum_object->VpiParent()));
             }
             if (rightrange_obj->UhdmType() == UHDM::uhdmoperation) {
                 // Substitute the previous rightrange with the resolved operation result.
-                range_obj->Right_expr(reduce_expression(rightrange_obj, enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent(),
-                                                        enum_object->VpiParent()));
+                const UHDM::any *const instance =
+                  enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent() ? enum_object->VpiParent() : shared.current_instance;
+
+                range_obj->Right_expr(reduce_expression(rightrange_obj, instance, enum_object->VpiParent()));
             }
         }
     }
