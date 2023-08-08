@@ -156,6 +156,31 @@ static void delete_internal_attributes(AST::AstNode *node)
     }
 }
 
+template <typename T> class ScopedValueChanger
+{
+    T &ref;
+    const T prev_val;
+
+  public:
+    ScopedValueChanger() = delete;
+
+    explicit ScopedValueChanger(T &r) : ref(r), prev_val(ref) {}
+
+    ScopedValueChanger(T &r, const T &val) : ref(r), prev_val(ref) { ref = val; }
+
+    ScopedValueChanger(ScopedValueChanger &&) = delete;
+    ScopedValueChanger &operator=(ScopedValueChanger &&) = delete;
+
+    ScopedValueChanger(const ScopedValueChanger &) = delete;
+    ScopedValueChanger &operator=(const ScopedValueChanger &) = delete;
+
+    ~ScopedValueChanger() { ref = prev_val; }
+};
+
+template <typename T> ScopedValueChanger(T &)->ScopedValueChanger<T>;
+
+template <typename T> ScopedValueChanger(T &, const T &)->ScopedValueChanger<T>;
+
 // Delete all children nodes.
 // Does *not* delete attributes.
 // This function exists as Yosys's function node->delete_children() does remove all children and attributes.
@@ -182,93 +207,6 @@ static void sanitize_symbol_name(std::string &name)
     }
 }
 
-static std::string get_parent_name(vpiHandle parent_h)
-{
-    std::string parent_name;
-    if (auto p = vpi_get_str(vpiFullName, parent_h)) {
-        parent_name = p;
-    } else if (auto p = vpi_get_str(vpiName, parent_h)) {
-        parent_name = p;
-    } else if (auto p = vpi_get_str(vpiDefName, parent_h)) {
-        parent_name = p;
-    }
-    return parent_name;
-}
-
-// Warning: Takes ownership of `parent_h` and releases it.
-static void find_ancestor_name(vpiHandle parent_h, std::string &name, std::string &parent_name)
-{
-
-    while (!parent_name.empty()) {
-        parent_name = parent_name + ".";
-        if ((name.rfind(parent_name) != std::string::npos)) {
-            name = name.substr(name.rfind(parent_name) + parent_name.size());
-            break;
-        } else {
-            auto old_parent_h = parent_h;
-            parent_h = vpi_handle(vpiParent, parent_h);
-            vpi_release_handle(old_parent_h);
-
-            if (parent_h) {
-                parent_name = get_parent_name(parent_h);
-            } else {
-                parent_name.clear();
-            }
-        }
-    }
-    vpi_release_handle(parent_h);
-}
-
-static std::string get_name(vpiHandle obj_h, bool prefer_full_name = false)
-{
-    auto first_check = prefer_full_name ? vpiFullName : vpiName;
-    auto last_check = prefer_full_name ? vpiName : vpiFullName;
-    std::string name;
-    if (auto s = vpi_get_str(first_check, obj_h)) {
-        name = s;
-    } else if (auto s = vpi_get_str(vpiDefName, obj_h)) {
-        name = s;
-    } else if (auto s = vpi_get_str(last_check, obj_h)) {
-        name = s;
-    }
-    // We are looking for the ancestor name to use it as a delimeter
-    // when stripping the name of the current node.
-    // We used to strip the name by searching for "." in it, but this
-    // approach didn't work for the names whith "." as an escaped
-    // character.
-    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
-
-    if (parent_h) {
-        std::string parent_name;
-        parent_name = get_parent_name(parent_h);
-
-        if (parent_name.empty()) {
-            // Nodes of certain types, like param_assign, don't have
-            // a name, so we need to look further for the ancestor.
-            auto old_parent_h = parent_h;
-            parent_h = vpi_handle(vpiParent, parent_h);
-            vpi_release_handle(old_parent_h);
-
-            if (parent_h) {
-                parent_name = get_parent_name(parent_h);
-            }
-        }
-        find_ancestor_name(parent_h, name, parent_name);
-    }
-    sanitize_symbol_name(name);
-    return name;
-}
-
-static std::string strip_package_name(std::string name)
-{
-    auto sep_index = name.find("::");
-    if (sep_index != string::npos) {
-        name = name.substr(sep_index + 1);
-        name[0] = '\\';
-    }
-    return name;
-}
-
 static std::string get_object_name(vpiHandle obj_h, const std::vector<int> &name_fields = {vpiName})
 {
     std::string objectName;
@@ -280,6 +218,18 @@ static std::string get_object_name(vpiHandle obj_h, const std::vector<int> &name
         }
     }
     return objectName;
+}
+
+static std::string get_name(vpiHandle obj_h) { return get_object_name(obj_h, {vpiName, vpiDefName}); }
+
+static std::string strip_package_name(std::string name)
+{
+    auto sep_index = name.find("::");
+    if (sep_index != string::npos) {
+        name = name.substr(sep_index + 1);
+        name[0] = '\\';
+    }
+    return name;
 }
 
 static AST::AstNode *mkconst_real(double d)
@@ -1796,9 +1746,9 @@ void UhdmAst::apply_location_from_current_obj(AST::AstNode &target_node) const
     }
 }
 
-void UhdmAst::apply_name_from_current_obj(AST::AstNode &target_node, bool prefer_full_name) const
+void UhdmAst::apply_name_from_current_obj(AST::AstNode &target_node) const
 {
-    target_node.str = get_name(obj_h, prefer_full_name);
+    target_node.str = get_name(obj_h);
     auto it = node_renames.find(target_node.str);
     if (it != node_renames.end())
         target_node.str = it->second;
@@ -1811,11 +1761,11 @@ AstNodeBuilder UhdmAst::make_node(AST::AstNodeType type) const
     return AstNodeBuilder(std::move(node));
 };
 
-AstNodeBuilder UhdmAst::make_named_node(AST::AstNodeType type, bool prefer_full_name) const
+AstNodeBuilder UhdmAst::make_named_node(AST::AstNodeType type) const
 {
     auto node = std::make_unique<AST::AstNode>(type);
     apply_location_from_current_obj(*node);
-    apply_name_from_current_obj(*node, prefer_full_name);
+    apply_name_from_current_obj(*node);
     return AstNodeBuilder(std::move(node));
 };
 
@@ -1835,10 +1785,10 @@ AstNodeBuilder UhdmAst::make_const(uint32_t value, uint8_t width) const
     return make_node(AST::AST_CONSTANT).value(value, false, width);
 };
 
-AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::AstNode *> children, bool prefer_full_name)
+AST::AstNode *UhdmAst::make_ast_node(AST::AstNodeType type, std::vector<AST::AstNode *> children)
 {
     auto node = new AST::AstNode(type);
-    apply_name_from_current_obj(*node, prefer_full_name);
+    apply_name_from_current_obj(*node);
     apply_location_from_current_obj(*node);
     node->children = children;
     return node;
@@ -2264,7 +2214,13 @@ void UhdmAst::process_module()
             });
         }
     } else {
-        // Not a top module, create instance
+        // A module instance inside another uhdmTopModules' module.
+        // Create standalone module instance AST and embed it in the instantiating module using AST_CELL.
+
+        const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+        const auto *const uhdm_obj = (const UHDM::any *)handle->object;
+        const auto current_instance_changer = ScopedValueChanger(shared.current_instance, uhdm_obj);
+
         current_node = make_ast_node(AST::AST_CELL);
         std::vector<std::pair<RTLIL::IdString, RTLIL::Const>> parameters;
 
@@ -2586,7 +2542,6 @@ static UHDM::expr *reduce_expression(const UHDM::any *expr, const UHDM::any *ins
 {
     log_assert(expr);
     log_assert(inst);
-    log_assert(pexpr);
 
     bool invalidvalue = false;
     UHDM::ExprEval eval;
@@ -2611,11 +2566,36 @@ void UhdmAst::process_enum_typespec()
 
     if (current_node->str.empty()) {
         // anonymous typespec, check if not already created
-        if (const auto enum_iter = shared.anonymous_enums.find(enum_object); enum_iter != shared.anonymous_enums.end()) {
-            // we already created typedef for this.
-            delete current_node;
-            current_node = make_node(AST::AST_WIRETYPE);
-            current_node->str = enum_iter->second;
+        log_assert(shared.current_top_node);
+        auto check_created_anonymous_enums = [enum_object, this](std::string top_module_name) -> bool {
+            for (auto pair : shared.anonymous_enums[top_module_name]) {
+                UHDM::CompareContext ctx;
+                if (pair.first->Compare(enum_object, &ctx) == 0) {
+                    // we already created typedef for this.
+                    delete current_node;
+                    current_node = make_node(AST::AST_WIRETYPE);
+                    current_node->str = pair.second;
+                    return true;
+                }
+            }
+            return false;
+        };
+        std::string top_module_name = shared.current_top_node->str;
+        if (check_created_anonymous_enums(top_module_name)) {
+            return;
+        }
+        // in case of parametrized module, also check unparametrized top module
+        // as we could add this enum there and then copy it to parametrized
+        // version
+        if (top_module_name.find("$paramod") != std::string::npos) {
+            // possible names:
+            // $paramod\module_name\PARAM=VAL
+            // $paramod$81af6bf473845aee480c993b90a1ed0117ae9091\module_name
+            top_module_name = top_module_name.substr(top_module_name.find("\\"));
+            if (auto params = top_module_name.find("\\", 1 /* skip first \ */) != std::string::npos)
+                top_module_name = top_module_name.substr(0, params);
+        }
+        if (check_created_anonymous_enums(top_module_name)) {
             return;
         }
     }
@@ -2640,13 +2620,17 @@ void UhdmAst::process_enum_typespec()
 
             if (leftrange_obj->UhdmType() == UHDM::uhdmoperation) {
                 // Substitute the previous leftrange with the resolved operation result.
-                range_obj->Left_expr(reduce_expression(leftrange_obj, enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent(),
-                                                       enum_object->VpiParent()));
+                const UHDM::any *const instance =
+                  enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent() ? enum_object->VpiParent() : shared.current_instance;
+
+                range_obj->Left_expr(reduce_expression(leftrange_obj, instance, enum_object->VpiParent()));
             }
             if (rightrange_obj->UhdmType() == UHDM::uhdmoperation) {
                 // Substitute the previous rightrange with the resolved operation result.
-                range_obj->Right_expr(reduce_expression(rightrange_obj, enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent(),
-                                                        enum_object->VpiParent()));
+                const UHDM::any *const instance =
+                  enum_object->Instance() ? enum_object->Instance() : enum_object->VpiParent() ? enum_object->VpiParent() : shared.current_instance;
+
+                range_obj->Right_expr(reduce_expression(rightrange_obj, instance, enum_object->VpiParent()));
             }
         }
     }
@@ -2716,7 +2700,7 @@ void UhdmAst::process_enum_typespec()
         move_type_to_new_typedef(shared.current_top_node, current_node);
         current_node = make_node(AST::AST_WIRETYPE);
         current_node->str = typedef_name;
-        shared.anonymous_enums[enum_object] = std::move(typedef_name);
+        shared.anonymous_enums[shared.current_top_node->str][enum_object] = std::move(typedef_name);
     }
 }
 
@@ -3988,23 +3972,13 @@ void UhdmAst::process_assignment_pattern_op()
 void UhdmAst::process_bit_select()
 {
     current_node = make_ast_node(AST::AST_IDENTIFIER);
-    visit_one_to_one({vpiIndex}, obj_h, [&](AST::AstNode *node) {
-        auto range_node = new AST::AstNode(AST::AST_RANGE, node);
-        range_node->filename = current_node->filename;
-        range_node->location = current_node->location;
-        current_node->children.push_back(range_node);
-    });
+    visit_one_to_one({vpiIndex}, obj_h, [&](AST::AstNode *node) { current_node->children.push_back(make_node(AST::AST_RANGE)({node})); });
 }
 
 void UhdmAst::process_part_select()
 {
     current_node = make_ast_node(AST::AST_IDENTIFIER);
-    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
-    current_node->str = get_name(parent_h);
-    vpi_release_handle(parent_h);
-    auto range_node = new AST::AstNode(AST::AST_RANGE);
-    range_node->filename = current_node->filename;
-    range_node->location = current_node->location;
+    AST::AstNode *range_node = make_node(AST::AST_RANGE);
     visit_one_to_one({vpiLeftRange, vpiRightRange}, obj_h, [&](AST::AstNode *node) { range_node->children.push_back(node); });
     current_node->children.push_back(range_node);
 }
@@ -4012,24 +3986,18 @@ void UhdmAst::process_part_select()
 void UhdmAst::process_indexed_part_select()
 {
     current_node = make_ast_node(AST::AST_IDENTIFIER);
-    vpiHandle parent_h = vpi_handle(vpiParent, obj_h);
-    current_node->str = get_name(parent_h);
-    vpi_release_handle(parent_h);
     // TODO: check if there are other types, for now only handle 1 and 2 (+: and -:)
     auto indexed_part_select_type = vpi_get(vpiIndexedPartSelectType, obj_h) == 1 ? AST::AST_ADD : AST::AST_SUB;
-    auto range_node = new AST::AstNode(AST::AST_RANGE);
-    range_node->filename = current_node->filename;
-    range_node->location = current_node->location;
+    AST::AstNode *range_node = make_node(AST::AST_RANGE);
     visit_one_to_one({vpiBaseExpr}, obj_h, [&](AST::AstNode *node) { range_node->children.push_back(node); });
     visit_one_to_one({vpiWidthExpr}, obj_h, [&](AST::AstNode *node) {
-        auto right_range_node = new AST::AstNode(indexed_part_select_type);
+        AST::AstNode *right_range_node = make_node(indexed_part_select_type);
         right_range_node->children.push_back(range_node->children[0]->clone());
         right_range_node->children.push_back(node);
-        auto sub = new AST::AstNode(indexed_part_select_type == AST::AST_ADD ? AST::AST_SUB : AST::AST_ADD);
+        AST::AstNode *sub = make_node(indexed_part_select_type == AST::AST_ADD ? AST::AST_SUB : AST::AST_ADD);
         sub->children.push_back(right_range_node);
         sub->children.push_back(AST::AstNode::mkconst_int(1, false, 1));
         range_node->children.push_back(sub);
-        // range_node->children.push_back(right_range_node);
     });
     if (indexed_part_select_type == AST::AST_ADD) {
         std::reverse(range_node->children.begin(), range_node->children.end());
@@ -4286,8 +4254,6 @@ void UhdmAst::process_function()
 
 void UhdmAst::process_hier_path()
 {
-    current_node = make_ast_node(AST::AST_IDENTIFIER);
-    current_node->str = "\\";
     AST::AstNode *top_node = nullptr;
     visit_one_to_many({vpiActual}, obj_h, [&](AST::AstNode *node) {
         if (node) {
@@ -4295,20 +4261,17 @@ void UhdmAst::process_hier_path()
                 node->str = node->str.substr(0, node->str.find('['));
             // for first node, just set correct string and move any children
             if (!top_node) {
-                current_node->str += node->str.substr(1);
-                current_node->children = std::move(node->children);
-                node->children.clear();
+                current_node = node;
                 top_node = current_node;
-                delete node;
             } else {
-                if (!node->children.empty() && node->children[0]->type == AST::AST_RANGE && (node->str == "\\" || node->str.empty())) {
-                    top_node->children.push_back(node->children[0]);
-                    node->children.erase(node->children.begin());
-                    delete node;
-                } else {
+                if (node->type == AST::AST_IDENTIFIER && !node->str.empty()) {
                     node->type = static_cast<AST::AstNodeType>(AST::Extended::AST_DOT);
                     top_node->children.push_back(node);
                     top_node = node;
+                } else {
+                    top_node->children.push_back(node->children[0]);
+                    node->children.erase(node->children.begin());
+                    delete node;
                 }
             }
         }
@@ -4468,12 +4431,24 @@ void UhdmAst::process_tf_call(AST::AstNodeType type)
             current_node->children.push_back(node);
         }
     });
-    // Prefer fully qualified name of a function (prefixed with a scope).
-    // This is important when a single function which has been imported from a package
-    // calls another function that is not imported in the calling scope.
-    if (vpiHandle function_h = vpi_handle(vpiFunction, obj_h)) {
-        current_node->str = get_name(function_h, true);
-        vpi_release_handle(function_h);
+
+    // Calls to functions imported from packages do not contain package name in vpiName. A full function name, containing package name,
+    // is necessary e.g. when call to a function is used as a value assigned to a port of a module instantiated inside generate for loop.
+    // However, we can't use full function name when it refers to a module's local function.
+    // To make it work the called function name is used instead of vpiName from the call object only when it contains package name (detected here
+    // by presence of "::").
+    // TODO(mglb): This can fail when "::" is just a part of an escaped identifier. Handle such cases properly here and in other places.
+    const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
+    if (handle->type == UHDM::uhdmfunc_call) {
+        const auto *const base_object = (const UHDM::BaseClass *)handle->object;
+        const auto *const fcall = base_object->Cast<const UHDM::func_call *>();
+        if (fcall->Function()) {
+            auto fname = fcall->Function()->VpiFullName();
+            if (fname.find("::") != std::string_view::npos) {
+                current_node->str = fname;
+                sanitize_symbol_name(current_node->str);
+            }
+        }
     }
 }
 
@@ -4814,7 +4789,7 @@ void UhdmAst::process_net()
 void UhdmAst::process_parameter()
 {
     auto type = vpi_get(vpiLocalParam, obj_h) == 1 ? AST::AST_LOCALPARAM : AST::AST_PARAMETER;
-    current_node = make_ast_node(type, {}, true);
+    current_node = make_ast_node(type);
     std::vector<AST::AstNode *> packed_ranges;   // comes before wire name
     std::vector<AST::AstNode *> unpacked_ranges; // comes after wire name
     visit_one_to_many({vpiRange}, obj_h, [&](AST::AstNode *node) { unpacked_ranges.push_back(node); });
@@ -5092,7 +5067,8 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     const uhdm_handle *const handle = (const uhdm_handle *)obj_h;
     const UHDM::BaseClass *const object = (const UHDM::BaseClass *)handle->object;
     for (auto *obj : shared.nonSynthesizableObjects) {
-        if (!object->Compare(obj)) {
+        UHDM::CompareContext ctx;
+        if (!object->Compare(obj, &ctx)) {
             log_warning("%.*s:%d: Skipping non-synthesizable object of type '%s'\n", (int)object->VpiFile().length(), object->VpiFile().data(),
                         object->VpiLineNo(), UHDM::VpiTypeName(obj_h).c_str());
             return nullptr;
