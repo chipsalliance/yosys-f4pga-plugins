@@ -39,12 +39,12 @@ class UhdmAst
     // Reads location info (start/end line/column numbers, file name) from `obj_h` and sets them on `target_node`.
     void apply_location_from_current_obj(::Yosys::AST::AstNode &target_node) const;
     // Reads object name from `obj_h` and assigns it to `target_node`.
-    void apply_name_from_current_obj(::Yosys::AST::AstNode &target_node, bool prefer_full_name = false) const;
+    void apply_name_from_current_obj(::Yosys::AST::AstNode &target_node) const;
 
     // Creates node of specified `type` with location properties read from `obj_h`.
     AstNodeBuilder make_node(::Yosys::AST::AstNodeType type) const;
     // Creates node of specified `type` with location properties and name read from `obj_h`.
-    AstNodeBuilder make_named_node(::Yosys::AST::AstNodeType type, bool prefer_full_name = false) const;
+    AstNodeBuilder make_named_node(::Yosys::AST::AstNodeType type) const;
     // Creates AST_IDENTIFIER node with specified `id` and location properties read from `obj_h`.
     AstNodeBuilder make_ident(std::string id) const;
     // Creates signed AST_CONSTANT node with specified `value` and location properties read from `obj_h`.
@@ -55,8 +55,7 @@ class UhdmAst
     // Create an AstNode of the specified type with metadata extracted from
     // the given vpiHandle.
     // OBSOLETE: use `make_node` or `make_named_node` instead.
-    ::Yosys::AST::AstNode *make_ast_node(::Yosys::AST::AstNodeType type, std::vector<::Yosys::AST::AstNode *> children = {},
-                                         bool prefer_full_name = false);
+    ::Yosys::AST::AstNode *make_ast_node(::Yosys::AST::AstNodeType type, std::vector<::Yosys::AST::AstNode *> children = {});
 
     // Create an identifier AstNode
     // OBSOLETE: use `make_ident` instead.

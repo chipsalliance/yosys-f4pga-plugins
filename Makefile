@@ -22,7 +22,7 @@
 # The CI will automatically tag the release with v${PLLUGIN_VERSION}
 #
 # TODO: pass as -D to gcc so that modules can provide e.g. --version flags.
-PLUGIN_VERSION = 1.20230425
+PLUGIN_VERSION = 1.20230808
 
 PLUGIN_LIST := fasm xdc params sdc ql-iob design_introspection integrateinv ql-qlf systemverilog uhdm dsp-ff parmys
 PLUGINS := $(foreach plugin,$(PLUGIN_LIST),$(plugin).so)

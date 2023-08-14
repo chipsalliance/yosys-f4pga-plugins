@@ -180,6 +180,7 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
         } else {
             clp->setCompile(true);
             clp->setElaborate(true);
+            clp->setElabUhdm(true);
         }
         if (this->shared.link) {
             clp->setLink(true);
