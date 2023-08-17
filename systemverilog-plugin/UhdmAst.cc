@@ -4835,6 +4835,7 @@ void UhdmAst::process_parameter()
             shared.report.mark_handled(typespec_h);
             break;
         }
+        case vpiUnionTypespec:
         case vpiStructTypespec: {
             visit_one_to_one({vpiTypespec}, obj_h, [&](AST::AstNode *node) {
                 if (node && !node->str.empty()) {
