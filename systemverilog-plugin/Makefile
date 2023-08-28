@@ -21,7 +21,6 @@ SOURCES = UhdmAst.cc \
           uhdmastfrontend.cc \
           uhdmcommonfrontend.cc \
           uhdmsurelogastfrontend.cc \
-          uhdmastreport.cc \
           third_party/yosys/const2ast.cc \
           third_party/yosys/simplify.cc
 

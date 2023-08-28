@@ -56,9 +56,6 @@ void UhdmCommonFrontend::print_read_options()
     log("    -dump_rtlil\n");
     log("        dump generated RTLIL netlist\n");
     log("\n");
-    log("    -report [directory]\n");
-    log("        write a coverage report for the UHDM file\n");
-    log("\n");
     log("    -defer\n");
     log("        only read the abstract syntax tree and defer actual compilation\n");
     log("        to a later 'hierarchy' command. Useful in cases where the default\n");
@@ -101,9 +98,6 @@ void UhdmCommonFrontend::execute(std::istream *&f, std::string filename, std::ve
             dump_vlog1 = true;
             dump_vlog2 = true;
             this->shared.debug_flag = true;
-        } else if (args[i] == "-report" && ++i < args.size()) {
-            this->report_directory = args[i];
-            this->shared.stop_on_error = false;
         } else if (args[i] == "-noassert") {
             this->shared.no_assert = true;
         } else if (args[i] == "-defer") {
