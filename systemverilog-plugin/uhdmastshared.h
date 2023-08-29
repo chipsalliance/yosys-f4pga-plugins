@@ -3,6 +3,10 @@
 
 #include "frontends/ast/ast.h"
 
+// Yosys defines a 'cover' macro in implicitly included kernel/log.h
+// that clashes with cover-class in UHDM
+#undef cover
+
 #include <string>
 #include <uhdm/uhdm.h>
 #include <uhdm/vpi_user.h>
