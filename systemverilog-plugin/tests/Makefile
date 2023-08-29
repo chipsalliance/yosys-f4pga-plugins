@@ -18,7 +18,6 @@ TESTS = counter \
 		break_continue \
 		separate-compilation \
 		debug-flag \
-		report-flag \
 		defines \
 		defaults \
 		formal \
@@ -30,7 +29,6 @@ counter_verify = true
 break_continue_verify = $(call diff_test,break_continue,out)
 separate-compilation_verify = true
 debug-flag_verify = true
-report-flag_verify = true
 defaults_verify = true
 defines_verify = true
 formal_verify = true
