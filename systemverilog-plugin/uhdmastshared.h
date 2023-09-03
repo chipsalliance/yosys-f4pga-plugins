@@ -3,8 +3,13 @@
 
 #include "frontends/ast/ast.h"
 
-#include "uhdmastreport.h"
+// Yosys defines a 'cover' macro in implicitly included kernel/log.h
+// that clashes with cover-class in UHDM
+#undef cover
+
 #include <string>
+#include <uhdm/uhdm.h>
+#include <uhdm/vpi_user.h>
 #include <unordered_map>
 
 namespace systemverilog_plugin
@@ -79,9 +84,6 @@ class UhdmAstShared
 
     // Top nodes of the design (modules, interfaces)
     std::unordered_map<std::string, ::Yosys::AST::AstNode *> top_nodes;
-
-    // UHDM node coverage report
-    UhdmAstReport report;
 
     // Map from AST param nodes to their types (used for params with struct types)
     std::unordered_map<std::string, ::Yosys::AST::AstNode *> param_types;

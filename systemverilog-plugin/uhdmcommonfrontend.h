@@ -48,7 +48,6 @@ static inline ObjT *make_new_object_with_optional_extra_true_arg(ArgN &&... arg_
 
 struct UhdmCommonFrontend : public ::Yosys::Frontend {
     UhdmAstShared shared;
-    std::string report_directory;
     std::vector<std::string> args;
     UhdmCommonFrontend(std::string name, std::string short_help) : Frontend(name, short_help) {}
     virtual void print_read_options();

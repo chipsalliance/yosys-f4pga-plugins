@@ -189,17 +189,6 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
         Compiler compiler;
         const auto &uhdm_designs = compiler.execute(std::move(errors), std::move(clp));
 
-        if (this->shared.debug_flag || !this->report_directory.empty()) {
-            for (auto design : uhdm_designs) {
-                std::ofstream null_stream;
-#if UHDM_VERSION > 1057
-                UHDM::visit_object(design, this->shared.debug_flag ? std::cout : null_stream);
-#else
-                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : null_stream);
-#endif
-            }
-        }
-
         // on parse_only mode, don't try to load design
         // into yosys
         if (this->shared.parse_only)
@@ -221,9 +210,6 @@ struct UhdmSurelogAstFrontend : public UhdmCommonFrontend {
 
         UhdmAst uhdm_ast(this->shared);
         AST::AstNode *current_ast = uhdm_ast.visit_designs(uhdm_designs);
-        if (!this->report_directory.empty()) {
-            this->shared.report.write(this->report_directory);
-        }
 
         // FIXME: Check and reset remaining shared data
         this->shared.top_nodes.clear();

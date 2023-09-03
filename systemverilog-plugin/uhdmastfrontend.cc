@@ -47,21 +47,8 @@ struct UhdmAstFrontend : public UhdmCommonFrontend {
           make_new_object_with_optional_extra_true_arg<UHDM::SynthSubset>(&serializer, this->shared.nonSynthesizableObjects, false);
         synthSubset->listenDesigns(restoredDesigns);
         delete synthSubset;
-        if (this->shared.debug_flag || !this->report_directory.empty()) {
-            for (auto design : restoredDesigns) {
-                std::ofstream null_stream;
-#if UHDM_VERSION > 1057
-                UHDM::visit_object(design, this->shared.debug_flag ? std::cout : null_stream);
-#else
-                UHDM::visit_object(design, 1, "", &this->shared.report.unhandled, this->shared.debug_flag ? std::cout : null_stream);
-#endif
-            }
-        }
         UhdmAst uhdm_ast(this->shared);
         AST::AstNode *current_ast = uhdm_ast.visit_designs(restoredDesigns);
-        if (!this->report_directory.empty()) {
-            this->shared.report.write(this->report_directory);
-        }
         for (auto design : restoredDesigns)
             vpi_release_handle(design);
 
