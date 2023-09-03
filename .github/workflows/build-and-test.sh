@@ -34,7 +34,7 @@ if [ "$PLUGIN_NAME" == "xdc" ] || [ "$PLUGIN_NAME" == "sdc" ]; then
 fi 
 
 export CXXFLAGS=-Werror
-make UHDM_INSTALL_DIR=`pwd`/env/conda/envs/yosys-plugins/ ${PLUGIN_NAME}.so -j`nproc`
+make UHDM_INSTALL_DIR=`pwd`/env/conda/envs/yosys-plugins/ VTR_INSTALL_DIR=`pwd`/env/conda/envs/yosys-plugins ${PLUGIN_NAME}.so -j`nproc`
 unset CXXFLAGS
 
 end_section

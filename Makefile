@@ -24,7 +24,7 @@
 # TODO: pass as -D to gcc so that modules can provide e.g. --version flags.
 PLUGIN_VERSION = 1.20230808
 
-PLUGIN_LIST := fasm xdc params sdc ql-iob design_introspection integrateinv ql-qlf systemverilog uhdm dsp-ff
+PLUGIN_LIST := fasm xdc params sdc ql-iob design_introspection integrateinv ql-qlf systemverilog uhdm dsp-ff parmys
 PLUGINS := $(foreach plugin,$(PLUGIN_LIST),$(plugin).so)
 PLUGINS_INSTALL := $(foreach plugin,$(PLUGIN_LIST),install_$(plugin))
 PLUGINS_CLEAN := $(foreach plugin,$(PLUGIN_LIST),clean_$(plugin))

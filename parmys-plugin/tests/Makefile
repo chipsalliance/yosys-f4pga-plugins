@@ -1,4 +1,4 @@
-# Copyright 2020-2022 F4PGA Authors
+# Copyright 2022 CAS—Atlantic (University of New Brunswick, CASA)
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,19 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-name: yosys-plugins
-channels:
-  - defaults
-  - litex-hub
-dependencies:
-  - litex-hub::yosys=0.17_7_g990c9b8e1=20220512_085338_py37
-  - litex-hub::surelog
-  - litex-hub::iverilog
-  - cas-atlantic::vtr-libs
+TESTS = raygentop \
+        eltwise_layer \
+		VexRiscv_Lite \
+		mips32r1_core
+        
+include $(shell pwd)/../../Makefile_test.common
+
+raygentop_verify = true
+eltwise_layer_verify = true
+VexRiscv_Lite_verify = true
+mips32r1_core_verify = true
+
+clean_modules:
+	@find . -name "*.net.dot" -or -name "*.yosys.blif" -or -name "*.info" | xargs rm -rf
+
+clean: clean_modules

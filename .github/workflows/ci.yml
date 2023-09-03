@@ -38,6 +38,7 @@ jobs:
           - systemverilog
           - uhdm
           - dsp-ff
+          - parmys
 
     steps:
 
