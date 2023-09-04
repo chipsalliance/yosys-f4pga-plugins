@@ -51,6 +51,14 @@ namespace systemverilog_plugin
 using namespace ::Yosys;
 using namespace ::Yosys::AST_INTERNAL;
 
+
+void detect_sign_width_proxy(Yosys::AST::AstNode * node, int& width, bool& sign, bool *found_real = NULL) {
+    if (node->type == Yosys::AST::AST_IDENTIFIER && node->id2ast && node->id2ast->type == Yosys::AST::AST_TYPEDEF) {
+        node->id2ast = node->id2ast->children[0];
+    }
+    node->detectSignWidth(width, sign, found_real);
+}
+
 void annotateTypedEnums(Yosys::AST::AstNode *ast_node, Yosys::AST::AstNode *template_node)
 {
 	//check if enum
@@ -535,17 +543,17 @@ static void check_auto_nosync(Yosys::AST::AstNode *node)
 }
 
 static inline std::string encode_filename(const std::string &filename)
-{    
-    std::stringstream val; 
-    if (!std::any_of(filename.begin(), filename.end(), [](char c) { 
-        return static_cast<unsigned char>(c) < 33 || static_cast<unsigned char>(c) > 126; 
+{
+    std::stringstream val;
+    if (!std::any_of(filename.begin(), filename.end(), [](char c) {
+        return static_cast<unsigned char>(c) < 33 || static_cast<unsigned char>(c) > 126;
     })) return filename;
     for (unsigned char const c : filename) {
-        if (c < 33 || c > 126) 
+        if (c < 33 || c > 126)
             val << stringf("$%02x", c);
-        else 
+        else
             val << c;
-    }    
+    }
     return val.str();
 }
 
@@ -1036,8 +1044,8 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 			did_something = true;
 		while (!ast_node->children[1]->basic_prep && simplify(ast_node->children[1], false, false, false, stage, -1, false, in_param) == true)
 			did_something = true;
-		ast_node->children[0]->detectSignWidth(backup_width_hint, backup_sign_hint);
-		ast_node->children[1]->detectSignWidth(width_hint, sign_hint);
+		detect_sign_width_proxy(ast_node->children[0], backup_width_hint, backup_sign_hint);
+		detect_sign_width_proxy(ast_node->children[1], width_hint, sign_hint);
 		width_hint = max(width_hint, backup_width_hint);
 		child_0_is_self_determined = true;
 		// test only once, before optimizations and memory mappings but after assignment LHS was mapped to an identifier
@@ -1117,7 +1125,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 		}
 		while (!ast_node->children[0]->basic_prep && simplify(ast_node->children[0], false, false, false, stage, -1, false, true) == true)
 			did_something = true;
-		ast_node->children[0]->detectSignWidth(width_hint, sign_hint);
+		detect_sign_width_proxy(ast_node->children[0], width_hint, sign_hint);
 		if (ast_node->children.size() > 1 && ast_node->children[1]->type == Yosys::AST::AST_RANGE) {
 			while (!ast_node->children[1]->basic_prep && simplify(ast_node->children[1], false, false, false, stage, -1, false, true) == true)
 				did_something = true;
@@ -1129,7 +1137,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 	case Yosys::AST::AST_ENUM_ITEM:
 		while (!ast_node->children[0]->basic_prep && simplify(ast_node->children[0], false, false, false, stage, -1, false, in_param))
 			did_something = true;
-		ast_node->children[0]->detectSignWidth(width_hint, sign_hint);
+		detect_sign_width_proxy(ast_node->children[0], width_hint, sign_hint);
 		if (ast_node->children.size() > 1 && ast_node->children[1]->type == Yosys::AST::AST_RANGE) {
 			while (!ast_node->children[1]->basic_prep && simplify(ast_node->children[1], false, false, false, stage, -1, false, in_param))
 				did_something = true;
@@ -1230,11 +1238,11 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 		for (auto child : ast_node->children)
 			while (!child->basic_prep && simplify(child, false, false, in_lvalue, stage, -1, false, in_param) == true)
 				did_something = true;
-		ast_node->detectSignWidth(width_hint, sign_hint);
+		detect_sign_width_proxy(ast_node, width_hint, sign_hint);
 	}
 
 	if (ast_node->type == Yosys::AST::AST_FCALL && ast_node->str == "\\$past")
-		ast_node->detectSignWidth(width_hint, sign_hint);
+		detect_sign_width_proxy(ast_node, width_hint, sign_hint);
 
 	if (ast_node->type == Yosys::AST::AST_TERNARY) {
 		if (width_hint < 0) {
@@ -1253,13 +1261,13 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 				did_something = true;
 
 			unevaluated_tern_branch = backup_unevaluated_tern_branch;
-			ast_node->detectSignWidth(width_hint, sign_hint);
+			detect_sign_width_proxy(ast_node, width_hint, sign_hint);
 		}
 		int width_hint_left, width_hint_right;
 		bool sign_hint_left, sign_hint_right;
 		bool found_real_left, found_real_right;
-		ast_node->children[1]->detectSignWidth(width_hint_left, sign_hint_left, &found_real_left);
-		ast_node->children[2]->detectSignWidth(width_hint_right, sign_hint_right, &found_real_right);
+		detect_sign_width_proxy(ast_node->children[1], width_hint_left, sign_hint_left, &found_real_left);
+		detect_sign_width_proxy(ast_node->children[2], width_hint_right, sign_hint_right, &found_real_right);
 		if (found_real_left || found_real_right) {
 			child_1_is_self_determined = true;
 			child_2_is_self_determined = true;
@@ -1280,7 +1288,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 
 	if (const_fold && ast_node->type == Yosys::AST::AST_CASE)
 	{
-		ast_node->detectSignWidth(width_hint, sign_hint);
+		detect_sign_width_proxy(ast_node, width_hint, sign_hint);
 		while (simplify(ast_node->children[0], const_fold, at_zero, in_lvalue, stage, width_hint, sign_hint, in_param)) { }
 		if (ast_node->children[0]->type == Yosys::AST::AST_CONSTANT && ast_node->children[0]->bits_only_01()) {
 			ast_node->children[0]->is_signed = sign_hint;
@@ -1415,7 +1423,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 		width_hint = backup_width_hint;
 		sign_hint = backup_sign_hint;
 		if (width_hint < 0)
-			ast_node->detectSignWidth(width_hint, sign_hint);
+			detect_sign_width_proxy(ast_node, width_hint, sign_hint);
 	}
 
 	current_block = backup_current_block;
@@ -1864,6 +1872,11 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 				current_scope[ast_node->str] = auto_wire;
 				did_something = true;
 			} else {
+				ast_node->dumpAst(nullptr, "----");
+				if (ast_node->id2ast)
+					ast_node->id2ast->dumpAst(nullptr, "____");
+				else
+					std::cout << "has no id2ast\n";
 				log_file_error(ast_node->filename, ast_node->location.first_line, "Identifier `%s' is implicitly declared and `default_nettype is set to none.\n", ast_node->str.c_str());
 			}
 		}
@@ -1994,7 +2007,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 		{
 			int expr_width_hint = -1;
 			bool expr_sign_hint = true;
-			varbuf->detectSignWidth(expr_width_hint, expr_sign_hint);
+			detect_sign_width_proxy(varbuf, expr_width_hint, expr_sign_hint);
 			while (simplify(varbuf, true, false, false, stage, 32, true, false)) { }
 		}
 
@@ -2035,7 +2048,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 			{
 				int expr_width_hint = -1;
 				bool expr_sign_hint = true;
-				buf->detectSignWidth(expr_width_hint, expr_sign_hint);
+				detect_sign_width_proxy(buf, expr_width_hint, expr_sign_hint);
 				while (simplify(buf, true, false, false, stage, expr_width_hint, expr_sign_hint, false)) { }
 			}
 
@@ -2086,7 +2099,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 			{
 				int expr_width_hint = -1;
 				bool expr_sign_hint = true;
-				buf->detectSignWidth(expr_width_hint, expr_sign_hint);
+				detect_sign_width_proxy(buf, expr_width_hint, expr_sign_hint);
 				while (simplify(buf, true, false, false, stage, expr_width_hint, expr_sign_hint, true)) { }
 			}
 
@@ -2500,7 +2513,7 @@ bool simplify(Yosys::AST::AstNode *ast_node, bool const_fold, bool at_zero, bool
 
 			int shamt_width_hint = -1;
 			bool shamt_sign_hint = true;
-			shift_expr->detectSignWidth(shamt_width_hint, shamt_sign_hint);
+			detect_sign_width_proxy(shift_expr, shamt_width_hint, shamt_sign_hint);
 
 			Yosys::AST::AstNode *wire_sel = new Yosys::AST::AstNode(Yosys::AST::AST_WIRE, new Yosys::AST::AstNode(Yosys::AST::AST_RANGE, ast_node->mkconst_int(shamt_width_hint-1, true), ast_node->mkconst_int(0, true)));
 			wire_sel->str = stringf("$bitselwrite$sel$%s:%d$%d", encode_filename(ast_node->filename).c_str(), ast_node->location.first_line, autoidx++);
@@ -2709,7 +2722,7 @@ skip_dynamic_range_lvalue_expansion:;
 			{
 				int child_width_hint = -1;
 				bool child_sign_hint = true;
-				child->detectSignWidth(child_width_hint, child_sign_hint);
+				detect_sign_width_proxy(child, child_width_hint, child_sign_hint);
 
 				Yosys::AST::AstNode *rhs = wire_tmp_id->clone();
 				rhs->children.push_back(new Yosys::AST::AstNode(Yosys::AST::AST_RANGE, ast_node->mkconst_int(cursor+child_width_hint-1, true), ast_node->mkconst_int(cursor, true)));
@@ -3127,7 +3140,13 @@ skip_dynamic_range_lvalue_expansion:;
 
 				// Is this needed?
 				//while (simplify(buf, true, false, false, stage, width_hint, sign_hint, false)) { }
-				buf->detectSignWidth(width_hint, sign_hint);
+
+				//if (buf->type == Yosys::AST::AST_IDENTIFIER && buf->id2ast && buf->id2ast->type == Yosys::AST::AST_TYPEDEF) {
+				//	// If the identifier points to a typedef, use the type that is stored inside the typedef (children[0]).
+				//	log_assert(buf->id2ast->children.size());
+				//	buf->id2ast = buf->id2ast->children[0];
+				//}
+				detect_sign_width_proxy(buf, width_hint, sign_hint);
 
 				if (buf->type == Yosys::AST::AST_IDENTIFIER) {
 					id_ast = buf->id2ast;
@@ -3279,7 +3298,7 @@ skip_dynamic_range_lvalue_expansion:;
 								RTLIL::unescape_id(ast_node->str).c_str());
 					int child_width_hint = width_hint;
 					bool child_sign_hint = sign_hint;
-					ast_node->children[0]->detectSignWidth(child_width_hint, child_sign_hint);
+					detect_sign_width_proxy(ast_node->children[0], child_width_hint, child_sign_hint);
 					x = ast_node->children[0]->asReal(child_sign_hint);
 				}
 
@@ -3290,7 +3309,7 @@ skip_dynamic_range_lvalue_expansion:;
 								RTLIL::unescape_id(ast_node->str).c_str());
 					int child_width_hint = width_hint;
 					bool child_sign_hint = sign_hint;
-					ast_node->children[1]->detectSignWidth(child_width_hint, child_sign_hint);
+					detect_sign_width_proxy(ast_node->children[1], child_width_hint, child_sign_hint);
 					y = ast_node->children[1]->asReal(child_sign_hint);
 				}
 
@@ -3358,7 +3377,7 @@ skip_dynamic_range_lvalue_expansion:;
 				int  exp_width = -1;
 				bool exp_sign  = false;
 				Yosys::AST::AstNode *exp = ast_node->children[0];
-				exp->detectSignWidth(exp_width, exp_sign, NULL);
+				detect_sign_width_proxy(exp, exp_width, exp_sign, NULL);
 
 				newNode = ast_node->mkconst_int(0, false);
 
@@ -3991,10 +4010,10 @@ replace_fcall_later:;
 					if (choice->type == Yosys::AST::AST_CONSTANT) {
 						int other_width_hint = width_hint;
 						bool other_sign_hint = sign_hint, other_real = false;
-						not_choice->detectSignWidth(other_width_hint, other_sign_hint, &other_real);
+						detect_sign_width_proxy(not_choice, other_width_hint, other_sign_hint, &other_real);
 						if (other_real) {
 							newNode = new Yosys::AST::AstNode(Yosys::AST::AST_REALVALUE);
-							choice->detectSignWidth(width_hint, sign_hint);
+							detect_sign_width_proxy(choice, width_hint, sign_hint);
 							newNode->realvalue = choice->asReal(sign_hint);
 						} else {
 							RTLIL::Const y = choice->bitsAsConst(width_hint, sign_hint);

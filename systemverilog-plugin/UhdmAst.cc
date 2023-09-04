@@ -19,6 +19,7 @@
 #include <uhdm/ExprEval.h>
 #include <uhdm/uhdm.h>
 #include <uhdm/vpi_user.h>
+#include "uhdm/vpi_visitor.h"  // visit_object
 
 #include "third_party/yosys/const2ast.h"
 #include "third_party/yosys/simplify.h"
@@ -1307,6 +1308,10 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
                 current_node->children.push_back(result);
             }
         }
+        //if (current_node->id2ast && current_node->id2ast->type == AST::AST_TYPEDEF) {
+        //    log_assert(current_node->id2ast->children.size());
+        //    current_node->id2ast = current_node->id2ast->children[0];
+        //}
         break;
     case AST::AST_STRUCT:
     case AST::AST_UNION:
@@ -1340,6 +1345,23 @@ static void simplify_sv(AST::AstNode *current_node, AST::AstNode *parent_node)
         if (current_node->str == "$display" || current_node->str == "$write")
             simplify_format_string(current_node);
         break;
+    case AST::AST_FCALL: {
+	    AST::AstNode *arg = current_node->children[0];
+	    if (arg->type == AST::AST_IDENTIFIER) {
+		    //current_node->dumpAst(nullptr, "->");
+		    if (!arg->id2ast) {
+				std::cout << "id2ast is null!\n";
+				simplify_sv(arg, current_node);
+		    }
+		    if (!arg->id2ast) {
+				std::cout << "id2ast is null again!\n";
+		    }
+		    //&& arg->id2ast && arg->id2ast->type == Yosys::AST::AST_TYPEDEF)
+		    simplify(current_node, true, false, false, 1, -1, false, false);
+	    }
+
+        break;
+    }
     case AST::AST_COND:
     case AST::AST_CONDX:
     case AST::AST_CONDZ:
@@ -2042,6 +2064,33 @@ AST::AstNode *UhdmAst::find_ancestor(const std::unordered_set<AST::AstNodeType> 
     return nullptr;
 }
 
+static void replace_ids_typedefs(AST::AstNode *tree) {
+    if (!tree) return;
+
+    if (tree->type == AST::AST_IDENTIFIER) {
+        std::cout << "identifier: \n";
+        tree->dumpAst(nullptr, "+");
+
+		if (!tree->id2ast) {
+			if (AST_INTERNAL::current_scope.count(tree->str))
+    			tree->id2ast = AST_INTERNAL::current_scope[tree->str];
+			else
+    			return;
+		}
+
+        if (tree->id2ast->type == AST::AST_TYPEDEF) {
+            tree->id2ast = tree->id2ast->children[0];
+            tree->id2ast->dumpAst(nullptr, ">");
+        } else {
+			std::cout << "Has no id2ast!\n";
+        }
+		std::cout << std::endl;
+    }
+    for (auto child: tree->children) {
+		replace_ids_typedefs(child);
+    }
+}
+
 void UhdmAst::process_design()
 {
     current_node = make_ast_node(AST::AST_DESIGN);
@@ -2088,6 +2137,7 @@ void UhdmAst::process_design()
                 check_memories(pair.second);
                 setup_current_scope(shared.top_nodes, pair.second);
                 simplify_sv(pair.second, nullptr);
+                //replace_ids_typedefs(pair.second);
                 clear_current_scope();
                 current_node->children.push_back(pair.second);
             }
@@ -4384,6 +4434,7 @@ void UhdmAst::process_logic_var()
 
 void UhdmAst::process_sys_func_call()
 {
+
     current_node = make_ast_node(AST::AST_FCALL);
 
     std::string task_calls[] = {"\\$display", "\\$monitor", "\\$write", "\\$time", "\\$readmemh", "\\$readmemb", "\\$finish", "\\$stop"};
@@ -5234,9 +5285,10 @@ AST::AstNode *UhdmAst::process_object(vpiHandle obj_handle)
     case vpiLogicVar:
         process_logic_var();
         break;
-    case vpiSysFuncCall:
+    case vpiSysFuncCall: {
         process_sys_func_call();
         break;
+    }
     case vpiFuncCall:
         process_tf_call(AST::AST_FCALL);
         break;
