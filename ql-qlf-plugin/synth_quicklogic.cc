@@ -28,7 +28,7 @@ PRIVATE_NAMESPACE_BEGIN
 #define STR(val) XSTR(val)
 
 #ifndef PASS_NAME
-#define PASS_NAME synth_quicklogic
+#define PASS_NAME synth_quicklogic_f4pga
 #endif
 
 struct SynthQuickLogicPass : public ScriptPass {
@@ -241,7 +241,7 @@ struct SynthQuickLogicPass : public ScriptPass {
     void script() override
     {
         if (check_label("begin")) {
-            std::string family_path = " +/quicklogic/" + family;
+            std::string family_path = " +/quicklogic_f4pga/" + family;
             std::string readVelArgs;
 
             // Read simulation library
@@ -254,7 +254,7 @@ struct SynthQuickLogicPass : public ScriptPass {
             // Use -nomem2reg here to prevent Yosys from complaining about
             // some block ram cell models. After all the only part of the cells
             // library required here is cell port definitions plus specify blocks.
-            run("read_verilog -lib -specify -nomem2reg +/quicklogic/common/cells_sim.v" + readVelArgs);
+            run("read_verilog -lib -specify -nomem2reg +/quicklogic_f4pga/common/cells_sim.v" + readVelArgs);
             run(stringf("hierarchy -check %s", help_mode ? "-top <top>" : top_opt.c_str()));
         }
 
@@ -291,7 +291,7 @@ struct SynthQuickLogicPass : public ScriptPass {
                 if (help_mode || !nodsp) {
                     run("memory_dff");
                     run("wreduce t:$mul");
-                    run("techmap -map +/mul2dsp.v -map +/quicklogic/" + family +
+                    run("techmap -map +/mul2dsp.v -map +/quicklogic_f4pga/" + family +
                           "/dsp_map.v -D DSP_A_MAXWIDTH=16 -D DSP_B_MAXWIDTH=16 "
                           "-D DSP_A_MINWIDTH=2 -D DSP_B_MINWIDTH=2 -D DSP_Y_MINWIDTH=11 "
                           "-D DSP_NAME=$__MUL16X16",
@@ -324,13 +324,13 @@ struct SynthQuickLogicPass : public ScriptPass {
                     run("ql_dsp_macc" + use_dsp_cfg_params, "(for qlf_k6n10f if not -no_dsp)");
                     run("techmap -map +/mul2dsp.v [...]", "  (for qlf_k6n10f if not -no_dsp)");
                     run("chtype -set $mul t:$__soft_mul", "  (for qlf_k6n10f if not -no_dsp)");
-                    run("techmap -map +/quicklogic/" + family + "/dsp_map.v", "(for qlf_k6n10f if not -no_dsp)");
+                    run("techmap -map +/quicklogic_f4pga/" + family + "/dsp_map.v", "(for qlf_k6n10f if not -no_dsp)");
                     if (use_dsp_cfg_params.empty())
-                        run("techmap -map +/quicklogic/" + family + "/dsp_map.v -D USE_DSP_CFG_PARAMS=0", "(for qlf_k6n10f if not -no_dsp)");
+                        run("techmap -map +/quicklogic_f4pga/" + family + "/dsp_map.v -D USE_DSP_CFG_PARAMS=0", "(for qlf_k6n10f if not -no_dsp)");
                     else
-                        run("techmap -map +/quicklogic/" + family + "/dsp_map.v -D USE_DSP_CFG_PARAMS=1", "(for qlf_k6n10f if not -no_dsp)");
+                        run("techmap -map +/quicklogic_f4pga/" + family + "/dsp_map.v -D USE_DSP_CFG_PARAMS=1", "(for qlf_k6n10f if not -no_dsp)");
                     run("ql_dsp_simd                   ", "(for qlf_k6n10f if not -no_dsp)");
-                    run("techmap -map +/quicklogic/" + family + "/dsp_final_map.v", "(for qlf_k6n10f if not -no_dsp)");
+                    run("techmap -map +/quicklogic_f4pga/" + family + "/dsp_final_map.v", "(for qlf_k6n10f if not -no_dsp)");
                     run("ql_dsp_io_regs");
                 } else if (!nodsp) {
 
@@ -346,11 +346,11 @@ struct SynthQuickLogicPass : public ScriptPass {
                         run("chtype -set $mul t:$__soft_mul");
                     }
                     if (use_dsp_cfg_params.empty())
-                        run("techmap -map +/quicklogic/" + family + "/dsp_map.v -D USE_DSP_CFG_PARAMS=0");
+                        run("techmap -map +/quicklogic_f4pga/" + family + "/dsp_map.v -D USE_DSP_CFG_PARAMS=0");
                     else
-                        run("techmap -map +/quicklogic/" + family + "/dsp_map.v -D USE_DSP_CFG_PARAMS=1");
+                        run("techmap -map +/quicklogic_f4pga/" + family + "/dsp_map.v -D USE_DSP_CFG_PARAMS=1");
                     run("ql_dsp_simd");
-                    run("techmap -map +/quicklogic/" + family + "/dsp_final_map.v");
+                    run("techmap -map +/quicklogic_f4pga/" + family + "/dsp_final_map.v");
                     run("ql_dsp_io_regs");
                 }
             }
@@ -370,14 +370,14 @@ struct SynthQuickLogicPass : public ScriptPass {
         }
 
         if (check_label("map_bram", "(skip if -no_bram)") && (family == "qlf_k6n10" || family == "qlf_k6n10f" || family == "pp3") && inferBram) {
-            run("memory_bram -rules +/quicklogic/" + family + "/brams.txt");
+            run("memory_bram -rules +/quicklogic_f4pga/" + family + "/brams.txt");
             if (family == "pp3") {
                 run("pp3_braminit");
             }
             run("ql_bram_split                   ", "(for qlf_k6n10f if not -no_bram)");
-            run("techmap -autoproc -map +/quicklogic/" + family + "/brams_map.v");
+            run("techmap -autoproc -map +/quicklogic_f4pga/" + family + "/brams_map.v");
             if (family == "qlf_k6n10f") {
-                run("techmap -map +/quicklogic/" + family + "/brams_final_map.v");
+                run("techmap -map +/quicklogic_f4pga/" + family + "/brams_final_map.v");
             }
 
             // Data width to specialized cell type width map
@@ -439,7 +439,7 @@ struct SynthQuickLogicPass : public ScriptPass {
 
         if (check_label("map_gates")) {
             if (inferAdder && (family == "qlf_k4n8" || family == "qlf_k6n10" || family == "qlf_k6n10f")) {
-                run("techmap -map +/techmap.v -map +/quicklogic/" + family + "/arith_map.v");
+                run("techmap -map +/techmap.v -map +/quicklogic_f4pga/" + family + "/arith_map.v");
             } else {
                 run("techmap");
             }
@@ -476,9 +476,9 @@ struct SynthQuickLogicPass : public ScriptPass {
                 run("dfflegalize" + legalizeArgs);
             } else if (family == "pp3") {
                 run("dfflegalize -cell $_DFFSRE_PPPP_ 0 -cell $_DLATCH_?_ x");
-                run("techmap -map +/quicklogic/" + family + "/cells_map.v");
+                run("techmap -map +/quicklogic_f4pga/" + family + "/cells_map.v");
             }
-            std::string techMapArgs = " -map +/techmap.v -map +/quicklogic/" + family + "/ffs_map.v";
+            std::string techMapArgs = " -map +/techmap.v -map +/quicklogic_f4pga/" + family + "/ffs_map.v";
             if (!noffmap) {
                 run("techmap " + techMapArgs);
             }
@@ -497,14 +497,14 @@ struct SynthQuickLogicPass : public ScriptPass {
                 } else if (family == "qlf_k4n8") {
                     run("abc -lut 4 ");
                 } else if (family == "pp3") {
-                    run("techmap -map +/quicklogic/" + family + "/latches_map.v");
+                    run("techmap -map +/quicklogic_f4pga/" + family + "/latches_map.v");
                     if (abc9) {
-                        run("read_verilog -lib -specify -icells +/quicklogic/" + family + "/abc9_model.v");
-                        run("techmap -map +/quicklogic/" + family + "/abc9_map.v");
+                        run("read_verilog -lib -specify -icells +/quicklogic_f4pga/" + family + "/abc9_model.v");
+                        run("techmap -map +/quicklogic_f4pga/" + family + "/abc9_map.v");
                         run("abc9 -maxlut 4 -dff");
-                        run("techmap -map +/quicklogic/" + family + "/abc9_unmap.v");
+                        run("techmap -map +/quicklogic_f4pga/" + family + "/abc9_unmap.v");
                     } else {
-                        std::string lutDefs = "+/quicklogic/" + family + "/lutdefs.txt";
+                        std::string lutDefs = "+/quicklogic_f4pga/" + family + "/lutdefs.txt";
                         rewrite_filename(lutDefs);
 
                         std::string abcArgs = "+read_lut," + lutDefs +
@@ -523,7 +523,7 @@ struct SynthQuickLogicPass : public ScriptPass {
 
         if (check_label("map_cells") && (family == "qlf_k6n10" || family == "pp3")) {
             std::string techMapArgs;
-            techMapArgs = "-map +/quicklogic/" + family + "/lut_map.v";
+            techMapArgs = "-map +/quicklogic_f4pga/" + family + "/lut_map.v";
             run("techmap " + techMapArgs);
             run("clean");
         }

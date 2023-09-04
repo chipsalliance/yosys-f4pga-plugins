@@ -8,7 +8,7 @@ design -save asymmetric_bram36k_sdp
 
 select spram_9x4096_36x1024
 select *
-synth_quicklogic -family qlf_k6n10f -top spram_9x4096_36x1024 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top spram_9x4096_36x1024 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -19,7 +19,7 @@ select -clear
 design -load asymmetric_bram36k_sdp
 select spram_18x2048_36x1024
 select *
-synth_quicklogic -family qlf_k6n10f -top spram_18x2048_36x1024 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top spram_18x2048_36x1024 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -30,7 +30,7 @@ select -clear
 design -load asymmetric_bram36k_sdp
 select spram_18x2048_9x4096
 select *
-synth_quicklogic -family qlf_k6n10f -top spram_18x2048_9x4096 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top spram_18x2048_9x4096 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -41,7 +41,7 @@ select -clear
 design -load asymmetric_bram36k_sdp
 select spram_36x1024_18x2048
 select *
-synth_quicklogic -family qlf_k6n10f -top spram_36x1024_18x2048 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top spram_36x1024_18x2048 -bram_types
 opt_expr -undriven
 opt_clean
 stat

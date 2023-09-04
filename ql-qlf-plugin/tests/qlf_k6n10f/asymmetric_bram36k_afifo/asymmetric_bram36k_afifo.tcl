@@ -8,7 +8,7 @@ design -save asymmetric_bram36k_afifo
 
 select af4096x9_1024x36
 select *
-synth_quicklogic -family qlf_k6n10f -top af4096x9_1024x36 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top af4096x9_1024x36 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -19,7 +19,7 @@ select -clear
 design -load asymmetric_bram36k_afifo
 select af2048x18_1024x36
 select *
-synth_quicklogic -family qlf_k6n10f -top af2048x18_1024x36 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top af2048x18_1024x36 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -30,7 +30,7 @@ select -clear
 design -load asymmetric_bram36k_afifo
 select af2048x18_4098x9
 select *
-synth_quicklogic -family qlf_k6n10f -top af2048x18_4098x9 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top af2048x18_4098x9 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -41,7 +41,7 @@ select -clear
 design -load asymmetric_bram36k_afifo
 select af1024x36_4098x9
 select *
-synth_quicklogic -family qlf_k6n10f -top af1024x36_4098x9 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top af1024x36_4098x9 -bram_types
 opt_expr -undriven
 opt_clean
 stat

@@ -8,7 +8,7 @@ design -save bram_tdp
 
 select spram_16x2048_32x1024
 select *
-synth_quicklogic -family qlf_k6n10f -top spram_16x2048_32x1024 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top spram_16x2048_32x1024 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -20,7 +20,7 @@ select -clear
 design -load bram_tdp
 select spram_8x4096_16x2048
 select *
-synth_quicklogic -family qlf_k6n10f -top spram_8x4096_16x2048 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top spram_8x4096_16x2048 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -32,7 +32,7 @@ select -clear
 design -load bram_tdp
 select spram_8x2048_16x1024
 select *
-synth_quicklogic -family qlf_k6n10f -top spram_8x2048_16x1024 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top spram_8x2048_16x1024 -bram_types
 opt_expr -undriven
 opt_clean
 stat
@@ -44,7 +44,7 @@ select -clear
 design -load bram_tdp
 select spram_8x4096_32x1024
 select *
-synth_quicklogic -family qlf_k6n10f -top spram_8x4096_32x1024 -bram_types
+synth_quicklogic_f4pga -family qlf_k6n10f -top spram_8x4096_32x1024 -bram_types
 opt_expr -undriven
 opt_clean
 stat
