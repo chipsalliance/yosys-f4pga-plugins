@@ -4478,7 +4478,7 @@ void UhdmAst::process_logic_typespec()
     visit_one_to_many({vpiRange}, obj_h, [&](AST::AstNode *node) { packed_ranges.push_back(node); });
     if (packed_ranges.empty())
         packed_ranges.push_back(make_range(0, 0));
-    add_multirange_wire(current_node, packed_ranges, unpacked_ranges);
+    add_multirange_wire(current_node, packed_ranges, unpacked_ranges, false);
     current_node->is_signed = vpi_get(vpiSigned, obj_h);
 }
 
