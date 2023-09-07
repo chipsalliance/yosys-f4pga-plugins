@@ -24,7 +24,7 @@
 # TODO: pass as -D to gcc so that modules can provide e.g. --version flags.
 PLUGIN_VERSION = 1.20230906
 
-PLUGIN_LIST := fasm xdc params sdc ql-iob design_introspection integrateinv ql-qlf systemverilog uhdm dsp-ff
+PLUGIN_LIST := fasm xdc params sdc ql-iob design_introspection integrateinv ql-qlf dsp-ff
 PLUGINS := $(foreach plugin,$(PLUGIN_LIST),$(plugin).so)
 PLUGINS_INSTALL := $(foreach plugin,$(PLUGIN_LIST),install_$(plugin))
 PLUGINS_CLEAN := $(foreach plugin,$(PLUGIN_LIST),clean_$(plugin))
@@ -87,3 +87,17 @@ VERIBLE_FORMAT ?= verible-verilog-format
 .PHONY: format-verilog
 format-verilog:
 	find */tests \( -name "*.v" -o -name "*.sv" \) -and -not -path '*/third_party/*' -print0 | xargs -0 $(VERIBLE_FORMAT) --inplace
+
+# Notify that the SystemVerilog plugin has been moved
+.PHONY: systemverilog.so
+systemverilog.so:
+	$(error The SystemVerilog plugin has been moved to https://github.com/chipsalliance/systemverilog-plugin.)
+
+.PHONY: install_systemverilog
+install_systemverilog: systemverilog.so
+
+.PHONY: clean_systemverilog
+clean_systemverilog: systemverilog.so
+
+.PHONY: test_systemverilog
+test_systemverilog: systemverilog.so

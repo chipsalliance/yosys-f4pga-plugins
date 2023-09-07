@@ -28,13 +28,13 @@ fi
 
 start_section Building
 
-if [ "$PLUGIN_NAME" == "xdc" ] || [ "$PLUGIN_NAME" == "sdc" ]; then 
+if [ "$PLUGIN_NAME" == "xdc" ] || [ "$PLUGIN_NAME" == "sdc" ]; then
     make design_introspection.so -j`nproc`
 	make install_design_introspection -j`nproc`
-fi 
+fi
 
 export CXXFLAGS=-Werror
-make UHDM_INSTALL_DIR=`pwd`/env/conda/envs/yosys-plugins/ ${PLUGIN_NAME}.so -j`nproc`
+make ${PLUGIN_NAME}.so -j`nproc`
 unset CXXFLAGS
 
 end_section

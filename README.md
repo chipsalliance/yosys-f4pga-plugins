@@ -99,15 +99,7 @@ The plugin adds the following commands:
 
 ## SystemVerilog plugin
 
-Reads SystemVerilog and UHDM files and processes them into yosys AST.
-
-The plugin adds the following commands:
-
-* read_systemverilog
-* read_uhdm
-
-Detailed help on the supported command(s) can be obtained by running `help <command_name>` in Yosys.
-
+The SystemVerilog plugin has been moved to [chipsalliance/systemverilog-plugin](https://github.com/chipsalliance/systemverilog-plugin).
 
 ## Clock Gating plugin
 

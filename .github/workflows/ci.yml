@@ -35,8 +35,6 @@ jobs:
           - design_introspection
           - integrateinv
           - ql-qlf
-          - systemverilog
-          - uhdm
           - dsp-ff
 
     steps:
