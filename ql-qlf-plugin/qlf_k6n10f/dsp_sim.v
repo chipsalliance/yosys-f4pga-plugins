@@ -4347,6 +4347,10 @@ module dsp_t1_sim_cfg_ports # (
     reg         r_sat;
     reg         r_rnd;
     reg [NBITS_ACC-1:0] acc;
+    reg                 r_sat_d1;
+    reg                 r_sat_d2;
+    reg                 r_rnd_d1;
+    reg                 r_rnd_d2;
 
     initial begin
         r_a          <= 0;
@@ -4380,6 +4384,10 @@ module dsp_t1_sim_cfg_ports # (
             r_load_acc   <= 0;
             r_sat    <= 0;
             r_rnd    <= 0;
+            r_sat_d1 <= 0;
+            r_sat_d2 <= 0;
+            r_rnd_d1 <= 0;
+            r_rnd_d2 <= 0;
 
         end else begin
 
@@ -4396,6 +4404,10 @@ module dsp_t1_sim_cfg_ports # (
             r_load_acc   <= load_acc_i;
             r_sat    <= r_sat;
             r_rnd    <= r_rnd;
+            r_sat_d1 <= saturate_enable_i;
+            r_sat_d2 <= sat_d1;
+            r_rnd_d1 <= round_i;
+            r_rnd_d2 <= rnd_d1;
 
         end
     end
@@ -4410,8 +4422,14 @@ module dsp_t1_sim_cfg_ports # (
     wire [2:0] feedback   = register_inputs_i ? r_feedback   : feedback_i;
     wire       load_acc   = register_inputs_i ? r_load_acc   : load_acc_i;
     wire       subtract   = register_inputs_i ? r_subtract   : subtract_i;
-    wire       sat    = register_inputs_i ? r_sat : saturate_enable_i;
-    wire       rnd    = register_inputs_i ? r_rnd : round_i;
+    wire       sat        = register_inputs_i ? r_sat : saturate_enable_i;
+    wire       rnd        = register_inputs_i ? r_rnd : round_i;
+
+    wire       sat_d1     = register_inputs_i  ?  r_sat_d1 : saturate_enable_i;
+    wire       sat_d2     = output_select_i[1] ?  r_sat_d1 : r_sat_d2;
+
+    wire       rnd_d1     = register_inputs_i  ?  r_rnd_d1 : round_i;
+    wire       rnd_d2     = output_select_i[1] ?  rnd_d1   : r_rnd_d2;
 
     // Shift right control
     wire [5:0] shift_d1 = register_inputs_i ? r_shift_d1 : shift_right_i;
@@ -4448,12 +4466,14 @@ module dsp_t1_sim_cfg_ports # (
         {{(NBITS_ACC-NBITS_A-NBITS_B){mult[NBITS_A+NBITS_B-1]}}, mult[NBITS_A+NBITS_B-1:0]};
 
     // Adder
-    wire [NBITS_ACC-1:0] acc_fir_int = unsigned_a ? {{(NBITS_ACC-NBITS_A){1'b0}},         a} :
+    wire [NBITS_ACC-1:0] acc_fir_int = unsigned_a ? {{(NBITS_ACC-NBITS_A){1'b0}}, a} :
                                                     {{(NBITS_ACC-NBITS_A){a[NBITS_A-1]}}, a} ;
 
     wire [NBITS_ACC-1:0] add_a = (subtract) ? (~mult_xtnd + 1) : mult_xtnd;
-    wire [NBITS_ACC-1:0] add_b = (feedback_i == 3'h0) ? acc :
-                                 (feedback_i == 3'h1) ? {{NBITS_ACC}{1'b0}} : (acc_fir_int << acc_fir);
+    wire [NBITS_ACC-1:0] add_b = (feedback == 3'h0) ? acc :
+                                 (feedback == 3'h1) ? {{NBITS_ACC}{1'b0}} :
+                                                    (acc_fir < 6'd44 ? acc_fir_int << acc_fir :
+                                                                       acc_fir_int << 6'd44);
 
     wire [NBITS_ACC-1:0] add_o = add_a + add_b;
 
@@ -4473,28 +4493,28 @@ module dsp_t1_sim_cfg_ports # (
     wire [NBITS_ACC-1:0] acc_out = (output_select_i[1]) ? add_o : acc;
 
     // Round, shift, saturate
-    wire [NBITS_ACC-1:0] acc_rnd = (rnd && (shift_right_i != 0)) ? (acc_out + ({{(NBITS_ACC-1){1'b0}}, 1'b1} << (shift_right_i - 1))) :
+    wire [NBITS_ACC-1:0] acc_rnd = (rnd_d2 && (shift_d2 != 0)) ? (acc_out + ({{(NBITS_ACC-1){1'b0}}, 1'b1} << (shift_d2 - 1))) :
                                                                     acc_out;
 
-    wire [NBITS_ACC-1:0] acc_shr = (unsigned_mode) ? (acc_rnd  >> shift_right_i) :
-                                                     (acc_rnd >>> shift_right_i);
+    wire [NBITS_ACC-1:0] acc_shr = acc_rnd >>> shift_d2;
 
-    wire [NBITS_ACC-1:0] acc_sat_u = (acc_shr[NBITS_ACC-1:NBITS_Z] != 0) ? {{(NBITS_ACC-NBITS_Z){1'b0}},{NBITS_Z{1'b1}}} :
-                                                                           {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}};
+    wire [NBITS_ACC-1:0] acc_sat_u = (&acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b1) ? {NBITS_ACC{1'b0}} :
+                                     (|acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b0  ? {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}}:
+                                                                                 {{(NBITS_ACC-NBITS_Z){1'b0}},{NBITS_Z{1'b1}}});
 
     wire [NBITS_ACC-1:0] acc_sat_s = ((|acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b0) ||
                                       (&acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b1)) ? {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}} :
                                                                                    {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_ACC-1],{NBITS_Z-1{~acc_shr[NBITS_ACC-1]}}}};
 
-    wire [NBITS_ACC-1:0] acc_sat = (sat) ? ((unsigned_mode) ? acc_sat_u : acc_sat_s) : acc_shr;
+    wire [NBITS_ACC-1:0] acc_sat = sat_d2 ? (unsigned_mode ? acc_sat_u : acc_sat_s) : acc_shr;
 
     // Output signals
-    wire [NBITS_Z-1:0]  z0;
-    reg  [NBITS_Z-1:0]  z1;
-    wire [NBITS_Z-1:0]  z2;
+    wire [NBITS_ACC-1:0] z0;
+    reg  [NBITS_ACC-1:0] z1;
+    wire [NBITS_ACC-1:0] z2;
 
-    assign z0 = mult_xtnd[NBITS_Z-1:0];
-    assign z2 = acc_sat[NBITS_Z-1:0];
+    assign z0 = unsigned_mode ? mult_xtnd >> shift_d2 : mult_xtnd >>> shift_d2;
+    assign z2 = acc_sat;
 
     initial z1 <= 0;
 
@@ -4502,18 +4522,18 @@ module dsp_t1_sim_cfg_ports # (
         if (s_reset)
             z1 <= 0;
         else begin
-            z1 <= (output_select_i == 3'b100) ? z0 : z2;
+            z1 <= (output_select_i == 3'b100) ? mult_xtnd : z2;
         end
 
     // Output mux
-    assign z_o = (output_select_i == 3'h0) ?   z0 :
-                 (output_select_i == 3'h1) ?   z2 :
-                 (output_select_i == 3'h2) ?   z2 :
-                 (output_select_i == 3'h3) ?   z2 :
-                 (output_select_i == 3'h4) ?   z1 :
-                 (output_select_i == 3'h5) ?   z1 :
-                 (output_select_i == 3'h6) ?   z1 :
-                           z1;  // if output_select_i == 3'h7
+    assign z_o = (output_select_i == 3'h0) ?   mult_xtnd[NBITS_Z-1:0] :
+                 (output_select_i == 3'h1) ?   z2[NBITS_Z-1:0] :
+                 (output_select_i == 3'h2) ?   z2[NBITS_Z-1:0] :
+                 (output_select_i == 3'h3) ?   z2[NBITS_Z-1:0] :
+                 (output_select_i == 3'h4) ?   z1[NBITS_Z-1:0] :
+                 (output_select_i == 3'h5) ?   z1[NBITS_Z-1:0] :
+                 (output_select_i == 3'h6) ?   z1[NBITS_Z-1:0] :
+                           z1[NBITS_Z-1:0];  // if output_select_i == 3'h7
 
     // B input delayed passthrough
     initial dly_b_o <= 0;
@@ -5573,6 +5593,10 @@ module dsp_t1_sim_cfg_params # (
     reg         r_sat;
     reg         r_rnd;
     reg [NBITS_ACC-1:0] acc;
+    reg                 r_sat_d1;
+    reg                 r_sat_d2;
+    reg                 r_rnd_d1;
+    reg                 r_rnd_d2;
 
     initial begin
         r_a          <= 0;
@@ -5636,8 +5660,14 @@ module dsp_t1_sim_cfg_params # (
     wire [2:0] feedback   = REGISTER_INPUTS ? r_feedback   : feedback_i;
     wire       load_acc   = REGISTER_INPUTS ? r_load_acc   : load_acc_i;
     wire       subtract   = REGISTER_INPUTS ? r_subtract   : subtract_i;
-    wire       sat    = REGISTER_INPUTS ? r_sat : SATURATE_ENABLE;
-    wire       rnd    = REGISTER_INPUTS ? r_rnd : ROUND;
+    wire       sat        = REGISTER_INPUTS ? r_sat : SATURATE_ENABLE;
+    wire       rnd        = REGISTER_INPUTS ? r_rnd : ROUND;
+
+    wire       sat_d1     = REGISTER_INPUTS  ?  r_sat_d1 : SATURATE_ENABLE;
+    wire       sat_d2     = OUTPUT_SELECT[1] ?  r_sat_d1   : r_sat_d2;
+
+    wire       rnd_d1     = REGISTER_INPUTS  ?  r_rnd_d1 : ROUND;
+    wire       rnd_d2     = OUTPUT_SELECT[1] ?  rnd_d1   : r_rnd_d2;
 
     // Shift right control
     wire [5:0] shift_d1 = REGISTER_INPUTS ? r_shift_d1 : SHIFT_RIGHT;
@@ -5674,12 +5704,14 @@ module dsp_t1_sim_cfg_params # (
         {{(NBITS_ACC-NBITS_A-NBITS_B){mult[NBITS_A+NBITS_B-1]}}, mult[NBITS_A+NBITS_B-1:0]};
 
     // Adder
-    wire [NBITS_ACC-1:0] acc_fir_int = unsigned_a ? {{(NBITS_ACC-NBITS_A){1'b0}},         a} :
+    wire [NBITS_ACC-1:0] acc_fir_int = unsigned_a ? {{(NBITS_ACC-NBITS_A){1'b0}}, a} :
                                                     {{(NBITS_ACC-NBITS_A){a[NBITS_A-1]}}, a} ;
 
     wire [NBITS_ACC-1:0] add_a = (subtract) ? (~mult_xtnd + 1) : mult_xtnd;
-    wire [NBITS_ACC-1:0] add_b = (feedback_i == 3'h0) ? acc :
-                                 (feedback_i == 3'h1) ? {{NBITS_ACC}{1'b0}} : (acc_fir_int << acc_fir);
+    wire [NBITS_ACC-1:0] add_b = (feedback == 3'h0) ? acc :
+                                 (feedback == 3'h1) ? {{NBITS_ACC}{1'b0}} :
+                                                    (acc_fir < 6'd44 ? acc_fir_int << acc_fir :
+                                                                       acc_fir_int << 6'd44);
 
     wire [NBITS_ACC-1:0] add_o = add_a + add_b;
 
@@ -5699,28 +5731,28 @@ module dsp_t1_sim_cfg_params # (
     wire [NBITS_ACC-1:0] acc_out = (OUTPUT_SELECT[1]) ? add_o : acc;
 
     // Round, shift, saturate
-    wire [NBITS_ACC-1:0] acc_rnd = (rnd && (SHIFT_RIGHT != 0)) ? (acc_out + ({{(NBITS_ACC-1){1'b0}}, 1'b1} << (SHIFT_RIGHT - 1))) :
+    wire [NBITS_ACC-1:0] acc_rnd = (rnd_d2 && (shift_d2 != 0)) ? (acc_out + ({{(NBITS_ACC-1){1'b0}}, 1'b1} << (shift_d2 - 1))) :
                                                                     acc_out;
 
-    wire [NBITS_ACC-1:0] acc_shr = (unsigned_mode) ? (acc_rnd  >> SHIFT_RIGHT) :
-                                                     (acc_rnd >>> SHIFT_RIGHT);
+    wire [NBITS_ACC-1:0] acc_shr = acc_rnd >>> shift_d2;
 
-    wire [NBITS_ACC-1:0] acc_sat_u = (acc_shr[NBITS_ACC-1:NBITS_Z] != 0) ? {{(NBITS_ACC-NBITS_Z){1'b0}},{NBITS_Z{1'b1}}} :
-                                                                           {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}};
+    wire [NBITS_ACC-1:0] acc_sat_u = (&acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b1) ? {NBITS_ACC{1'b0}} :
+                                     (|acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b0  ? {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}}:
+                                                                                 {{(NBITS_ACC-NBITS_Z){1'b0}},{NBITS_Z{1'b1}}});
 
     wire [NBITS_ACC-1:0] acc_sat_s = ((|acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b0) ||
                                       (&acc_shr[NBITS_ACC-1:NBITS_Z-1] == 1'b1)) ? {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_Z-1:0]}} :
                                                                                    {{(NBITS_ACC-NBITS_Z){1'b0}},{acc_shr[NBITS_ACC-1],{NBITS_Z-1{~acc_shr[NBITS_ACC-1]}}}};
 
-    wire [NBITS_ACC-1:0] acc_sat = (sat) ? ((unsigned_mode) ? acc_sat_u : acc_sat_s) : acc_shr;
+    wire [NBITS_ACC-1:0] acc_sat = sat_d2 ? (unsigned_mode ? acc_sat_u : acc_sat_s) : acc_shr;
 
     // Output signals
-    wire [NBITS_Z-1:0]  z0;
-    reg  [NBITS_Z-1:0]  z1;
-    wire [NBITS_Z-1:0]  z2;
+    wire [NBITS_ACC-1:0] z0;
+    reg  [NBITS_ACC-1:0] z1;
+    wire [NBITS_ACC-1:0] z2;
 
-    assign z0 = mult_xtnd[NBITS_Z-1:0];
-    assign z2 = acc_sat[NBITS_Z-1:0];
+    assign z0 = unsigned_mode ? mult_xtnd >> shift_d2 : mult_xtnd >>> shift_d2;
+    assign z2 = acc_sat;
 
     initial z1 <= 0;
 
@@ -5728,18 +5760,18 @@ module dsp_t1_sim_cfg_params # (
         if (s_reset)
             z1 <= 0;
         else begin
-            z1 <= (OUTPUT_SELECT == 3'b100) ? z0 : z2;
+            z1 <= (OUTPUT_SELECT == 3'b100) ? mult_xtnd : z2;
         end
 
     // Output mux
-    assign z_o = (OUTPUT_SELECT == 3'h0) ?   z0 :
-                 (OUTPUT_SELECT == 3'h1) ?   z2 :
-                 (OUTPUT_SELECT == 3'h2) ?   z2 :
-                 (OUTPUT_SELECT == 3'h3) ?   z2 :
-                 (OUTPUT_SELECT == 3'h4) ?   z1 :
-                 (OUTPUT_SELECT == 3'h5) ?   z1 :
-                 (OUTPUT_SELECT == 3'h6) ?   z1 :
-                           z1;  // if OUTPUT_SELECT == 3'h7
+    assign z_o = (OUTPUT_SELECT == 3'h0) ?   mult_xtnd[NBITS_Z-1:0] :
+                 (OUTPUT_SELECT == 3'h1) ?   z2[NBITS_Z-1:0] :
+                 (OUTPUT_SELECT == 3'h2) ?   z2[NBITS_Z-1:0] :
+                 (OUTPUT_SELECT == 3'h3) ?   z2[NBITS_Z-1:0] :
+                 (OUTPUT_SELECT == 3'h4) ?   z1[NBITS_Z-1:0] :
+                 (OUTPUT_SELECT == 3'h5) ?   z1[NBITS_Z-1:0] :
+                 (OUTPUT_SELECT == 3'h6) ?   z1[NBITS_Z-1:0] :
+                           z1[NBITS_Z-1:0];  // if OUTPUT_SELECT == 3'h7
 
     // B input delayed passthrough
     initial dly_b_o <= 0;
