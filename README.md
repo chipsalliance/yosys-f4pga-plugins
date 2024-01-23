@@ -99,7 +99,7 @@ The plugin adds the following commands:
 
 ## SystemVerilog plugin
 
-The SystemVerilog plugin has been moved to [chipsalliance/systemverilog-plugin](https://github.com/chipsalliance/systemverilog-plugin).
+The SystemVerilog plugin has been moved to [chipsalliance/synlig](https://github.com/chipsalliance/synlig).
 
 ## Clock Gating plugin
 
