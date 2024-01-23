@@ -1,3 +1,3 @@
 # SystemVerilog Plugin
 
-The SystemVerilog plugin has been moved to [chipsalliance/systemverilog-plugin](https://github.com/chipsalliance/systemverilog-plugin).
+The SystemVerilog plugin has been moved to [chipsalliance/systemverilog-plugin](https://github.com/chipsalliance/synlig).
