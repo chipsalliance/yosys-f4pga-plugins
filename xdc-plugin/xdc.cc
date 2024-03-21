@@ -56,6 +56,7 @@ const std::unordered_map<std::string, SetPropertyOptions> set_property_options_m
 // corresponding PADs
 const std::unordered_map<std::string, std::vector<std::string>> supported_primitive_parameters = {
   {"OBUF", {"IO_LOC_PAIRS", "IOSTANDARD", "DRIVE", "SLEW", "IN_TERM"}},
+  {"OBUFT", {"IO_LOC_PAIRS", "IOSTANDARD", "DRIVE", "SLEW", "IN_TERM"}},
   {"OBUFDS", {"IO_LOC_PAIRS", "IOSTANDARD", "SLEW", "IN_TERM"}},
   {"OBUFTDS", {"IO_LOC_PAIRS", "IOSTANDARD", "SLEW", "IN_TERM"}},
   {"IBUF", {"IO_LOC_PAIRS", "IOSTANDARD"}},

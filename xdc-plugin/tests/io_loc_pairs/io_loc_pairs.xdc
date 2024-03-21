@@ -50,3 +50,12 @@ set_property LOC G4 [get_ports {tx_n}]
 # IBUFDS_GTE2
 set_property LOC G5 [get_ports {ibufds_gte2_i}]
 set_property LOC G6 [get_ports {ibufds_gte2_ib}]
+
+# OBUFT_1
+set_property SLEW FAST [get_ports tri_top]
+set_property LOC U16 [get_ports tri_top]
+set_property IOSTANDARD LVCMOS25 [get_ports tri_top]
+
+# OBUFT_2
+set_property LOC E19 [get_ports tri_bottom]
+set_property IOSTANDARD LVCMOS33 [get_ports tri_bottom]
