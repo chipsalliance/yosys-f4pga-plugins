@@ -4,3 +4,14 @@
 *.swp
 *.log
 /*/build
+pmgen.py
+
+
+# Test assets
+*/tests/*/ok
+*/tests/*/*.eblif
+*/tests/*/*.json
+*/tests/*/*.sdc
+*/tests/*/*.test
+*/tests/*/tmp
+*/tests/*/*.txt

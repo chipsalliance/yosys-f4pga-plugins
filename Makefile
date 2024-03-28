@@ -34,10 +34,14 @@ PLUGINS_TEST := $(foreach plugin,$(PLUGIN_LIST),test_$(plugin))
 all: plugins
 
 TOP_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
-REQUIREMENTS_FILE ?= requirements.txt
-ENVIRONMENT_FILE ?= environment.yml
 
--include third_party/make-env/conda.mk
+UNAME := $(shell uname)
+ifeq ($(UNAME), Linux)
+NPROC = $(shell nproc)
+endif
+ifeq ($(UNAME), Darwin)
+NPROC = $(shell sysctl -n hw.physicalcpu)
+endif
 
 define install_plugin =
 .PHONY: $(1).so
@@ -60,7 +64,7 @@ endef
 $(foreach plugin,$(PLUGIN_LIST),$(eval $(call install_plugin,$(plugin))))
 
 pmgen.py:
-	wget -nc -O $@ https://raw.githubusercontent.com/YosysHQ/yosys/master/passes/pmgen/pmgen.py
+	wget -nc -O $@ https://raw.githubusercontent.com/YosysHQ/yosys/yosys-0.17/passes/pmgen/pmgen.py
 
 .PHONY: plugins
 plugins: $(PLUGINS)
@@ -81,7 +85,7 @@ clean:: plugins_clean
 CLANG_FORMAT ?= clang-format-8
 .PHONY: format
 format:
-	find . \( -name "*.h" -o -name "*.cc" \) -and -not -path '*/third_party/*' -print0 | xargs -0 -P $$(nproc) ${CLANG_FORMAT} -style=file -i
+	find . \( -name "*.h" -o -name "*.cc" \) -and -not -path '*/third_party/*' -print0 | xargs -0 -P ${NPROC} ${CLANG_FORMAT} -style=file -i
 
 VERIBLE_FORMAT ?= verible-verilog-format
 .PHONY: format-verilog

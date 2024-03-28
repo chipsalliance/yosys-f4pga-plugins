@@ -17,7 +17,10 @@
  *
  */
 #include "kernel/log.h"
-#include "libs/json11/json11.hpp"
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 USING_YOSYS_NAMESPACE
 // Coordinates of HCLK_IOI tiles associated with a specified bank
@@ -32,20 +35,22 @@ inline BankTilesMap get_bank_tiles(const std::string json_file_name)
     if (!json_file.good()) {
         log_cmd_error("Can't open JSON file %s", json_file_name.c_str());
     }
-    std::string json_str((std::istreambuf_iterator<char>(json_file)), std::istreambuf_iterator<char>());
-    std::string error;
-    auto json = json11::Json::parse(json_str, error);
-    if (!error.empty()) {
-        log_cmd_error("%s\n", error.c_str());
+
+    json data;
+    try {
+        data = json::parse(json_file);
+    } catch (json::parse_error &ex) {
+        log_cmd_error("json parsing error: %s\n", ex.what());
+        return bank_tiles;
     }
-    auto json_objects = json.object_items();
-    auto iobanks = json_objects.find("iobanks");
-    if (iobanks == json_objects.end()) {
+
+    auto iobanks = data.find("iobanks");
+    if (iobanks == data.end()) {
         log_cmd_error("IO Bank information missing in the part's json: %s\n", json_file_name.c_str());
     }
 
-    for (auto iobank : iobanks->second.object_items()) {
-        bank_tiles.emplace(std::atoi(iobank.first.c_str()), iobank.second.string_value());
+    for (auto &el : iobanks->items()) {
+        bank_tiles.emplace(std::atoi(el.key().c_str()), to_string(el.value()));
     }
 
     return bank_tiles;

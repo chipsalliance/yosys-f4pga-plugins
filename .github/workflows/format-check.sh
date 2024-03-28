@@ -22,7 +22,7 @@ source .github/workflows/common.sh
 ##########################################################################
 
 start_section Formatting
-make format -j`nproc`
+make format -j$NPROC
 test $(git status --porcelain | wc -l) -eq 0 || { git diff; false; }
 end_section
 

@@ -25,7 +25,7 @@ jobs:
   Checks:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - uses: SymbiFlow/actions/checks@main
       with:
@@ -33,5 +33,3 @@ jobs:
           ./design_introspection-plugin/tests/selection_to_tcl_list/selection_to_tcl_list.v
           ./third_party/minilitex_ddr_arty/minilitex_ddr_arty.v
           ./third_party/VexRiscv_Lite/VexRiscv_Lite.v
-        third_party: |
-          ./third_party/googletest/

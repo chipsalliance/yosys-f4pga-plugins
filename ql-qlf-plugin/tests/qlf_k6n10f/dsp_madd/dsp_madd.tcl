@@ -7,10 +7,10 @@ proc check_equiv {top use_cfg_params} {
     design -save preopt
 
     if {${use_cfg_params} == 1} {
-        synth_quicklogic -family qlf_k6n10f -top ${top} -use_dsp_cfg_params
+        synth_quicklogic_f4pga -family qlf_k6n10f -top ${top} -use_dsp_cfg_params
     } else {
         stat
-        synth_quicklogic -family qlf_k6n10f -top ${top}
+        synth_quicklogic_f4pga -family qlf_k6n10f -top ${top}
     }
 
     design -stash postopt
@@ -18,8 +18,8 @@ proc check_equiv {top use_cfg_params} {
     design -copy-from preopt  -as gold A:top
     design -copy-from postopt -as gate A:top
 
-    techmap -wb -autoproc -map +/quicklogic/qlf_k6n10f/cells_sim.v
-    techmap -wb -autoproc -map +/quicklogic/qlf_k6n10f/dsp_sim.v
+    techmap -wb -autoproc -map +/quicklogic_f4pga/qlf_k6n10f/cells_sim.v
+    techmap -wb -autoproc -map +/quicklogic_f4pga/qlf_k6n10f/dsp_sim.v
     yosys proc
     opt_expr
     opt_clean -purge

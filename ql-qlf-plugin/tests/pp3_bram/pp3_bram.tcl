@@ -6,7 +6,7 @@ read_verilog $::env(DESIGN_TOP).v
 design -save read
 
 design -load read
-synth_quicklogic -family pp3 -top top_bram_9_16
+synth_quicklogic_f4pga -family pp3 -top top_bram_9_16
 yosys cd top_bram_9_16
 stat
 select -assert-count 1 t:ckpad
@@ -15,7 +15,7 @@ select -assert-count 16 t:outpad
 select -assert-count 1 t:ram8k_2x1_cell_macro
 
 design -load read
-synth_quicklogic -family pp3 -top top_bram_9_32
+synth_quicklogic_f4pga -family pp3 -top top_bram_9_32
 yosys cd top_bram_9_32
 stat
 select -assert-count 1 t:ckpad
@@ -24,7 +24,7 @@ select -assert-count 32 t:outpad
 select -assert-count 1 t:ram8k_2x1_cell_macro
 
 design -load read
-synth_quicklogic -family pp3 -top top_bram_10_16
+synth_quicklogic_f4pga -family pp3 -top top_bram_10_16
 yosys cd top_bram_10_16
 stat
 select -assert-count 1 t:ckpad
@@ -34,7 +34,7 @@ select -assert-count 1 t:ram8k_2x1_cell_macro
 
 # BRAM initialization from file using pp3_braminig pass test
 design -load read
-synth_quicklogic -family pp3 -top top_bram_init
+synth_quicklogic_f4pga -family pp3 -top top_bram_init
 yosys cd top_bram_init
 stat
 select -assert-count 1 t:ckpad

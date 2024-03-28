@@ -28,13 +28,14 @@ fi
 
 start_section Building
 
-if [ "$PLUGIN_NAME" == "xdc" ] || [ "$PLUGIN_NAME" == "sdc" ]; then
-    make design_introspection.so -j`nproc`
-	make install_design_introspection -j`nproc`
-fi
+if [ "$PLUGIN_NAME" == "xdc" ] || [ "$PLUGIN_NAME" == "sdc" ]; then 
+    make design_introspection.so -j$NPROC
+	sudo make install_design_introspection -j$NPROC
+fi 
 
 export CXXFLAGS=-Werror
-make ${PLUGIN_NAME}.so -j`nproc`
+make ${PLUGIN_NAME}.so -j$NPROC
+
 unset CXXFLAGS
 
 end_section
@@ -42,19 +43,19 @@ end_section
 ##########################################################################
 
 start_section Installing
-make install_${PLUGIN_NAME} -j`nproc`
+sudo make install_${PLUGIN_NAME} -j$NPROC
 end_section
 
 ##########################################################################
 
 start_section Testing
-make test_${PLUGIN_NAME} -j`nproc`
+make test_${PLUGIN_NAME} -j$NPROC
 end_section
 
 ##########################################################################
 
 start_section Cleanup
-make clean_${PLUGIN_NAME} -j`nproc`
+make clean_${PLUGIN_NAME} -j$NPROC
 end_section
 
 ##########################################################################
