@@ -8,7 +8,7 @@ design -save dsp_mult_post_synth_sim
 
 select dsp_mult
 select *
-synth_quicklogic -family qlf_k6n10f -top dsp_mult
+synth_quicklogic_f4pga -family qlf_k6n10f -top dsp_mult
 opt_expr -undriven
 opt_clean
 stat
@@ -19,7 +19,7 @@ select -clear
 design -load dsp_mult_post_synth_sim
 select dsp_mult
 select *
-synth_quicklogic -family qlf_k6n10f -top dsp_mult -use_dsp_cfg_params
+synth_quicklogic_f4pga -family qlf_k6n10f -top dsp_mult -use_dsp_cfg_params
 opt_expr -undriven
 opt_clean
 stat

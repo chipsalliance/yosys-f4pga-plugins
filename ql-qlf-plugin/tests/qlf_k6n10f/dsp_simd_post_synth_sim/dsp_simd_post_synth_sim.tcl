@@ -8,7 +8,7 @@ design -save dsp_simd
 
 select simd_mult
 select *
-synth_quicklogic -family qlf_k6n10f -top simd_mult
+synth_quicklogic_f4pga -family qlf_k6n10f -top simd_mult
 opt_expr -undriven
 opt_clean
 stat
@@ -19,7 +19,7 @@ select -clear
 design -load dsp_simd
 select simd_mult_explicit_ports
 select *
-synth_quicklogic -family qlf_k6n10f -top simd_mult_explicit_ports
+synth_quicklogic_f4pga -family qlf_k6n10f -top simd_mult_explicit_ports
 opt_expr -undriven
 opt_clean
 stat
@@ -30,7 +30,7 @@ select -clear
 design -load dsp_simd
 select simd_mult_explicit_params
 select *
-synth_quicklogic -family qlf_k6n10f -top simd_mult_explicit_params -use_dsp_cfg_params
+synth_quicklogic_f4pga -family qlf_k6n10f -top simd_mult_explicit_params -use_dsp_cfg_params
 opt_expr -undriven
 opt_clean
 stat

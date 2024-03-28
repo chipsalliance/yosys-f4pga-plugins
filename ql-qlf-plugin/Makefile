@@ -108,6 +108,6 @@ $(PMGEN_OUT_DIR)/ql-bram-asymmetric-wider-read.h: ql-bram-asymmetric-wider-read.
 	python3 $(PMGEN_PY) -o $@ -p ql_bram_asymmetric_wider_read ql-bram-asymmetric-wider-read.pmg
 
 install_modules: $(VERILOG_MODULES)
-	$(foreach f,$^,install -D $(f) $(YOSYS_DATA_DIR)/quicklogic/$(f);)
+	$(foreach f,$^,install -D $(f) $(YOSYS_DATA_DIR)/quicklogic_f4pga/$(f);)
 
 install: install_modules
